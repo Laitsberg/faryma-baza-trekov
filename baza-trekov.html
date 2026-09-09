@@ -105,33 +105,38 @@ input,select{font:inherit;color:inherit}
 .fb{display:flex;flex-direction:column;gap:1px}
 .fg.closed .fb{display:none}
 
-.opt{display:flex;align-items:center;gap:10px;padding:4px 2px;cursor:pointer;
+/* Пункт живёт в трёх состояниях: не тронут, выбран, исключён. Поэтому
+   это кнопка, а не галочка: у галочки состояний два. */
+.opt{display:flex;align-items:center;gap:10px;width:100%;padding:5px 2px;
+  text-align:left;background:none;cursor:pointer;
   color:var(--dim);font-size:14px;border-radius:4px}
 .opt:hover{color:var(--ink)}
 .opt.zero{opacity:.42}
-.opt input{position:absolute;opacity:0;width:0;height:0}
 .bx{width:15px;height:15px;flex:none;border-radius:4px;background:var(--card-2);
   position:relative;transition:background .12s}
-.opt input:checked~.bx{background:var(--brand)}
-.opt input:focus-visible~.bx{outline:2px solid var(--brand-hi);outline-offset:2px}
-.opt input:checked~.lb{color:var(--ink)}
+/* Выбран — галочка, исключён — минус, и подпись зачёркнута: цвет тут
+   тот же, что у нижней ступени шкалы, он в файле везде значит «нет». */
+.opt.on .bx{background:var(--brand)}
+.opt.on .bx::after{content:'';position:absolute;left:5px;top:2px;width:3.5px;height:8px;
+  border:solid #151517;border-width:0 2px 2px 0;transform:rotate(43deg)}
+.opt.off .bx{background:var(--t-krin)}
+.opt.off .bx::after{content:'';position:absolute;left:3px;top:6.5px;width:9px;height:2px;
+  background:#151517;border-radius:1px}
+.opt.on .lb{color:var(--ink)}
+.opt.off .lb{color:var(--faint);text-decoration:line-through}
 .lb{display:flex;align-items:center;gap:8px;min-width:0}
 .lb i{width:8px;height:8px;border-radius:50%;flex:none}
 .n{margin-left:auto;font-family:var(--m);font-size:10px;color:var(--faint);
   font-variant-numeric:tabular-nums}
+
+.hint{margin:0;font-size:12px;line-height:1.45;color:var(--faint)}
+.fb .hint{margin:7px 0 2px}
 
 .more{align-self:flex-start;margin-top:3px;padding:3px 2px;
   color:var(--dim);font:italic 13.5px var(--b);display:flex;align-items:center;gap:8px}
 .more::before{content:'•••';font-style:normal;font-size:9px;letter-spacing:1px;color:var(--ink)}
 .more:hover{color:var(--brand-hi)}
 
-.yr{display:flex;align-items:center;gap:9px;padding:2px 0}
-.yr b{background:var(--card-2);border-radius:4px;padding:3px 10px;
-  font:500 12.5px var(--b);color:var(--ink)}
-.yr span{color:var(--dim)}
-.sel{width:100%;background:var(--card-2);border:0;border-radius:4px;
-  padding:6px 9px;font:13.5px var(--b);color:var(--ink)}
-.sel:focus{outline:none;box-shadow:0 0 0 2px var(--brand)}
 
 /* ---------- шапка выдачи ---------- */
 .hd{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;
@@ -141,6 +146,9 @@ input,select{font:inherit;color:inherit}
 .sortbtn .car{color:var(--brand);font-size:10px}
 .sortbtn select{background:none;border:0;font:600 16px var(--b);color:var(--ink);cursor:pointer}
 .sortbtn select:focus{outline:none;color:var(--brand-hi)}
+.sortbtn.per select{font:600 13.5px var(--b);color:var(--dim)}
+.sortbtn.per .car{font-size:8px;color:var(--dim)}
+.sortbtn.per:hover select,.sortbtn.per:hover .car{color:var(--ink)}
 
 .chip{display:inline-flex;align-items:center;gap:9px;background:var(--card-2);
   border-radius:5px;padding:4px 7px 4px 11px;font-size:13px;color:var(--ink)}
@@ -158,7 +166,12 @@ input,select{font:inherit;color:inherit}
   font-variant-numeric:tabular-nums}
 
 /* ---------- сетка ---------- */
-.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(196px,1fr))}
+/* Не больше пяти в ряду: на широком экране их набивалось по восемь, и
+   обложки мельчали. Ширина колонки — либо 196px, либо ровно пятая
+   часть ряда, смотря что больше; на узких экранах работает первое. */
+.grid{display:grid;gap:18px;--n:5;
+  grid-template-columns:repeat(auto-fill,
+    minmax(max(196px, calc((100% - (var(--n) - 1) * 18px) / var(--n))), 1fr))}
 
 .card{background:var(--card);border-radius:var(--r);overflow:hidden;cursor:pointer;
   display:flex;flex-direction:column;transition:transform .16s}
@@ -258,10 +271,13 @@ input,select{font:inherit;color:inherit}
 .btn[hidden]{display:none}
 
 .more-wrap{display:flex;flex-direction:column;align-items:center;gap:9px;padding:26px 0 4px}
-#more{background:var(--card-2);border-radius:5px;padding:11px 26px;
-  font-weight:600;min-height:var(--tap)}
-#more:hover{background:#44444C;color:var(--brand-hi)}
-#more[hidden]{display:none}
+.pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px}
+.pg{min-width:var(--tap);height:38px;padding:0 12px;border-radius:5px;background:var(--card-2);
+  font-family:var(--m);font-size:12.5px;color:var(--dim)}
+.pg:hover:not(:disabled):not(.now){background:#44444C;color:var(--ink)}
+.pg.now{background:var(--brand);color:#151517;font-weight:700}
+.pg.gap{min-width:16px;padding:0;background:none;color:var(--faint);cursor:default}
+.pg:disabled{opacity:.35;cursor:default}
 #shown{font-family:var(--m);font-size:11px;color:var(--faint)}
 
 .foot-note{max-width:1560px;margin:0 auto;padding:0 22px 40px;
@@ -504,6 +520,34 @@ input,select{font:inherit;color:inherit}
   font-family:var(--m);font-size:12px;line-height:1.45;color:var(--ink);resize:vertical}
 .adm-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
+/* ---------- интересные факты ---------- */
+.ff{margin:0;padding:0;list-style:none;display:grid;gap:11px}
+.ff li{display:flex;gap:10px;font-size:13.5px;line-height:1.45;color:var(--dim)}
+.ff li i{flex:none;width:6px;height:6px;margin-top:7px;border-radius:50%;background:var(--brand)}
+.ff b{color:var(--ink);font-weight:600}
+.ff b.k{font-family:var(--m);color:var(--tc,var(--ink))}
+
+/* ---------- комментарии ---------- */
+.talk{margin-top:20px;padding-top:4px}
+.talk-form{display:grid;gap:8px;margin-bottom:6px}
+.talk-form input,.talk-form textarea{width:100%;padding:9px 11px;border-radius:6px;
+  background:var(--card-2);border:1px solid var(--line);font:14px var(--b);color:var(--ink)}
+.talk-form input{max-width:230px}
+.talk-form textarea{min-height:76px;resize:vertical}
+.talk-form input:focus,.talk-form textarea:focus{outline:none;border-color:var(--brand)}
+.talk-act{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.talk-act .note{flex:1;min-width:220px}
+.msg{display:flex;align-items:flex-start;gap:11px;padding:12px 0;border-top:1px solid var(--line)}
+.msg .ini{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;
+  background:var(--card-2);font:700 13px var(--d);color:var(--dim)}
+.msg .bd{min-width:0;flex:1}
+.msg .bd b{font-size:13.5px}
+.msg .bd time{margin-left:9px;font-family:var(--m);font-size:11px;color:var(--faint)}
+.msg .bd p{margin:3px 0 0;font-size:13.5px;color:var(--ink);
+  white-space:pre-wrap;overflow-wrap:anywhere}
+.msg .del{flex:none;color:var(--faint);font-size:13px;padding:5px 7px}
+.msg .del:hover{color:var(--like)}
+
 /* ---------- похожие ---------- */
 /* Столбец с явным minmax(0,…): иначе строку распирает длинное
    название, и список вылезает за панель. */
@@ -583,6 +627,15 @@ input,select{font:inherit;color:inherit}
       <option value="az">по алфавиту</option>
      </select>
     </span>
+    <span class="sortbtn per">
+     <span class="car">▼</span>
+     <select id="per" aria-label="Сколько треков на странице">
+      <option value="30">по 30 на странице</option>
+      <option value="60" selected>по 60 на странице</option>
+      <option value="120">по 120 на странице</option>
+      <option value="240">по 240 на странице</option>
+     </select>
+    </span>
     <span id="chips" style="display:contents"></span>
    </div>
   </div>
@@ -590,7 +643,7 @@ input,select{font:inherit;color:inherit}
   <div class="grid" id="grid"><div class="boot" id="boot">Читаю таблицу…</div></div>
 
   <div class="more-wrap">
-   <button id="more" hidden>Показать ещё</button>
+   <nav class="pager" id="pager" aria-label="Страницы"></nav>
    <span id="shown"></span>
   </div>
  </main>
@@ -9517,11 +9570,9 @@ let CAT = [];
 let CAT_COUNTRIES = {};
 let CAT_YEARS = [];
 
-/* Порция карточек. Архив — почти семь тысяч строк, и рисовать их
-   разом нельзя: телефон на этом умирает. Прокрутки внутри прокрутки
-   не делаем, вместо неё кнопка «показать ещё». */
-const STEP = 60;
-let shown = STEP;
+/* Архив — почти семь тысяч строк, и рисовать их разом нельзя: телефон
+   на этом умирает. Поэтому выдача разбита на страницы; сколько карточек
+   на странице, выбирает сам зритель — это F.per. */
 
 const LS = 'faryma-catalog-v2';
 const store = (() => { try { return JSON.parse(localStorage.getItem(LS)) || {}; }
@@ -9549,13 +9600,47 @@ let SPC = (() => { try { return JSON.parse(localStorage.getItem(SP_LS)) || {}; }
                    catch { return {}; } })();
 const saveSp = () => { try { localStorage.setItem(SP_LS, JSON.stringify(SPC)); } catch {} };
 
+/* ---------- отбор ----------
+   Каждый столбец отбора — Map «значение → +1 или −1»: пункт можно
+   выбрать, а вторым щелчком исключить. Третий щелчок снимает.
+   В оценках рядом со ступенями лежат точные значения с плюсами и
+   минусами — они помечены знаком «=» впереди, чтобы «хорошечно»
+   (вся ступень) не спуталось с «хорошечно» (ровно, без модификатора). */
 const F = {
-  q: '', sort: 'new', country: '', year: null,
-  tier: new Set(), genre: new Set(), origin: new Set(),
-  tag: new Set(), kind: new Set(), has: new Set(),
-  // ступени своей оценки: «покажи всё, что я сам записал в атличну»
-  myTier: new Set()
+  q: '', sort: 'new', page: 0, per: 60,
+  tier: new Map(), myTier: new Map(), genre: new Map(), origin: new Map(),
+  kind: new Map(), tag: new Map(), has: new Map(), country: new Map(), year: new Map()
 };
+const ПОЛЯ = ['tier', 'myTier', 'genre', 'origin', 'kind', 'tag', 'has', 'country', 'year'];
+
+const плюс  = m => [...m].filter(([, v]) => v > 0).map(([k]) => k);
+const минус = m => [...m].filter(([, v]) => v < 0).map(([k]) => k);
+/* Щелчки идут по кругу: не тронут → выбран → исключён → не тронут. */
+const ход = (m, key, s) => { s ? m.set(key, s) : m.delete(key); };
+
+/* Отбор в разобранном виде — по два множества на столбец. Собираем их
+   один раз на перерисовку: match() зовут десятки тысяч раз подряд, и
+   раскладывать Map на каждой строке было бы вдесятеро дороже. */
+const FC = {};
+function применить() {
+  ПОЛЯ.forEach(k => {
+    const да = new Set(), нет = new Set();
+    F[k].forEach((v, key) => (v > 0 ? да : нет).add(key));
+    FC[k] = { да, нет };
+  });
+}
+применить();
+
+/* Значения строки против одного столбца: с выбранными — «хоть одно
+   совпало», с исключёнными — «ни одно не совпало». */
+function прошёл(c, vals) {
+  if (c.да.size && !vals.some(v => c.да.has(v))) return false;
+  if (c.нет.size && vals.some(v => c.нет.has(v))) return false;
+  return true;
+}
+/* Ступень и точное значение оценки — два ключа одной строки. */
+const оценкаКлючи = rate => rate ? [rate.tier, '=' + rate.label] : [];
+const мояКлючи = v => v ? [v.t, '=' + v.t + modLabel(v.m)] : [];
 
 const $ = id => document.getElementById(id);
 /* Разделитель разрядов. Такой же помощник есть в js/ui.js, но тот файл
@@ -9714,23 +9799,33 @@ function match(r, skip) {
       : r.search.includes(F.q);
     if (!ok) return false;
   }
-  if (skip !== 'tier'   && F.tier.size   && !(r.rate && F.tier.has(r.rate.tier))) return false;
-  if (skip !== 'genre'  && F.genre.size  && !r.genres.some(g => F.genre.has(g))) return false;
-  if (skip !== 'origin' && F.origin.size && !F.origin.has(r.origin)) return false;
-  if (skip !== 'kind'   && F.kind.size   && !F.kind.has(r.kind)) return false;
-  if (skip !== 'tag'    && F.tag.size    && !r.tags.some(t => F.tag.has(t))) return false;
-  if (skip !== 'has'    && F.has.size) {
-    if (F.has.has('roast') && !r.moment) return false;
-    if (F.has.has('link')  && !r.link) return false;
-    if (F.has.has('fav')   && !FAV.has(r.key)) return false;
-    if (F.has.has('mine')  && !MY[r.key]) return false;
+  if (skip !== 'tier'   && !прошёл(FC.tier, оценкаКлючи(r.rate))) return false;
+  if (skip !== 'myTier' && !прошёл(FC.myTier, мояКлючи(MY[r.key]))) return false;
+
+  // Жанр исключается только у одножанровых: «метал / фолк» без фолка —
+  // всё ещё метал, и выбрасывать его из-за одного слова неправильно.
+  if (skip !== 'genre') {
+    const c = FC.genre;
+    if (c.да.size && !r.genres.some(g => c.да.has(g))) return false;
+    if (c.нет.size && r.genres.length === 1 && c.нет.has(r.genres[0])) return false;
   }
-  if (skip !== 'myTier' && F.myTier.size) {
-    const v = MY[r.key];
-    if (!v || !F.myTier.has(v.t)) return false;
+
+  if (skip !== 'origin' && !прошёл(FC.origin, r.origin ? [r.origin] : [])) return false;
+  if (skip !== 'kind'   && !прошёл(FC.kind, r.kind ? [r.kind] : [])) return false;
+  if (skip !== 'tag'    && !прошёл(FC.tag, r.tags)) return false;
+
+  if (skip !== 'has') {
+    const c = FC.has;
+    if (c.да.size || c.нет.size) {
+      const есть = { roast: !!r.moment, link: !!r.link,
+                     fav: FAV.has(r.key), mine: !!MY[r.key] };
+      for (const k of c.да)  if (!есть[k]) return false;
+      for (const k of c.нет) if (есть[k])  return false;
+    }
   }
-  if (skip !== 'country' && F.country && r.country !== F.country) return false;
-  if (skip !== 'year' && F.year && !(r.date && r.date.getFullYear() === F.year)) return false;
+
+  if (skip !== 'country' && !прошёл(FC.country, r.country ? [r.country] : [])) return false;
+  if (skip !== 'year' && !прошёл(FC.year, r.date ? [r.date.getFullYear()] : [])) return false;
   return true;
 }
 
@@ -9761,12 +9856,12 @@ function cnt(field, val) {
   return CAT.filter(r => {
     if (!match(r, field)) return false;
     switch (field) {
-      case 'tier':    return r.rate && r.rate.tier === val;
+      case 'tier':    return оценкаКлючи(r.rate).includes(val);
+      case 'myTier':  return мояКлючи(MY[r.key]).includes(val);
       case 'genre':   return r.genres.includes(val);
       case 'origin':  return r.origin === val;
       case 'kind':    return r.kind === val;
       case 'tag':     return r.tags.includes(val);
-      case 'myTier':  return !!MY[r.key] && MY[r.key].t === val;
       case 'country': return r.country === val;
       case 'year':    return r.date && r.date.getFullYear() === val;
       case 'has':     return val === 'roast' ? !!r.moment
@@ -9811,99 +9906,127 @@ function group(title, closed) {
   return { g, b };
 }
 
-function opt(body, label, on, count, color, toggle) {
-  const row = document.createElement('label');
-  row.className = 'opt' + (count ? '' : ' zero');
-  row.innerHTML = '<input type="checkbox"' + (on ? ' checked' : '') + '>' +
-    '<span class="bx"></span><span class="lb">' +
+function opt(body, label, state, count, color, поставить) {
+  const row = document.createElement('button');
+  row.type = 'button';
+  row.className = 'opt' + (count ? '' : ' zero') +
+    (state > 0 ? ' on' : state < 0 ? ' off' : '');
+  row.setAttribute('aria-pressed', state > 0 ? 'true' : 'false');
+  row.title = state > 0 ? 'выбрано — ещё щелчок, чтобы исключить'
+            : state < 0 ? 'исключено — ещё щелчок, чтобы снять'
+            : 'щёлкни, чтобы оставить только это';
+  row.innerHTML = '<span class="bx"></span><span class="lb">' +
     (color ? '<i style="background:' + color + '"></i>' : '') + esc(label) + '</span>' +
     '<span class="n">' + число(count) + '</span>';
-  row.querySelector('input').addEventListener('change', e => {
-    toggle(e.target.checked); rail(); render();
+  row.addEventListener('click', () => {
+    поставить(state > 0 ? -1 : state < 0 ? 0 : 1);
+    rail(); render();
   });
   body.append(row);
 }
 
+const подсказка = (b, текст) => {
+  const p = document.createElement('p');
+  p.className = 'hint';
+  p.textContent = текст;
+  b.append(p);
+};
+
+/* Ступени или точные оценки — выбор вида запоминается на группу. */
+const ТОЧНО = { tier: false, myTier: false };
+
+function оценки(b, поле) {
+  const m = F[поле];
+  const точно = ТОЧНО[поле];
+  if (точно) {
+    SCALE_ORDER.forEach(label => {
+      const t = TIERS.find(x => label.startsWith(x.key));
+      const key = '=' + label;
+      opt(b, label, m.get(key) || 0, cnt(поле, key), TCOLOR[t.key], s => ход(m, key, s));
+    });
+  } else {
+    TIERS.forEach(t =>
+      opt(b, t.key, m.get(t.key) || 0, cnt(поле, t.key), TCOLOR[t.key], s => ход(m, t.key, s)));
+  }
+  const кн = document.createElement('button');
+  кн.type = 'button'; кн.className = 'more';
+  кн.textContent = точно ? 'только ступени' : 'с плюсами и минусами';
+  кн.addEventListener('click', () => { ТОЧНО[поле] = !точно; rail(); });
+  b.append(кн);
+}
+
 function rail() {
+  применить();
   const box = $('rail');
   box.textContent = '';
+  подсказка(box, 'Первый щелчок по пункту оставляет только его, второй — исключает из выдачи.');
 
   { const { g, b } = group('оценка композера', false);
-    TIERS.forEach(t => opt(b, t.key, F.tier.has(t.key), cnt('tier', t.key), TCOLOR[t.key],
-      on => { on ? F.tier.add(t.key) : F.tier.delete(t.key); }));
+    оценки(b, 'tier');
     box.append(g); }
 
   { const { g, b } = group('моя оценка', true);
-    TIERS.forEach(t => opt(b, t.key, F.myTier.has(t.key), cnt('myTier', t.key), TCOLOR[t.key],
-      on => { on ? F.myTier.add(t.key) : F.myTier.delete(t.key); }));
+    оценки(b, 'myTier');
     box.append(g); }
 
   { const { g, b } = group('жанр', false);
     const draw = full => {
       b.textContent = '';
       частые(r => r.genres, full ? 40 : 6).forEach(v =>
-        opt(b, v, F.genre.has(v), cnt('genre', v), null,
-          on => { on ? F.genre.add(v) : F.genre.delete(v); }));
+        opt(b, v, F.genre.get(v) || 0, cnt('genre', v), null, s => ход(F.genre, v, s)));
       const m = document.createElement('button');
       m.type = 'button'; m.className = 'more';
       m.textContent = full ? 'свернуть' : 'больше';
       m.addEventListener('click', () => draw(!full));
       b.append(m);
+      подсказка(b, 'Исключение не трогает треки с несколькими жанрами: «метал / фолк» без фолка — всё ещё метал.');
     };
     draw(false);
     box.append(g); }
 
   // Года релиза в таблице нет — есть только год эфира, когда разносили.
   { const { g, b } = group('год эфира', false);
-    const line = document.createElement('div');
-    line.className = 'yr';
-    line.innerHTML = '<b>' + Math.min(...CAT_YEARS) + '</b><span>—</span><b>' + Math.max(...CAT_YEARS) + '</b>';
-    b.append(line);
-    CAT_YEARS.forEach(y => opt(b, String(y), F.year === y, cnt('year', y), null,
-      on => { F.year = on ? y : null; }));
+    CAT_YEARS.forEach(y => opt(b, String(y), F.year.get(y) || 0, cnt('year', y), null,
+      s => ход(F.year, y, s)));
     box.append(g); }
 
-  { const list = частые(r => [r.country], 16);
+  // Порог в пять треков: страны-одиночки раздували список до сотни
+  // строк, а толку в отборе от «Люксембург · 1» никакого.
+  { const счёт = new Map();
+    CAT.forEach(r => { if (r.country) счёт.set(r.country, (счёт.get(r.country) || 0) + 1); });
+    const list = [...счёт.entries()].filter(([, n]) => n >= 5)
+      .sort((a, b) => b[1] - a[1]).map(([c]) => c);
     if (list.length) {
       const { g, b } = group('страна', false);
-      const s = document.createElement('select');
-      s.className = 'sel';
-      s.setAttribute('aria-label', 'Страна');
-      s.innerHTML = '<option value="">любая</option>' + list.map(c =>
-        '<option value="' + esc(c) + '">' + esc(c) + ' · ' + число(cnt('country', c)) + '</option>').join('');
-      s.value = F.country;
-      s.addEventListener('change', () => { F.country = s.value; rail(); render(); });
-      b.append(s);
+      list.forEach(c => opt(b, c, F.country.get(c) || 0, cnt('country', c), null,
+        s => ход(F.country, c, s)));
+      подсказка(b, 'В списке страны, у которых в архиве хотя бы пять треков.');
       box.append(g);
     } }
 
   { const { g, b } = group('разносы', false);
-    opt(b, 'есть запись разноса', F.has.has('roast'), cnt('has', 'roast'), null,
-      on => { on ? F.has.add('roast') : F.has.delete('roast'); });
-    opt(b, 'есть ссылка на трек', F.has.has('link'), cnt('has', 'link'), null,
-      on => { on ? F.has.add('link') : F.has.delete('link'); });
-    opt(b, 'в избранном', F.has.has('fav'), cnt('has', 'fav'), null,
-      on => { on ? F.has.add('fav') : F.has.delete('fav'); });
-    opt(b, 'мной оценённые', F.has.has('mine'), cnt('has', 'mine'), null,
-      on => { on ? F.has.add('mine') : F.has.delete('mine'); });
+    const п = (key, label) => opt(b, label, F.has.get(key) || 0, cnt('has', key), null,
+      s => ход(F.has, key, s));
+    п('roast', 'есть запись разноса');
+    п('link',  'есть ссылка на трек');
+    п('fav',   'в избранном');
+    п('mine',  'мной оценённые');
     box.append(g); }
 
   { const { g, b } = group('происхождение', false);
     частые(r => [r.origin], 10).forEach(v =>
-      opt(b, v.toLowerCase(), F.origin.has(v), cnt('origin', v), null,
-        on => { on ? F.origin.add(v) : F.origin.delete(v); }));
+      opt(b, v.toLowerCase(), F.origin.get(v) || 0, cnt('origin', v), null,
+        s => ход(F.origin, v, s)));
     box.append(g); }
 
   { const { g, b } = group('тип трека', true);
     частые(r => [r.kind], 10).forEach(v =>
-      opt(b, v, F.kind.has(v), cnt('kind', v), null,
-        on => { on ? F.kind.add(v) : F.kind.delete(v); }));
+      opt(b, v, F.kind.get(v) || 0, cnt('kind', v), null, s => ход(F.kind, v, s)));
     box.append(g); }
 
   { const { g, b } = group('тэги', false);
     частые(r => r.tags, 14).forEach(v =>
-      opt(b, v, F.tag.has(v), cnt('tag', v), null,
-        on => { on ? F.tag.add(v) : F.tag.delete(v); }));
+      opt(b, v, F.tag.get(v) || 0, cnt('tag', v), null, s => ход(F.tag, v, s)));
     box.append(g); }
 }
 
@@ -9921,18 +10044,28 @@ function chips() {
     box.append(c);
   };
 
+  const имя = v => String(v).replace(/^=/, '');
+  const свод = (m, f = имя) => {
+    const п = плюс(m).map(f), н = минус(m).map(f);
+    return (п.length ? п.join(', ') : 'любые') +
+           // «кроме электронное» звучит криво, а склонять жанры и страны
+           // автоматически не выйдет — поэтому двоеточие.
+           (н.length ? ' · исключено: ' + н.join(', ') : '');
+  };
+  const HAS_NAME = { roast: 'с записью', link: 'со ссылкой',
+                     fav: 'избранное', mine: 'мной оценённые' };
+
   if (F.q) add('поиск', '«' + F.q + '»', () => { F.q = ''; $('q').value = ''; });
-  if (F.tier.size)   add('оценка композера', [...F.tier].join(', '), () => F.tier.clear());
-  if (F.myTier.size) add('моя оценка', [...F.myTier].join(', '), () => F.myTier.clear());
-  if (F.genre.size)  add('жанр', [...F.genre].join(', '), () => F.genre.clear());
-  if (F.year)        add('год эфира', String(F.year), () => { F.year = null; });
-  if (F.country)     add('страна', F.country, () => { F.country = ''; });
-  if (F.origin.size) add('происхождение', [...F.origin].join(', ').toLowerCase(), () => F.origin.clear());
-  if (F.kind.size)   add('тип', [...F.kind].join(', '), () => F.kind.clear());
-  if (F.tag.size)    add('тэги', [...F.tag].join(', '), () => F.tag.clear());
-  if (F.has.size)    add('разносы', [...F.has].map(h =>
-    h === 'roast' ? 'с записью' : h === 'link' ? 'со ссылкой' :
-    h === 'fav' ? 'избранное' : 'мной оценённые').join(', '), () => F.has.clear());
+  if (F.tier.size)    add('оценка композера', свод(F.tier), () => F.tier.clear());
+  if (F.myTier.size)  add('моя оценка', свод(F.myTier), () => F.myTier.clear());
+  if (F.genre.size)   add('жанр', свод(F.genre), () => F.genre.clear());
+  if (F.year.size)    add('год эфира', свод(F.year), () => F.year.clear());
+  if (F.country.size) add('страна', свод(F.country), () => F.country.clear());
+  if (F.origin.size)  add('происхождение', свод(F.origin, v => имя(v).toLowerCase()),
+                          () => F.origin.clear());
+  if (F.kind.size)    add('тип', свод(F.kind), () => F.kind.clear());
+  if (F.tag.size)     add('тэги', свод(F.tag), () => F.tag.clear());
+  if (F.has.size)     add('разносы', свод(F.has, k => HAS_NAME[k]), () => F.has.clear());
 
   const ft = $('fToggle');
   if (ft) ft.innerHTML = 'Фильтры<b>' + (box.children.length || '') + '</b>';
@@ -9948,8 +10081,7 @@ function chips() {
 
 function reset() {
   F.q = ''; $('q').value = '';
-  ['tier', 'genre', 'origin', 'tag', 'kind', 'has', 'myTier'].forEach(k => F[k].clear());
-  F.country = ''; F.year = null;
+  ПОЛЯ.forEach(k => F[k].clear());
   rail(); render();
 }
 
@@ -9957,7 +10089,7 @@ function reset() {
    щелчок дорого — под ним семь тысяч строк, — поэтому трогаем только
    когда по этим числам идёт отбор или они прямо сейчас на экране. */
 function railAfterRate() {
-  if (F.has.has('mine') || F.myTier.size) { rail(); render(true); }
+  if (F.has.size || F.myTier.size) { rail(); render(true); }
   else if (GOPEN['моя оценка'] || GOPEN['разносы']) rail();
 }
 
@@ -10189,8 +10321,13 @@ function card(r) {
 let VIEW = [];
 
 function render(keep) {
+  применить();
   VIEW = rows();
-  if (!keep) shown = STEP;
+
+  // Страница могла исчезнуть под новым отбором — тогда садимся на последнюю.
+  const страниц = Math.max(1, Math.ceil(VIEW.length / F.per));
+  if (!keep) F.page = 0;
+  if (F.page >= страниц) F.page = страниц - 1;
 
   const grid = $('grid');
   grid.textContent = '';
@@ -10205,16 +10342,65 @@ function render(keep) {
     grid.append(e);
   } else {
     const frag = document.createDocumentFragment();
-    VIEW.slice(0, shown).forEach(r => frag.append(card(r)));
+    VIEW.slice(F.page * F.per, F.page * F.per + F.per).forEach(r => frag.append(card(r)));
     grid.append(frag);
   }
 
   const n = VIEW.length;
   $('count').textContent = число(n) + ' ' + plural(n, 'разнос', 'разноса', 'разносов') +
     (n < CAT.length ? ' из ' + число(CAT.length) : '');
-  $('more').hidden = shown >= n;
-  $('shown').textContent = n > STEP ? 'показано ' + число(Math.min(shown, n)) + ' из ' + число(n) : '';
+  страницы(страниц);
   chips();
+}
+
+/* ---------- страницы ---------- */
+/* Кнопкой «показать ещё» до середины архива было не дойти: она
+   доклеивала карточки в тот же список, и на трёхтысячной странице
+   браузер начинал думать. Страницы рисуют ровно свою порцию. */
+function страницы(всего) {
+  const box = $('pager');
+  box.textContent = '';
+
+  const n = VIEW.length;
+  const от = F.page * F.per;
+  $('shown').textContent = n
+    ? 'показано ' + число(от + 1) + '–' + число(Math.min(от + F.per, n)) + ' из ' + число(n) +
+      (всего > 1 ? ' · страница ' + (F.page + 1) + ' из ' + число(всего) : '')
+    : '';
+  if (всего < 2) return;
+
+  const кнопка = (текст, page, cls) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pg' + (cls ? ' ' + cls : '');
+    b.textContent = текст;
+    if (page == null) b.disabled = true;
+    else if (page === F.page) {
+      b.classList.add('now');
+      b.setAttribute('aria-current', 'page');
+    } else b.addEventListener('click', () => наСтраницу(page));
+    box.append(b);
+    return b;
+  };
+
+  кнопка('◀', F.page - 1, 'nav').disabled = F.page === 0;
+  // Всегда видны края, текущая и по две соседних; между ними — многоточие.
+  const нужны = [...new Set([0, 1, F.page - 2, F.page - 1, F.page,
+                             F.page + 1, F.page + 2, всего - 2, всего - 1])]
+    .filter(x => x >= 0 && x < всего).sort((a, b) => a - b);
+  нужны.forEach((x, i) => {
+    if (i && x - нужны[i - 1] > 1) кнопка('…', null, 'gap');
+    кнопка(число(x + 1), x);
+  });
+  кнопка('▶', F.page + 1, 'nav').disabled = F.page >= всего - 1;
+}
+
+function наСтраницу(page) {
+  F.page = page;
+  render(true);
+  // К началу сетки, а не страницы: шапка с отбором остаётся перед глазами.
+  const y = $('grid').getBoundingClientRect().top + window.scrollY - 84;
+  window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
 }
 
 /* ---------- окно карточки ---------- */
@@ -10282,15 +10468,16 @@ function controls() {
     F.q = q.value.trim().toLowerCase(); rail(); render(); q.focus();
   });
   $('sort').addEventListener('change', e => { F.sort = e.target.value; render(); });
-  $('more').addEventListener('click', () => { shown += STEP; render(true); });
+  $('per').addEventListener('change', e => { F.per = +e.target.value; render(); });
 
   $('btnLuck').addEventListener('click', () => {
     if (!VIEW.length) return;
     const r = VIEW[Math.floor(Math.random() * VIEW.length)];
-    // Выпавший трек может лежать за пределами показанного куска —
-    // тогда сначала дорисовываем до него, иначе прокручивать некуда.
+    // Выпавший трек может лежать на другой странице — тогда сначала
+    // переходим туда, иначе прокручивать не к чему.
     const i = VIEW.indexOf(r);
-    if (i >= shown) { shown = Math.ceil((i + 1) / STEP) * STEP; render(true); }
+    const page = Math.floor(i / F.per);
+    if (page !== F.page) { F.page = page; render(true); }
     const el = document.querySelector('.card[data-key="' + CSS.escape(r.key) + '"]');
     if (el) {
       document.querySelectorAll('.card.flash').forEach(c => c.classList.remove('flash'));
@@ -10347,7 +10534,7 @@ function controls() {
    и на то же место прокрутки, откуда ушёл.
    ============================================================ */
 
-const T = { r: null, tab: 'roast', vid: true, fresh: false };
+const T = { r: null, tab: 'roast', fresh: false };
 let BACK_Y = 0;
 
 /* Прокрутку возвращаем сами. Браузер помнит свою и на «назад»
@@ -10390,7 +10577,6 @@ function route() {
 function showTrack(r) {
   if (!T.r) BACK_Y = window.scrollY;   // куда вернуть, когда уйдёшь назад
   T.r = r;
-  T.vid = true;
   $('page').hidden = true;
   $('footNote').hidden = true;
   $('apage').hidden = true;
@@ -10662,21 +10848,7 @@ function tabRoast(box) {
 
   const vid = document.createElement('div');
   vid.className = 'vid';
-  box.append(vid);
-
-  const рисовать = () => {
-    vid.textContent = '';
-    if (!src) {
-      vid.innerHTML = '<div class="stub">' + esc(r.moment
-        ? 'Запись есть, но встроить её не вышло — открой её по кнопке «смотреть разнос».'
-        : r.mine ? 'Это твой трек: его ещё не разносили.'
-        : 'Записи этого эфира пока нет — в таблице на её месте стоит «СКОРО».') + '</div>';
-      return;
-    }
-    if (!T.vid) {
-      vid.innerHTML = '<div class="stub">Видео скрыто.</div>';
-      return;
-    }
+  if (src) {
     const f = document.createElement('iframe');
     f.src = src;
     f.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
@@ -10684,23 +10856,15 @@ function tabRoast(box) {
     f.loading = 'lazy';
     f.title = 'Запись разноса';
     vid.append(f);
-  };
-
-  if (src) {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.textContent = T.vid ? 'скрыть видео' : 'показать видео';
-    b.addEventListener('click', () => {
-      T.vid = !T.vid;
-      b.textContent = T.vid ? 'скрыть видео' : 'показать видео';
-      рисовать();
-    });
-    hd.append(b);
+  } else {
+    vid.innerHTML = '<div class="stub">' + esc(r.moment
+      ? 'Запись есть, но встроить её не вышло — открой её по кнопке «смотреть разнос».'
+      : r.mine ? 'Это твой трек: его ещё не разносили.'
+      : 'Записи этого эфира пока нет — в таблице на её месте стоит «СКОРО».') + '</div>';
   }
-  рисовать();
+  box.append(vid);
 
-  // Приписка нужна только там, где есть что смотреть: под пустой
-  // заглушкой она объясняла бы поведение плеера, которого нет.
+  // Приписка нужна только там, где есть что смотреть.
   if (src) {
     const p = document.createElement('p');
     p.className = 'note';
@@ -10709,6 +10873,104 @@ function tabRoast(box) {
       : 'Тайм-кода у этой строки в таблице нет, поэтому запись открывается с начала.';
     box.append(p);
   }
+
+  box.append(разговор(r));
+}
+
+/* ---------- комментарии ----------
+   Профилей нет, поэтому имя зритель пишет сам — оно запоминается и
+   подставляется в следующий раз. Сервера тоже нет: сказанное ложится
+   в этот же браузер и дальше него не уходит. Врать об этом нельзя,
+   поэтому под формой стоит прямая приписка. */
+const TALK_LS = 'faryma-catalog-talk';
+const WHO_LS  = 'faryma-catalog-who';
+let TALK = (() => { try { return JSON.parse(localStorage.getItem(TALK_LS)) || {}; }
+                    catch { return {}; } })();
+const saveTalk = () => { try { localStorage.setItem(TALK_LS, JSON.stringify(TALK)); } catch {} };
+const ктоЯ = () => { try { return localStorage.getItem(WHO_LS) || ''; } catch { return ''; } };
+
+function разговор(r) {
+  const box = document.createElement('div');
+  box.className = 'talk';
+
+  const форма = document.createElement('form');
+  форма.className = 'talk-form';
+  форма.innerHTML =
+    '<input class="who" maxlength="40" placeholder="Твоё имя или ник" value="' + esc(ктоЯ()) + '">' +
+    '<textarea maxlength="1500" placeholder="Что скажешь про этот разнос?"></textarea>' +
+    '<div class="talk-act"><button type="submit" class="btn">Отправить</button>' +
+      '<span class="note">Профилей пока нет, поэтому имя пишется руками. И сервера нет: ' +
+      'сказанное остаётся в этом браузере и видно только тебе.</span></div>';
+  box.append(форма);
+
+  const лента = document.createElement('div');
+  лента.className = 'talk-list';
+  box.append(лента);
+
+  const заголовок = document.createElement('h3');
+  заголовок.textContent = 'Комментарии';
+  box.insertBefore(заголовок, форма);
+
+  const рисовать = () => {
+    const список = TALK[r.key] || [];
+    заголовок.textContent = 'Комментарии' + (список.length ? ' (' + список.length + ')' : '');
+    лента.textContent = '';
+    if (!список.length) {
+      const p = document.createElement('p');
+      p.className = 'note';
+      p.textContent = 'Пока пусто.';
+      лента.append(p);
+      return;
+    }
+    // Свежие сверху: старое искать никто не идёт.
+    [...список].reverse().forEach(м => {
+      const el = document.createElement('article');
+      el.className = 'msg';
+      el.innerHTML =
+        '<span class="ini">' + esc((м.who || '?').trim()[0].toUpperCase()) + '</span>' +
+        '<div class="bd"><b>' + esc(м.who) + '</b>' +
+          '<time>' + когда(м.when) + '</time>' +
+          '<p></p></div>' +
+        '<button class="del" type="button" aria-label="Удалить">✕</button>';
+      el.querySelector('p').textContent = м.text;
+      el.querySelector('.del').addEventListener('click', () => {
+        TALK[r.key] = (TALK[r.key] || []).filter(x => x !== м);
+        if (!TALK[r.key].length) delete TALK[r.key];
+        saveTalk(); рисовать();
+      });
+      лента.append(el);
+    });
+  };
+
+  форма.addEventListener('submit', e => {
+    e.preventDefault();
+    const who = форма.querySelector('.who').value.trim();
+    const text = форма.querySelector('textarea').value.trim();
+    if (!who) return toast('Подпишись — хотя бы ником');
+    if (!text) return;
+    try { localStorage.setItem(WHO_LS, who); } catch {}
+    (TALK[r.key] = TALK[r.key] || []).push({ who, text, when: Date.now() });
+    saveTalk();
+    форма.querySelector('textarea').value = '';
+    рисовать();
+  });
+
+  рисовать();
+  return box;
+}
+
+/* «сегодня, 14:20» вместо голой даты: комментарии свежие, и полная
+   дата у них выглядит казённо. */
+function когда(ts) {
+  const d = new Date(ts);
+  const два = n => String(n).padStart(2, '0');
+  const час = два(d.getHours()) + ':' + два(d.getMinutes());
+  const сег = new Date(); сег.setHours(0, 0, 0, 0);
+  const день = new Date(d); день.setHours(0, 0, 0, 0);
+  const разница = Math.round((сег - день) / 86400000);
+  return разница === 0 ? 'сегодня, ' + час
+       : разница === 1 ? 'вчера, ' + час
+       : два(d.getDate()) + '.' + два(d.getMonth() + 1) + '.' + d.getFullYear() + ', ' + час;
 }
 
 /* Вся строка таблицы как есть: витрина показывает не все колонки,
@@ -10760,14 +11022,22 @@ function tabInfo(box) {
   box.append(p);
 }
 
-/* Похожие — сначала весь исполнитель, потом соседи по жанру, и среди
+/* Похожие — сначала до трёх треков этого же исполнителя (берём лучшие
+   по оценке, а не первые попавшиеся), дальше соседи по жанру, и среди
    них ближе те, кого композитор оценил примерно так же. */
+const ПОДБОРКА_СВОИХ = 3;
+
 function similar(r, n) {
   const out = [];
   const было = new Set([r.key]);
   const класть = x => { if (!было.has(x.key)) { было.add(x.key); out.push(x); } };
 
-  if (r.artistKey) CAT.forEach(x => { if (x.artistKey === r.artistKey) класть(x); });
+  if (r.artistKey) {
+    CAT.filter(x => x.artistKey === r.artistKey && x.key !== r.key)
+      .sort((a, b) => sc(b) - sc(a))
+      .slice(0, ПОДБОРКА_СВОИХ)
+      .forEach(класть);
+  }
   const свои = out.length;
 
   if (out.length < n && r.genres.length) {
@@ -10790,7 +11060,8 @@ function tabSim(box) {
   p.className = 'note';
   p.style.marginBottom = '12px';
   p.textContent = свои
-    ? 'Сначала ' + свои + ' ' + plural(свои, 'трек', 'трека', 'треков') + ' этого исполнителя, дальше — соседи по жанру с близкой оценкой.'
+    ? 'Сначала ' + свои + ' ' + plural(свои, 'трек', 'трека', 'треков') +
+      ' этого исполнителя — лучшие по оценке, — дальше соседи по жанру с близкой оценкой.'
     : 'Соседи по жанру с близкой оценкой.';
   box.append(p);
 
@@ -10888,34 +11159,87 @@ function drawMine() {
   paint();
 }
 
-/* ---------- быстрые факты ---------- */
+/* ---------- интересные факты ----------
+   «Быстрые факты» пересказывали то, что и так написано в шапке и лежит
+   во вкладке «Инфо»: жанр, страна, эфир, площадка. Здесь вместо этого
+   считаем то, чего с первого взгляда не видно — где трек стоит среди
+   семи тысяч, как этого исполнителя принимали раньше, кто его заказал.
+   Всё считается по той же таблице: ничего придуманного тут нет. */
 function drawFacts() {
   const r = T.r;
   const box = $('tFacts');
-  box.innerHTML = '<h2>Быстрые факты</h2>';
-  const dl = document.createElement('dl');
-  dl.className = 'facts';
-  const пара = (k, v) => {
-    if (!v) return;
-    const dt = document.createElement('dt'); dt.textContent = k;
-    const dd = document.createElement('dd'); dd.innerHTML = v;
-    dl.append(dt, dd);
-  };
-  пара('оценка', r.rate
-    ? '<b style="--tc:' + tColor(r.rate) + '">' + esc(r.rate.label) + '</b>'
-    : '<b>—</b>');
-  пара('эфир', r.streamNum != null ? '№' + r.streamNum : '—');
-  пара('дата', r.date ? дата(r.date) : '—');
-  пара('площадка', r.link
-    ? '<a href="' + esc(r.link.url) + '" target="_blank" rel="noopener noreferrer">' + esc(r.link.platform) + '</a>'
-    : '—');
-  пара('страна', esc(r.country || '—'));
-  пара('жанр', esc(r.genres.join(' / ') || '—'));
-  пара('источник', esc(r.source || r.kind || '—'));
-  пара('заказал', esc(r.user || '—'));
-  box.append(dl);
-}
+  const факты = [];
+  const цвет = 'style="--tc:' + tColor(r.rate) + '"';
+  const деньги = t => { const c = String(t || '').replace(/\D/g, ''); return c ? +c : 0; };
 
+  if (/ПОВТОР/i.test(r.full || ''))
+    факты.push('Этот трек разносили и раньше — в таблице он помечен как <b>повтор</b>.');
+
+  // Место по оценке. Считаем только среди разобранных: у своих заявок
+  // и «СКОРО» оценки нет, и они бы занизили долю.
+  const оценённые = CAT.filter(x => x.rate);
+  if (r.rate && оценённые.length) {
+    const ниже = оценённые.filter(x => x.rate.score < r.rate.score).length;
+    факты.push('Оценка <b class="k" ' + цвет + '>' + esc(r.rate.label) + '</b> — выше, чем у <b>' +
+      Math.round(ниже / оценённые.length * 100) + '%</b> разобранного архива.');
+  }
+
+  const свои = r.artistKey ? CAT.filter(x => x.artistKey === r.artistKey) : [];
+  if (свои.length > 1) {
+    const оц = свои.filter(x => x.rate);
+    const средняя = оц.length ? оц.reduce((s, x) => s + x.rate.score, 0) / оц.length : 0;
+    const лучший = оц.length ? оц.reduce((a, x) => sc(x) > sc(a) ? x : a) : null;
+    факты.push('У исполнителя в архиве <b>' + свои.length + '</b> ' +
+      plural(свои.length, 'разнос', 'разноса', 'разносов') +
+      (оц.length ? ', средняя оценка — <b>' + средняя.toFixed(1) + '</b> из 10' : '') +
+      (лучший === r ? ', и этот — лучший из них.' : '.'));
+  } else if (свои.length === 1 && r.artist) {
+    факты.push('Единственный трек этого исполнителя за весь архив.');
+  }
+
+  if (r.streamNum != null) {
+    const эфир = CAT.filter(x => x.streamNum === r.streamNum);
+    const место = эфир.filter(x => sc(x) > sc(r)).length + 1;
+    факты.push('В эфире <b>№' + r.streamNum + '</b> разнесли <b>' + эфир.length + '</b> ' +
+      plural(эфир.length, 'трек', 'трека', 'треков') +
+      (эфир.length > 1 ? ', этот — <b>' + место + '-й</b> по оценке.' : '.'));
+  }
+
+  if (r.user) {
+    const его = CAT.filter(x => x.user === r.user);
+    факты.push('Заказал <b>' + esc(r.user) + '</b>' + (его.length > 1
+      ? ' — всего в архиве у него <b>' + число(его.length) + '</b> ' +
+        plural(его.length, 'заявка', 'заявки', 'заявок') + '.'
+      : ' — это его единственная заявка.'));
+  }
+
+  if (r.rate && r.genres.length) {
+    const g = r.genres[0];
+    const пул = CAT.filter(x => x.rate && x.genres.includes(g));
+    if (пул.length > 3) {
+      const ср = пул.reduce((s, x) => s + x.rate.score, 0) / пул.length;
+      факты.push('Средняя оценка жанра <b>' + esc(g) + '</b> — <b>' + ср.toFixed(1) +
+        '</b>, этот трек ' + (r.rate.score >= ср ? 'выше' : 'ниже') + ' неё.');
+    }
+  }
+
+  if (r.country) {
+    const n = CAT.filter(x => x.country === r.country).length;
+    if (n <= 3) факты.push('Редкая страна: из <b>' + esc(r.country) + '</b> в архиве ' +
+      (n === 1 ? 'только этот трек.' : 'всего <b>' + n + '</b> ' + plural(n, 'трек', 'трека', 'треков') + '.'));
+  }
+
+  if (деньги(r.sum) && r.streamNum != null) {
+    const эфир = CAT.filter(x => x.streamNum === r.streamNum);
+    const макс = Math.max(...эфир.map(x => деньги(x.sum)));
+    if (эфир.length > 1 && деньги(r.sum) === макс)
+      факты.push('Самая дорогая заявка своего эфира — <b>' + esc(r.sum) + '</b>.');
+  }
+
+  box.innerHTML = '<h2>Интересные факты</h2>' + (факты.length
+    ? '<ul class="ff">' + факты.slice(0, 6).map(f => '<li><i></i><span>' + f + '</span></li>').join('') + '</ul>'
+    : '<p class="note">Про этот трек архив ничего сверх карточки не знает.</p>');
+}
 /* ---------- распределение оценок ---------- */
 /* Зрительских оценок в архиве нет — считать по ним нечего. Зато есть
    все прошлые разносы этого исполнителя: по ним и видно, как
