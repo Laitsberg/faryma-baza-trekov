@@ -10483,13 +10483,28 @@ function toast(msg) {
 function controls() {
   const q = $('q');
   let timer;
-  q.addEventListener('input', () => {
-    clearTimeout(timer);
-    timer = setTimeout(() => { F.q = q.value.trim().toLowerCase(); rail(); render(); }, 160);
-  });
-  $('btnSearch').addEventListener('click', () => {
-    F.q = q.value.trim().toLowerCase(); rail(); render(); q.focus();
-  });
+  /* Читаем поле, а не запоминаем ввод: текст в нём может появиться и
+     без события input. Шапка рисуется раньше, чем разбирается таблица
+     на семь тысяч строк, — на телефоне легко успеть напечатать до
+     того, как эта строчка вообще выполнится. А ещё браузер сам
+     возвращает прежний запрос при обновлении страницы и при
+     восстановлении вкладки. Раньше в обоих случаях в поле был запрос,
+     а в выдаче — весь архив. */
+  const искать = () => { F.q = q.value.trim().toLowerCase(); rail(); render(); };
+  q.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(искать, 160); });
+  $('btnSearch').addEventListener('click', () => { искать(); q.focus(); });
+  /* На change не подписываемся намеренно: он приходит и когда поле
+     теряет фокус, то есть ровно в тот миг, когда по карточке щёлкнули.
+     Сетка перерисовывалась под курсором, и щелчок не доезжал до
+     карточки — трек не открывался. */
+
+  // Что уже лежит в поле к этому моменту — применяем сразу; рельс и
+  // сетку тут не трогаем, их build() рисует следующей строкой.
+  F.q = q.value.trim().toLowerCase();
+  // Восстановить значение браузер может и после нас — сверяемся ещё раз.
+  const сверить = () => { if (q.value.trim().toLowerCase() !== F.q) искать(); };
+  window.addEventListener('load', сверить);
+  window.addEventListener('pageshow', сверить);
   $('sort').addEventListener('change', e => { F.sort = e.target.value; render(); });
   $('per').addEventListener('change', e => { F.per = +e.target.value; render(); });
 
