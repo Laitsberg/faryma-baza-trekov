@@ -108,7 +108,7 @@ input,select{font:inherit;color:inherit}
 /* Пункт живёт в трёх состояниях: не тронут, выбран, исключён. Поэтому
    это кнопка, а не галочка: у галочки состояний два. */
 .opt{display:flex;align-items:center;gap:10px;width:100%;padding:5px 2px;
-  text-align:left;background:none;cursor:pointer;
+  text-align:left;background:none;cursor:pointer;touch-action:manipulation;
   color:var(--dim);font-size:14px;border-radius:4px}
 .opt:hover{color:var(--ink)}
 .opt.zero{opacity:.42}
@@ -9906,20 +9906,37 @@ function group(title, closed) {
   return { g, b };
 }
 
-function opt(body, label, state, count, color, поставить) {
+/* Что делает следующий щелчок по пункту.
+   Исключение вешаем на второй щелчок ПОДРЯД — тот, что пришёл в
+   пределах секунды. Если человек вернулся к пункту позже, он
+   передумал, а не «исключает»: тогда щелчок просто снимает отметку и
+   ходить по кругу через анти-режим не приходится. Снять исключение
+   можно всегда одним щелчком, сколько бы времени ни прошло. */
+const ДВОЙНОЙ = 1000;
+let ЩЕЛЧОК = { id: '', когда: 0 };
+
+function следующее(state, id) {
+  const подряд = ЩЕЛЧОК.id === id && Date.now() - ЩЕЛЧОК.когда < ДВОЙНОЙ;
+  ЩЕЛЧОК = { id, когда: Date.now() };
+  if (state > 0) return подряд ? -1 : 0;
+  if (state < 0) return 0;
+  return 1;
+}
+
+function opt(body, label, state, count, color, поставить, id) {
   const row = document.createElement('button');
   row.type = 'button';
   row.className = 'opt' + (count ? '' : ' zero') +
     (state > 0 ? ' on' : state < 0 ? ' off' : '');
   row.setAttribute('aria-pressed', state > 0 ? 'true' : 'false');
-  row.title = state > 0 ? 'выбрано — ещё щелчок, чтобы исключить'
-            : state < 0 ? 'исключено — ещё щелчок, чтобы снять'
+  row.title = state > 0 ? 'выбрано · щелчок сразу — исключить, позже — снять'
+            : state < 0 ? 'исключено · щелчок снимает'
             : 'щёлкни, чтобы оставить только это';
   row.innerHTML = '<span class="bx"></span><span class="lb">' +
     (color ? '<i style="background:' + color + '"></i>' : '') + esc(label) + '</span>' +
     '<span class="n">' + число(count) + '</span>';
   row.addEventListener('click', () => {
-    поставить(state > 0 ? -1 : state < 0 ? 0 : 1);
+    поставить(следующее(state, id));
     rail(); render();
   });
   body.append(row);
@@ -9942,11 +9959,13 @@ function оценки(b, поле) {
     SCALE_ORDER.forEach(label => {
       const t = TIERS.find(x => label.startsWith(x.key));
       const key = '=' + label;
-      opt(b, label, m.get(key) || 0, cnt(поле, key), TCOLOR[t.key], s => ход(m, key, s));
+      opt(b, label, m.get(key) || 0, cnt(поле, key), TCOLOR[t.key],
+        s => ход(m, key, s), поле + ':' + key);
     });
   } else {
     TIERS.forEach(t =>
-      opt(b, t.key, m.get(t.key) || 0, cnt(поле, t.key), TCOLOR[t.key], s => ход(m, t.key, s)));
+      opt(b, t.key, m.get(t.key) || 0, cnt(поле, t.key), TCOLOR[t.key],
+        s => ход(m, t.key, s), поле + ':' + t.key));
   }
   const кн = document.createElement('button');
   кн.type = 'button'; кн.className = 'more';
@@ -9959,7 +9978,8 @@ function rail() {
   применить();
   const box = $('rail');
   box.textContent = '';
-  подсказка(box, 'Первый щелчок по пункту оставляет только его, второй — исключает из выдачи.');
+  подсказка(box, 'Щелчок оставляет только этот пункт. Сразу второй — исключает его из выдачи, ' +
+    'а если вернуться к нему позже, щелчок просто снимает отметку.');
 
   { const { g, b } = group('оценка композера', false);
     оценки(b, 'tier');
@@ -9973,7 +9993,8 @@ function rail() {
     const draw = full => {
       b.textContent = '';
       частые(r => r.genres, full ? 40 : 6).forEach(v =>
-        opt(b, v, F.genre.get(v) || 0, cnt('genre', v), null, s => ход(F.genre, v, s)));
+        opt(b, v, F.genre.get(v) || 0, cnt('genre', v), null,
+          s => ход(F.genre, v, s), 'genre:' + v));
       const m = document.createElement('button');
       m.type = 'button'; m.className = 'more';
       m.textContent = full ? 'свернуть' : 'больше';
@@ -9987,7 +10008,7 @@ function rail() {
   // Года релиза в таблице нет — есть только год эфира, когда разносили.
   { const { g, b } = group('год эфира', false);
     CAT_YEARS.forEach(y => opt(b, String(y), F.year.get(y) || 0, cnt('year', y), null,
-      s => ход(F.year, y, s)));
+      s => ход(F.year, y, s), 'year:' + y));
     box.append(g); }
 
   // Порог в пять треков: страны-одиночки раздували список до сотни
@@ -9999,14 +10020,14 @@ function rail() {
     if (list.length) {
       const { g, b } = group('страна', false);
       list.forEach(c => opt(b, c, F.country.get(c) || 0, cnt('country', c), null,
-        s => ход(F.country, c, s)));
+        s => ход(F.country, c, s), 'country:' + c));
       подсказка(b, 'В списке страны, у которых в архиве хотя бы пять треков.');
       box.append(g);
     } }
 
   { const { g, b } = group('разносы', false);
     const п = (key, label) => opt(b, label, F.has.get(key) || 0, cnt('has', key), null,
-      s => ход(F.has, key, s));
+      s => ход(F.has, key, s), 'has:' + key);
     п('roast', 'есть запись разноса');
     п('link',  'есть ссылка на трек');
     п('fav',   'в избранном');
@@ -10016,17 +10037,19 @@ function rail() {
   { const { g, b } = group('происхождение', false);
     частые(r => [r.origin], 10).forEach(v =>
       opt(b, v.toLowerCase(), F.origin.get(v) || 0, cnt('origin', v), null,
-        s => ход(F.origin, v, s)));
+        s => ход(F.origin, v, s), 'origin:' + v));
     box.append(g); }
 
   { const { g, b } = group('тип трека', true);
     частые(r => [r.kind], 10).forEach(v =>
-      opt(b, v, F.kind.get(v) || 0, cnt('kind', v), null, s => ход(F.kind, v, s)));
+      opt(b, v, F.kind.get(v) || 0, cnt('kind', v), null,
+        s => ход(F.kind, v, s), 'kind:' + v));
     box.append(g); }
 
   { const { g, b } = group('тэги', false);
     частые(r => r.tags, 14).forEach(v =>
-      opt(b, v, F.tag.get(v) || 0, cnt('tag', v), null, s => ход(F.tag, v, s)));
+      opt(b, v, F.tag.get(v) || 0, cnt('tag', v), null,
+        s => ход(F.tag, v, s), 'tag:' + v));
     box.append(g); }
 }
 
