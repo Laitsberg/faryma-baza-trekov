@@ -129,8 +129,12 @@ input,select{font:inherit;color:inherit}
 .n{margin-left:auto;font-family:var(--m);font-size:10px;color:var(--faint);
   font-variant-numeric:tabular-nums}
 
-.hint{margin:0;font-size:12px;line-height:1.45;color:var(--faint)}
-.fb .hint{margin:7px 0 2px}
+.rail-hd{display:flex;align-items:center;gap:7px;padding:0 2px 2px;
+  font:600 11px var(--m);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.q{width:15px;height:15px;flex:none;display:grid;place-items:center;border-radius:50%;
+  background:var(--card-2);font:700 10px var(--b);color:var(--dim);cursor:help}
+.q:hover{background:var(--brand);color:#151517}
+.fh .q{margin-left:auto}
 
 .more{align-self:flex-start;margin-top:3px;padding:3px 2px;
   color:var(--dim);font:italic 13.5px var(--b);display:flex;align-items:center;gap:8px}
@@ -412,6 +416,9 @@ input,select{font:inherit;color:inherit}
 .tg{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;
   padding:3px 10px;font-size:12px;color:var(--dim);white-space:nowrap}
 .tg.brand{border-color:transparent;background:var(--brand);color:#151517;font-weight:600}
+button.tg{cursor:pointer;font-family:var(--b)}
+button.tg:hover{border-color:var(--brand);color:var(--ink)}
+button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 .hero-rt{display:flex;flex-wrap:wrap;align-items:center;gap:7px 16px;
   font-size:13px;color:var(--dim)}
 .hero-rt b{font-family:var(--m);font-size:13px;color:var(--tc,var(--faint))}
@@ -461,13 +468,6 @@ input,select{font:inherit;color:inherit}
 .vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .vid .stub{position:absolute;inset:0;display:grid;place-items:center;padding:22px;
   text-align:center;color:var(--faint);font-size:13px;line-height:1.5}
-.vid-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.vid-hd .tc{font-family:var(--m);font-size:12.5px;color:var(--dim)}
-.vid-hd a.tc{text-decoration:none;border-bottom:1px dashed var(--line)}
-.vid-hd a.tc:hover{color:var(--ink);border-bottom-color:var(--brand)}
-.vid-hd button{margin-left:auto;background:var(--card-2);border-radius:5px;
-  padding:8px 13px;font-size:12.5px;color:var(--dim);min-height:36px}
-.vid-hd button:hover{background:#44444C;color:var(--ink)}
 
 .facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 14px;
   margin:0;font-size:13px}
@@ -10155,14 +10155,19 @@ function частые(pick, limit) {
    ровно в тот момент, когда в ней что-то отмечали. */
 const GOPEN = {};
 
-function group(title, closed) {
+function group(title, closed, справка) {
   if (GOPEN[title] !== undefined) closed = !GOPEN[title];
   const g = document.createElement('section');
   g.className = 'fg' + (closed ? ' closed' : '');
   const h = document.createElement('button');
   h.type = 'button'; h.className = 'fh';
   h.setAttribute('aria-expanded', String(!closed));
-  h.innerHTML = '<span class="car">' + (closed ? '▼' : '▲') + '</span><span>' + esc(title) + '</span>';
+  // Пояснения живут в вопросике у заголовка, а не строкой под списком:
+  // текстом они забивали рельс, а нужны раз в жизни.
+  h.innerHTML = '<span class="car">' + (closed ? '▼' : '▲') + '</span><span>' + esc(title) + '</span>' +
+    (справка ? '<span class="q" title="' + esc(справка) + '" role="note" tabindex="0">?</span>' : '');
+  const q = h.querySelector('.q');
+  if (q) q.addEventListener('click', e => e.stopPropagation());
   const b = document.createElement('div');
   b.className = 'fb';
   h.addEventListener('click', () => {
@@ -10243,58 +10248,76 @@ function оценки(b, поле) {
   b.append(кн);
 }
 
+/* Какие списки раскрыты кнопкой «больше». Рельс пересобирается на
+   каждый щелчок, поэтому раскрытое состояние надо помнить снаружи —
+   иначе список жанров схлопывался обратно, стоило отметить пункт. */
+const ПОЛНО = {};
+const ВИДНО = 6;
+
+function список(b, ключ, значения, рисовать) {
+  const полно = !!ПОЛНО[ключ];
+  (полно ? значения : значения.slice(0, ВИДНО)).forEach(рисовать);
+  if (значения.length > ВИДНО) {
+    const m = document.createElement('button');
+    m.type = 'button'; m.className = 'more';
+    m.textContent = полно ? 'свернуть' : 'больше';
+    m.addEventListener('click', () => { ПОЛНО[ключ] = !полно; rail(); });
+    b.append(m);
+  }
+}
+
 function rail() {
   применить();
   const box = $('rail');
   box.textContent = '';
-  подсказка(box, 'Щелчок оставляет только этот пункт. Сразу второй — исключает его из выдачи, ' +
-    'а если вернуться к нему позже, щелчок просто снимает отметку.');
 
-  { const { g, b } = group('оценка композера', false);
+  const шапка = document.createElement('div');
+  шапка.className = 'rail-hd';
+  шапка.innerHTML = 'отбор<span class="q" role="note" tabindex="0" title="' +
+    esc('Щелчок оставляет только этот пункт. Сразу второй — исключает его из выдачи, ' +
+        'а если вернуться к пункту позже, щелчок просто снимает отметку. ' +
+        'Цифра справа — сколько треков за пунктом с учётом остального отбора.') + '">?</span>';
+  box.append(шапка);
+
+  { const { g, b } = group('оценка композера', false,
+      'Оценка композитора из таблицы разносов. Строчкой ниже список разворачивается ' +
+      'в полную шкалу с плюсами и минусами — тогда «атлична++» можно выбрать отдельно от «атлична».');
     оценки(b, 'tier');
     box.append(g); }
 
-  { const { g, b } = group('моя оценка', true);
+  { const { g, b } = group('моя оценка', true,
+      'Оценки, которые ты сам поставил трекам. Они живут в этом браузере и видны только тебе.');
     оценки(b, 'myTier');
     box.append(g); }
 
-  { const { g, b } = group('жанр', false);
-    const draw = full => {
-      b.textContent = '';
-      частые(r => r.genres, full ? 40 : 6).forEach(v =>
-        opt(b, v, F.genre.get(v) || 0, cnt('genre', v), null,
-          s => ход(F.genre, v, s), 'genre:' + v));
-      const m = document.createElement('button');
-      m.type = 'button'; m.className = 'more';
-      m.textContent = full ? 'свернуть' : 'больше';
-      m.addEventListener('click', () => draw(!full));
-      b.append(m);
-      подсказка(b, 'Исключение не трогает треки с несколькими жанрами: «метал / фолк» без фолка — всё ещё метал.');
-    };
-    draw(false);
+  { const { g, b } = group('жанр', false,
+      'Жанры проставлены в таблице разносов, у трека их бывает несколько. ' +
+      'Исключение не трогает многожанровые: «метал / фолк» без фолка — всё ещё метал.');
+    const все = частые(r => r.genres, 40);
+    список(b, 'genre', все, v =>
+      opt(b, v, F.genre.get(v) || 0, cnt('genre', v), null,
+        s => ход(F.genre, v, s), 'genre:' + v));
     box.append(g); }
 
-  // Года релиза в таблице нет — есть только год эфира, когда разносили.
-  { const { g, b } = group('год эфира', false);
-    CAT_YEARS.forEach(y => opt(b, String(y), F.year.get(y) || 0, cnt('year', y), null,
-      s => ход(F.year, y, s), 'year:' + y));
-    box.append(g); }
-
-  // Порог в пять треков: страны-одиночки раздували список до сотни
-  // строк, а толку в отборе от «Люксембург · 1» никакого.
+  // Страну ищет справочник по имени исполнителя; у кого в архиве меньше
+  // пяти треков, того в списке нет — от «Люксембург · 1» в отборе толку нет.
   { const счёт = new Map();
     CAT.forEach(r => { if (r.country) счёт.set(r.country, (счёт.get(r.country) || 0) + 1); });
     const list = [...счёт.entries()].filter(([, n]) => n >= 5)
       .sort((a, b) => b[1] - a[1]).map(([c]) => c);
     if (list.length) {
-      const { g, b } = group('страна', false);
-      list.forEach(c => opt(b, c, F.country.get(c) || 0, cnt('country', c), null,
-        s => ход(F.country, c, s), 'country:' + c));
-      подсказка(b, 'В списке страны, у которых в архиве хотя бы пять треков.');
+      const { g, b } = group('страна', false,
+        'Страна исполнителя из справочника, а не страна релиза. ' +
+        'В списке те, у кого в архиве хотя бы пять треков.');
+      список(b, 'country', list, c =>
+        opt(b, c, F.country.get(c) || 0, cnt('country', c), null,
+          s => ход(F.country, c, s), 'country:' + c));
       box.append(g);
     } }
 
-  { const { g, b } = group('разносы', false);
+  { const { g, b } = group('разносы', false,
+      'Что есть у трека, кроме самой оценки: запись эфира, ссылка на трек, ' +
+      'твоё сердечко или твоя оценка.');
     const п = (key, label) => opt(b, label, F.has.get(key) || 0, cnt('has', key), null,
       s => ход(F.has, key, s), 'has:' + key);
     п('roast', 'есть запись разноса');
@@ -10303,20 +10326,33 @@ function rail() {
     п('mine',  'мной оценённые');
     box.append(g); }
 
-  { const { g, b } = group('происхождение', false);
-    частые(r => [r.origin], 10).forEach(v =>
+  { const { g, b } = group('происхождение', false,
+      'Откуда трек пришёл на стрим: аниме, игра и прочее — колонка «Откуда» в таблице.');
+    const все = частые(r => [r.origin], 20);
+    список(b, 'origin', все, v =>
       opt(b, v.toLowerCase(), F.origin.get(v) || 0, cnt('origin', v), null,
         s => ход(F.origin, v, s), 'origin:' + v));
     box.append(g); }
 
-  { const { g, b } = group('тип трека', true);
-    частые(r => [r.kind], 10).forEach(v =>
+  { const { g, b } = group('тип трека', true,
+      'Что это за запись: опенинг, эндинг, саундтрек, обычный трек.');
+    const все = частые(r => [r.kind], 20);
+    список(b, 'kind', все, v =>
       opt(b, v, F.kind.get(v) || 0, cnt('kind', v), null,
         s => ход(F.kind, v, s), 'kind:' + v));
     box.append(g); }
 
-  { const { g, b } = group('тэги', false);
-    частые(r => r.tags, 14).forEach(v =>
+  // Года релиза в таблице нет — есть только год эфира, когда разносили.
+  { const { g, b } = group('год эфира', false,
+      'Год стрима, на котором трек разносили. Года выхода самого трека в таблице нет.');
+    CAT_YEARS.forEach(y => opt(b, String(y), F.year.get(y) || 0, cnt('year', y), null,
+      s => ход(F.year, y, s), 'year:' + y));
+    box.append(g); }
+
+  { const { g, b } = group('тэги', false,
+      'Пометки из таблицы: мем, повтор, каверы и прочее, что композитор отметил отдельно.');
+    const все = частые(r => r.tags, 30);
+    список(b, 'tag', все, v =>
       opt(b, v, F.tag.get(v) || 0, cnt('tag', v), null,
         s => ход(F.tag, v, s), 'tag:' + v));
     box.append(g); }
@@ -10842,7 +10878,7 @@ function controls() {
    и на то же место прокрутки, откуда ушёл.
    ============================================================ */
 
-const T = { r: null, tab: 'roast', fresh: false };
+const T = { r: null, tab: 'roast', fresh: false, панели: {}, панелиКлюч: '' };
 let BACK_Y = 0;
 
 /* Прокрутку возвращаем сами. Браузер помнит свою и на «назад»
@@ -10984,9 +11020,12 @@ function поИсполнителю() {
     $('q').value = r.artist;
   });
 }
+/* Все столбцы отбора чистятся одинаково. Раньше здесь страна и год
+   обнулялись как строка и число — такими они были до трёх состояний, —
+   и после «показать все треки исполнителя» отбор падал на первом же
+   пересчёте: рельс и сетка переставали перерисовываться совсем. */
 function reset_soft() {
-  ['tier', 'genre', 'origin', 'tag', 'kind', 'has', 'myTier'].forEach(k => F[k].clear());
-  F.country = ''; F.year = null;
+  ПОЛЯ.forEach(k => F[k].clear());
 }
 
 function drawHero() {
@@ -10996,12 +11035,20 @@ function drawHero() {
   const my = MY[r.key];
   const myT = my && (TIERS.find(x => x.key === my.t) || null);
 
+  // Жанр, страна и прочее ведут в каталог с этим отбором: раньше по ним
+  // было не щёлкнуть, хотя выглядят они ровно как фильтр.
   const tgs = [];
-  if (r.date) tgs.push('<span class="tg">эфир №' + r.streamNum + ' · ' + дата(r.date) + '</span>');
-  if (r.country) tgs.push('<span class="tg">' + esc(r.country) + '</span>');
-  r.genres.forEach(g => tgs.push('<span class="tg">' + esc(g) + '</span>'));
-  if (r.origin) tgs.push('<span class="tg">' + esc(r.origin.toLowerCase()) + '</span>');
-  r.tags.forEach(t => tgs.push('<span class="tg brand">' + esc(t) + '</span>'));
+  const идти = (поле, знач, текст, класс) =>
+    '<button type="button" class="tg go ' + (класс || '') + '" data-поле="' + поле +
+    '" data-знач="' + esc(String(знач)) + '" title="Показать всё с этим в каталоге">' +
+    esc(текст) + '</button>';
+
+  if (r.date) tgs.push(идти('year', r.date.getFullYear(),
+    'эфир №' + r.streamNum + ' · ' + дата(r.date)));
+  if (r.country) tgs.push(идти('country', r.country, r.country));
+  r.genres.forEach(g => tgs.push(идти('genre', g, g)));
+  if (r.origin) tgs.push(идти('origin', r.origin, r.origin.toLowerCase()));
+  r.tags.forEach(t => tgs.push(идти('tag', t, t, 'brand')));
   if (r.mine) tgs.push('<span class="tg brand">предложено тобой</span>');
   if (MYCOV[r.key]) tgs.push('<span class="tg brand">твоя обложка · ждёт проверки</span>');
 
@@ -11075,6 +11122,16 @@ function drawHero() {
     toast(FAV.has(r.key) ? 'Добавлено в избранное' : 'Убрано из избранного');
   });
 
+  box.querySelectorAll('.tg.go').forEach(b => b.addEventListener('click', () => {
+    const поле = b.dataset['поле'];
+    const знач = поле === 'year' ? +b.dataset['знач'] : b.dataset['знач'];
+    toCatalog(() => {
+      reset_soft();
+      F.q = ''; $('q').value = '';
+      ход(F[поле], знач, 1);
+    });
+  }));
+
   $('tCover').classList.toggle('sent', !!MYCOV[r.key]);
   $('tCover').addEventListener('click', () => openCover(r));
 
@@ -11125,12 +11182,24 @@ function drawTabs() {
   });
 }
 
+/* Вкладки рисуются по одному разу на трек и дальше просто прячутся.
+   Раньше уход на «Инфо» и обратно пересоздавал плеер ВК, и запись
+   начиналась сначала. Обновление таблицы, пока трек открыт, панели
+   тоже не трогает — по той же причине. */
 function drawTab() {
-  const box = $('tTab');
-  box.textContent = '';
-  if (T.tab === 'roast') return tabRoast(box);
-  if (T.tab === 'info')  return tabInfo(box);
-  return tabSim(box);
+  const кор = $('tTab');
+  if (T.панелиКлюч !== T.r.key) {
+    T.панелиКлюч = T.r.key;
+    T.панели = {};
+    кор.textContent = '';
+  }
+  Object.entries(T.панели).forEach(([id, el]) => { el.hidden = id !== T.tab; });
+  if (T.панели[T.tab]) return;
+
+  const el = document.createElement('div');
+  T.панели[T.tab] = el;
+  кор.append(el);
+  (T.tab === 'roast' ? tabRoast : T.tab === 'info' ? tabInfo : tabSim)(el);
 }
 
 /* Встроенный плеер VK: записи эфиров лежат на vkvideo.ru, а он умеет
@@ -11147,21 +11216,9 @@ function tabRoast(box) {
   const r = T.r;
   const src = vkEmbed(r.vod, r.sec);
 
-  const hd = document.createElement('div');
-  hd.className = 'vid-hd';
-  const подпись =
-    (r.streamNum != null ? 'стрим №' + r.streamNum : 'эфир не записан') +
-    (r.date ? ' · ' + дата(r.date) : '') +
-    (r.sec != null ? ' · тайм-код ' + время(r.sec) : '');
-  // Строка сама ведёт на запись: отдельной кнопки под это больше нет,
-  // а открыть эфир на нужной минуте иногда всё равно нужно — например,
-  // когда встроенный плеер не завёлся.
-  hd.innerHTML = r.moment
-    ? '<a class="tc" href="' + esc(r.moment) + '" target="_blank" rel="noopener noreferrer"' +
-      ' title="Открыть запись на этой минуте">' + подпись + '</a>'
-    : '<span class="tc">' + подпись + '</span>';
-  box.append(hd);
-
+  // Строки «стрим №… · дата · тайм-код» здесь нет намеренно: всё это
+  // написано в шапке трека и во вкладке «Инфо», а над плеером только
+  // загромождало. Ссылка на запись осталась там же, в «Инфо».
   const vid = document.createElement('div');
   vid.className = 'vid';
   if (src) {
@@ -11301,7 +11358,6 @@ function tabInfo(box) {
     const dd = document.createElement('dd'); dd.innerHTML = v;
     dl.append(dt, dd);
   };
-  пара('строка в таблице', esc(r.full || ''));
   пара('исполнитель', esc(r.artist || ''));
   пара('название', esc(r.title || ''));
   пара('источник', esc(r.source || ''));
