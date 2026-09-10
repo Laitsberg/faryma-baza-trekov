@@ -428,6 +428,16 @@ input,select{font:inherit;color:inherit}
 .act svg{width:15px;height:15px;flex:none}
 .act.on{color:var(--like)}
 .act.on svg{fill:currentColor}
+/* У поданной заявки на обложку кнопка подсвечена: подписи, которая
+   раньше говорила «заменить обложку», больше нет. */
+.act.ic.sent{color:var(--brand-hi)}
+/* Общеупотребимое — без подписей: сердечко, ссылку и «поделиться»
+   узнают по значку, а шесть подписей занимали на телефоне три ряда.
+   Слова остались у главного действия и у заявки на обложку: её по
+   картинке не угадать. */
+.act.ic{width:38px;padding:0;justify-content:center}
+.act.ic svg{width:17px;height:17px}
+.act-sep{width:1px;height:22px;align-self:center;margin:0 4px;background:var(--line)}
 
 /* ---------- вкладки и панели ---------- */
 .tabs{display:flex;gap:8px;flex-wrap:wrap}
@@ -11012,29 +11022,28 @@ function drawHero() {
             esc(r.link ? r.link.url : '#') + '">' +
             '<svg viewBox="0 0 12 12" fill="currentColor"><path d="M2 1l9 5-9 5z"/></svg>' +
             (r.link ? 'слушать в ' + esc(r.link.platform) : 'ссылки в таблице нет') + '</a>' +
-          '<a class="act' + (r.moment ? '' : ' off') + '" target="_blank" rel="noopener noreferrer" href="' +
-            esc(r.moment || '#') + '">' +
+          '<span class="act-sep"></span>' +
+          '<a class="act ic' + (r.moment ? '' : ' off') + '" target="_blank" rel="noopener noreferrer" href="' +
+            esc(r.moment || '#') + '" title="' + (r.moment ? 'Смотреть разнос' : 'Записи эфира нет') +
+            '" aria-label="' + (r.moment ? 'Смотреть разнос' : 'Записи эфира нет') + '">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
-            '<path d="M4.5 19.5L15 6"/><path d="M17 3l4 3-3 4-4-3z"/><path d="M4 4l5 5"/><path d="M9 4l-5 5"/></svg>' +
-            (r.moment ? 'смотреть разнос' : 'записи эфира нет') + '</a>' +
-          '<button class="act" id="tFav" aria-pressed="false">' +
+            '<path d="M4.5 19.5L15 6"/><path d="M17 3l4 3-3 4-4-3z"/><path d="M4 4l5 5"/><path d="M9 4l-5 5"/></svg></a>' +
+          '<button class="act ic" id="tFav" aria-pressed="false">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
-            '<path d="M12 20s-7-4.6-7-9.3A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.7C19 15.4 12 20 12 20z"/></svg>' +
-            '<span>в избранное</span></button>' +
-          '<button class="act" id="tCover">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-            '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/>' +
-            '<path d="M4 17l5-5 4 4 3-2 4 4"/></svg>' +
-            (MYCOV[r.key] ? 'заменить обложку' : 'предложить обложку') + '</button>' +
-          '<button class="act" id="tCopy">' +
+            '<path d="M12 20s-7-4.6-7-9.3A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.7C19 15.4 12 20 12 20z"/></svg></button>' +
+          '<button class="act ic" id="tCopy" title="Копировать ссылку" aria-label="Копировать ссылку">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
             '<path d="M10 13a4 4 0 0 0 5.7.4l3-3A4 4 0 0 0 13 4.7l-1.7 1.7"/>' +
-            '<path d="M14 11a4 4 0 0 0-5.7-.4l-3 3A4 4 0 0 0 11 19.3l1.7-1.7"/></svg>' +
-            'копировать ссылку</button>' +
-          '<button class="act" id="tShare">' +
+            '<path d="M14 11a4 4 0 0 0-5.7-.4l-3 3A4 4 0 0 0 11 19.3l1.7-1.7"/></svg></button>' +
+          '<button class="act ic" id="tShare" title="Поделиться" aria-label="Поделиться">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-            '<path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M5 14v5h14v-5"/></svg>' +
-            'поделиться</button>' +
+            '<path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M5 14v5h14v-5"/></svg></button>' +
+          '<button class="act ic" id="tCover" title="' +
+            (MYCOV[r.key] ? 'Заменить обложку' : 'Предложить обложку') + '" aria-label="' +
+            (MYCOV[r.key] ? 'Заменить обложку' : 'Предложить обложку') + '">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+            '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/>' +
+            '<path d="M4 17l5-5 4 4 3-2 4 4"/></svg></button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -11055,7 +11064,9 @@ function drawHero() {
     const on = FAV.has(r.key);
     fav.classList.toggle('on', on);
     fav.setAttribute('aria-pressed', String(on));
-    fav.querySelector('span').textContent = on ? 'в избранном' : 'в избранное';
+    // Подписи у кнопки больше нет — состояние живёт в подсказке и цвете.
+    fav.title = on ? 'В избранном' : 'В избранное';
+    fav.setAttribute('aria-label', fav.title);
   };
   paintFav();
   fav.addEventListener('click', () => {
@@ -11064,6 +11075,7 @@ function drawHero() {
     toast(FAV.has(r.key) ? 'Добавлено в избранное' : 'Убрано из избранного');
   });
 
+  $('tCover').classList.toggle('sent', !!MYCOV[r.key]);
   $('tCover').addEventListener('click', () => openCover(r));
 
   // Ссылка на трек, а не на эту страницу: страницу и так видно в адресе,
