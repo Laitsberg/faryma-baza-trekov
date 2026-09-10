@@ -9769,9 +9769,54 @@ async function подтянуть() {
 
 const fail = msg => { $('boot').innerHTML = '<h3>Не открылось</h3><p>' + esc(msg) + '</p>'; };
 
+/* Ключ трека получил номер в эфире — без него два трека с одинаковым
+   названием в одном эфире делили сердечко и оценку на двоих. Всё, что
+   зрители успели отметить до этого, лежит под прежними ключами:
+   переносим один раз, чтобы у людей ничего не пропало. */
+function переехать() {
+  const карта = new Map();
+  CAT.forEach(r => {
+    if (!r.num) return;
+    const старый = (r.streamNum ?? '?') + '|' + r.full;
+    if (!карта.has(старый)) карта.set(старый, r.key);
+  });
+
+  let тронули = false;
+  const перенести = о => {
+    const новое = {};
+    Object.keys(о).forEach(k => {
+      const н = карта.get(k);
+      if (!н || о[н]) return;          // некуда переносить или там уже своё
+      новое[н] = о[k]; delete о[k]; тронули = true;
+    });
+    Object.assign(о, новое);
+  };
+  перенести(MY); перенести(MYCOV); перенести(TALK);
+  [...FAV].forEach(k => {
+    const н = карта.get(k);
+    if (н) { FAV.delete(k); FAV.add(н); тронули = true; }
+  });
+  if (тронули) { save(); saveTalk(); }
+}
+
 /* ---------- строки ---------- */
+/* Пара строк архива написана без разделителя: «Собственная песня Alex
+   Newton #12», «Импровизация создания музыки от Faryma.composer #1».
+   Общий разбор оставляет их без исполнителя, и карточка выходит
+   безымянной. Вытаскиваем автора здесь, а не в parse.js: тот файл —
+   копия разбора статистики, расходиться им нельзя. Правило узкое и
+   срабатывает только там, где исполнителя не нашлось вовсе. */
+function свояПесня(w) {
+  if (w.artist || !w.full) return w;
+  let m = w.full.match(/^Собственная песня\s+(.+?)\s*(#\d+)?$/i);
+  if (m) return { ...w, artist: m[1], title: 'Собственная песня' + (m[2] ? ' ' + m[2] : '') };
+  m = w.full.match(/^(.+?)\s+от\s+(.+?)\s*(#\d+)?$/i);
+  if (m) return { ...w, artist: m[2], title: m[1] + (m[3] ? ' ' + m[3] : '') };
+  return w;
+}
+
 function build(raw, снова) {
-  const parsed = raw.map(r => ({ r, w: parseWhat(r['Что']) }));
+  const parsed = raw.map(r => ({ r, w: свояПесня(parseWhat(r['Что'])) }));
 
   // Написание вселенных сводим к самому частому — как на статистике,
   // иначе «ULTRAKILL» и «Ultrakill» станут двумя пунктами фильтра.
@@ -9800,7 +9845,11 @@ function build(raw, снова) {
       rate, link,
       ytId: link ? youtubeId(link.url) : '',
       spId: link ? spotifyId(link.url) : '',
-      artist: w.artist, title: w.title, full: w.full,
+      artist: w.artist, title: w.title || 'без названия', full: w.full,
+      // Номер трека в эфире. Нужен в ключе: в архиве попадаются два
+      // трека с одинаковым названием в одном эфире, и без номера ключ
+      // у них совпадал бы — вместе с ним сердечко и своя оценка.
+      num: (String(r['Что'] || '').match(/^\s*([\d.]+)\)/) || ['', ''])[1],
       artistKey: w.artist ? nameKey(w.artist) : '',
       parts: w.artist ? participants(w.artist, solo).map(nameKey) : [],
       user: (r['Кто'] || '').trim(),
@@ -9829,7 +9878,9 @@ function build(raw, снова) {
 
   // Ключ своей оценки — сам трек, а не номер строки: новый эфир
   // сдвигает весь архив вниз, и по индексу оценки разъехались бы.
-  CAT.forEach(r => { r.key = (r.streamNum ?? '?') + '|' + r.full; });
+  CAT.forEach(r => {
+    r.key = (r.streamNum ?? '?') + '|' + (r.num ? r.num + '|' : '') + r.full;
+  });
 
   // Добавленное посетителем кладём наверх — как самое свежее.
   MINE.slice().reverse().forEach(a => CAT.unshift(mineRow(a)));
@@ -9838,6 +9889,7 @@ function build(raw, снова) {
     .sort((a, b) => b - a);
 
   applyCountries();
+  if (!снова) переехать();
   приписка();
 
   // На перестройке пульт не трогаем — обработчики уже висят, второй
@@ -9869,7 +9921,7 @@ function mineRow(a) {
     spId: link ? spotifyId(link.url) : '',
     artist: a.artist, title: a.title, full: a.artist + ' — ' + a.title,
     artistKey: '', parts: [], user: '', origin: '', source: '', kind: '',
-    genres: [], tags: [], country: null, streamNum: null, date: null, moment: '',
+    genres: [], tags: [], country: null, streamNum: null, date: null, moment: '', num: '',
     vod: '', sec: null, way: '', sum: '', feat: '',
     mine: true, key: 'my|' + a.id,
     search: (a.artist + ' ' + a.title).toLowerCase(),
@@ -10709,7 +10761,10 @@ function route() {
   if (m) {
     let key = m[1];
     try { key = decodeURIComponent(key); } catch {}
-    r = CAT.find(x => x.key === key) || null;
+    // Ссылку могли отправить до того, как в ключ добавили номер трека
+    // в эфире, — тогда ищем по прежнему виду ключа.
+    r = CAT.find(x => x.key === key) ||
+        CAT.find(x => (x.streamNum ?? '?') + '|' + x.full === key) || null;
     if (!r) toast('Такого трека в базе нет');
   }
   r ? showTrack(r) : showCatalog();
