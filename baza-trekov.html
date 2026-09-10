@@ -269,6 +269,9 @@ input,select{font:inherit;color:inherit}
 .btn.ghost:hover{background:#44444C}
 /* display у .btn свой, поэтому hidden сам по себе кнопку не прячет */
 .btn[hidden]{display:none}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:disabled:hover{background:var(--brand)}
+.btn.ghost:disabled:hover{background:var(--card-2)}
 
 .more-wrap{display:flex;flex-direction:column;align-items:center;gap:9px;padding:26px 0 4px}
 .pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px}
@@ -438,7 +441,7 @@ input,select{font:inherit;color:inherit}
   gap:9px;flex-wrap:wrap}
 .pan h2 small{font:400 12px var(--b);color:var(--faint)}
 .pan h3{font:600 13px var(--b);color:var(--dim);margin:18px 0 9px}
-.pan .note{margin:0;color:var(--faint);font-size:12.5px}
+.pan .note{margin:0;color:var(--faint);font-size:12.5px;max-width:82ch}
 .pan .lnk{margin-top:12px;font-size:12.5px;color:var(--brand-hi);
   text-decoration:underline;text-underline-offset:3px}
 .pan .lnk:hover{color:var(--brand)}
@@ -520,7 +523,20 @@ input,select{font:inherit;color:inherit}
   font-family:var(--m);font-size:12px;line-height:1.45;color:var(--ink);resize:vertical}
 .adm-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
-/* ---------- интересные факты ---------- */
+/* ---------- интересные факты ----------
+   Написанное про сам трек и счёт по архиву лежат одним списком: сверху
+   настоящие факты, снизу цифры. Так у трека, про который ничего не
+   нашлось, панель всё равно не пустует. */
+.fx-wait{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;
+  background:var(--brand);color:#151517;font:600 10.5px var(--b);vertical-align:1px;
+  white-space:nowrap}
+.ff li.real span{color:var(--ink)}
+.ff-act{display:grid;gap:8px;margin-top:14px}
+
+/* счётчик символов в окне заявки */
+.cnt{margin-left:auto;font-family:var(--m);font-size:11.5px;color:var(--faint)}
+.cnt.over{color:var(--like)}
+
 .ff{margin:0;padding:0;list-style:none;display:grid;gap:11px}
 .ff li{display:flex;gap:10px;font-size:13.5px;line-height:1.45;color:var(--dim)}
 .ff li i{flex:none;width:6px;height:6px;margin-top:7px;border-radius:50%;background:var(--brand)}
@@ -752,6 +768,34 @@ input,select{font:inherit;color:inherit}
  </div>
 </div>
 
+<!-- Заявка на факт. Ограничение по длине одно для всех — и для тех,
+     кто пишет факты сам, и для того, что приходит со стороны: три
+     коротких абзаца читаются, три полотна нет. -->
+<div class="modal" id="mFact" hidden>
+ <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="factTitle">
+  <button class="mx" data-close aria-label="Закрыть">✕</button>
+  <div class="mhd">
+   <div class="k" style="color:var(--brand)">факт</div>
+   <h2 id="factTitle">Рассказать про трек</h2>
+   <p id="factFor">—</p>
+  </div>
+  <form id="factForm">
+   <div class="field">
+    <label for="factText">Что стоит знать про этот трек</label>
+    <textarea id="factText" class="box" maxlength="400" required
+      placeholder="История песни, кто написал текст, чем эта запись отличается от других…"></textarea>
+   </div>
+   <p class="cov-note">Один факт — до 400 знаков, это три-четыре строки. Пиши про сам трек, а не про то, как его приняли на стриме: цифры архива страница считает сама. Заявка сохраняется в этом браузере, у остальных факт появится после проверки.</p>
+   <div class="mact">
+    <button type="button" class="btn ghost" id="factDrop" hidden>Убрать заявку</button>
+    <button type="button" class="btn ghost" id="factCopy">Скопировать заявку</button>
+    <span class="cnt" id="factCnt">0 / 400</span>
+    <button type="submit" class="btn">Отправить</button>
+   </div>
+  </form>
+ </div>
+</div>
+
 <!-- Панель администратора: собирает присланные заявки в готовый блок
      COVERS_INLINE, который вставляют в файл при пересборке. -->
 <div class="tpage" id="apage" hidden>
@@ -761,6 +805,7 @@ input,select{font:inherit;color:inherit}
   </nav>
  </div>
  <section class="pan" id="aPan"></section>
+ <section class="pan" id="aFacts" style="margin-top:18px"></section>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -8553,6 +8598,21 @@ const COUNTRIES_INLINE = {"7":{"country":"US","score":100},"22":{"country":"BR",
    ============================================================ */
 const COVERS_INLINE = {
 };
+
+/* ============================================================
+   ИНТЕРЕСНЫЕ ФАКТЫ
+   ------------------------------------------------------------
+   Ключ трека → до трёх фактов о нём. Пишутся не про архив, а про
+   сам трек: кто автор текста, что это за место в альбоме, какая
+   история за песней. Про часть архива такого не найти — и это
+   нормально: там страница честно говорит, что информации мало,
+   и зовёт дополнить.
+
+   Заполняется так же, как обложки: заявки собираются на #covers,
+   оттуда готовый блок переносится сюда при пересборке файла.
+   ============================================================ */
+const FACTS_INLINE = {
+};
 </script>
 <script>/* @license
 Papa Parse
@@ -9584,14 +9644,30 @@ let MINE = store.adds || [];    // что посетитель добавил с
    Утверждённые лежат отдельно, в COVERS_INLINE — их приносит сам файл. */
 let MYCOV = store.covers || {};
 const COVER = Object.assign({}, COVERS_INLINE);
+
+/* Интересные факты: утверждённые приносит файл, свои ждут проверки.
+   Три коротких абзаца читаются, три полотна — нет, поэтому предел
+   один для всех: до трёх фактов, до четырёхсот знаков каждый. */
+const ФАКТОВ = 3;
+const ФАКТ_МАКС = 400;
+const FACT = Object.assign({}, FACTS_INLINE);
+let MYFACT = store.facts || {};
+
 const save = () => { try {
-  localStorage.setItem(LS, JSON.stringify({ rates: MY, favs: [...FAV], adds: MINE, covers: MYCOV }));
+  localStorage.setItem(LS, JSON.stringify({
+    rates: MY, favs: [...FAV], adds: MINE, covers: MYCOV, facts: MYFACT
+  }));
 } catch {} };
 
 // Что уже утверждено, того ждать больше не надо: заявка своё отработала.
-{ const было = Object.keys(MYCOV).length;
+{ const было = JSON.stringify([MYCOV, MYFACT]);
   Object.keys(MYCOV).forEach(k => { if (COVER[k]) delete MYCOV[k]; });
-  if (Object.keys(MYCOV).length !== было) save(); }
+  Object.keys(MYFACT).forEach(k => {
+    const свои = (FACT[k] || []).map(t => t.trim());
+    MYFACT[k] = MYFACT[k].filter(f => !свои.includes(f.text.trim()));
+    if (!MYFACT[k].length) delete MYFACT[k];
+  });
+  if (JSON.stringify([MYCOV, MYFACT]) !== было) save(); }
 
 /* Обложки Spotify приезжают по одной и медленно — держим их отдельно,
    чтобы при следующем заходе не спрашивать те же самые снова. */
@@ -10696,6 +10772,7 @@ function controls() {
   });
 
   coverInit();
+  factInit();
 
   const ft = $('fToggle');
   ft.addEventListener('click', () => {
@@ -11361,6 +11438,14 @@ function drawMine() {
    считаем то, чего с первого взгляда не видно — где трек стоит среди
    семи тысяч, как этого исполнителя принимали раньше, кто его заказал.
    Всё считается по той же таблице: ничего придуманного тут нет. */
+/* ---------- интересные факты ----------
+   Одним списком: сверху то, что написали про сам трек, снизу счёт по
+   архиву. Про часть треков в открытом доступе ничего нет — тогда
+   сверху просто ничего не встаёт, а панель не пустует, потому что
+   цифры есть всегда. Присланное человеком видно только ему, с
+   пометкой, пока не пройдёт проверку. */
+const ФАКТОВ_ВСЕГО = 5;
+
 function drawFacts() {
   const r = T.r;
   const box = $('tFacts');
@@ -11432,9 +11517,34 @@ function drawFacts() {
       факты.push('Самая дорогая заявка своего эфира — <b>' + esc(r.sum) + '</b>.');
   }
 
-  box.innerHTML = '<h2>Интересные факты</h2>' + (факты.length
-    ? '<ul class="ff">' + факты.slice(0, 6).map(f => '<li><i></i><span>' + f + '</span></li>').join('') + '</ul>'
-    : '<p class="note">Про этот трек архив ничего сверх карточки не знает.</p>');
+  // «свои» в этой функции уже заняты — так называются треки исполнителя
+  const мои = (MYFACT[r.key] || []).map(f => ({ text: f.text, ждёт: true }));
+  const готовые = (FACT[r.key] || []).map(text => ({ text, ждёт: false }));
+  const настоящие = [...готовые, ...мои].slice(0, ФАКТОВ);
+
+  // Настоящие факты идут первыми, цифры архива добивают список снизу.
+  const строки = [
+    ...настоящие.map(ф => '<li class="real"><i></i><span>' + esc(ф.text) +
+      (ф.ждёт ? '<span class="fx-wait">ждёт проверки</span>' : '') + '</span></li>'),
+    ...факты.map(f => '<li><i></i><span>' + f + '</span></li>')
+  ].slice(0, ФАКТОВ_ВСЕГО);
+
+  box.innerHTML = '<h2>Интересные факты</h2>' +
+    (строки.length ? '<ul class="ff">' + строки.join('') + '</ul>' : '') +
+    '<div class="ff-act">' +
+      (настоящие.length
+        ? ''
+        : '<p class="note">Про сам трек в открытом доступе нашлось мало. ' +
+          'Знаешь про него что-то стоящее — расскажи, и это увидят все.</p>') +
+      '<button type="button" class="btn' + (настоящие.length ? ' ghost' : '') + '" id="tFact">' +
+        (настоящие.length ? 'Добавить факт' : 'Рассказать про трек') + '</button>' +
+    '</div>';
+
+  const кн = $('tFact');
+  if (настоящие.length >= ФАКТОВ && !мои.length) {
+    кн.disabled = true;
+    кн.title = 'Про этот трек уже собрано три факта';
+  } else кн.addEventListener('click', () => openFact(r));
 }
 /* ---------- распределение оценок ---------- */
 /* Зрительских оценок в архиве нет — считать по ним нечего. Зато есть
@@ -11544,6 +11654,59 @@ function предпросмотр(u) {
 }
 
 const covJson = (key, url) => JSON.stringify({ key, url });
+
+let FACT_R = null;   // трек, про который пишут факт
+
+function openFact(r) {
+  FACT_R = r;
+  const своё = (MYFACT[r.key] || [])[0];
+  $('factFor').textContent = (r.title || '—') + ' — ' + (r.artist || '—');
+  $('factTitle').textContent = своё ? 'Изменить свой факт' : 'Рассказать про трек';
+  $('factText').value = своё ? своё.text : '';
+  $('factDrop').hidden = !своё;
+  счётФакта();
+  $('mFact').hidden = false;
+  $('factText').focus();
+}
+
+function счётФакта() {
+  const n = $('factText').value.trim().length;
+  const c = $('factCnt');
+  c.textContent = n + ' / ' + ФАКТ_МАКС;
+  c.classList.toggle('over', n > ФАКТ_МАКС);
+}
+
+function factInit() {
+  const поле = $('factText');
+  поле.addEventListener('input', счётФакта);
+
+  $('factForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const t = поле.value.trim();
+    if (!FACT_R || !t) return;
+    if (t.length > ФАКТ_МАКС) return toast('Длиннее 400 знаков не поместится');
+    MYFACT[FACT_R.key] = [{ text: t, when: Date.now() }];
+    save();
+    $('mFact').hidden = true;
+    if (T.r) drawFacts();
+    toast('Спасибо! Факт появится у всех после проверки');
+  });
+
+  $('factCopy').addEventListener('click', () => {
+    const t = поле.value.trim();
+    if (!FACT_R || !t) return toast('Сначала напиши сам факт');
+    копия(JSON.stringify({ key: FACT_R.key, fact: t }));
+    toast('Заявка скопирована — отправь её администратору');
+  });
+
+  $('factDrop').addEventListener('click', () => {
+    if (!FACT_R) return;
+    delete MYFACT[FACT_R.key]; save();
+    $('mFact').hidden = true;
+    if (T.r) drawFacts();
+    toast('Заявка убрана');
+  });
+}
 
 function coverInit() {
   const url = $('covUrl');
@@ -11716,6 +11879,133 @@ function drawAdmin() {
   });
   $('aCopy').addEventListener('click', () => копия($('aOut').value));
   $('aBack').onclick = e => { e.preventDefault(); toCatalog(); };
+  drawAdminФакты();
+}
+
+/* ---------- заявки на факты ---------- */
+const FIN_LS = 'faryma-catalog-facts-inbox';
+let FIN = (() => { try { return JSON.parse(localStorage.getItem(FIN_LS)) || {}; }
+                   catch { return {}; } })();
+const saveFin = () => { try { localStorage.setItem(FIN_LS, JSON.stringify(FIN)); } catch {} };
+
+/* Заявка приходит как {"key":"…","fact":"…"}. Принимаем и списком, и
+   готовым блоком, и по строчке — люди присылают по-разному. */
+function разобратьФакты(текст) {
+  const out = {};
+  let плохих = 0;
+  const класть = (k, t) => {
+    if (typeof k !== 'string' || typeof t !== 'string' || !t.trim()) { плохих++; return; }
+    (out[k] = out[k] || []).push(t.trim());
+  };
+  const взять = o => {
+    if (!o || typeof o !== 'object') { плохих++; return; }
+    if (Array.isArray(o)) return o.forEach(взять);
+    if (typeof o.key === 'string') {
+      if (typeof o.fact === 'string') return класть(o.key, o.fact);
+      if (Array.isArray(o.facts)) return o.facts.forEach(t => класть(o.key, t));
+    }
+    Object.entries(o).forEach(([k, v]) =>
+      Array.isArray(v) ? v.forEach(t => класть(k, t)) : класть(k, v));
+  };
+  const попытка = t => {
+    const x = t.trim();
+    if (!x) return undefined;
+    try { return JSON.parse(x); } catch {}
+    try { return JSON.parse('{' + x.replace(/,$/, '') + '}'); } catch {}
+    return undefined;
+  };
+  const целиком = попытка(текст);
+  if (целиком !== undefined) взять(целиком);
+  else текст.split(/\r?\n/).forEach(строка => {
+    const o = попытка(строка);
+    o === undefined ? (строка.trim() && плохих++) : взять(o);
+  });
+  return { найдено: out, плохих };
+}
+
+function drawAdminФакты() {
+  const box = $('aFacts');
+  const собрано = {};
+  // Один и тот же факт приходит дважды: он и в своих заявках, и в
+  // присланных, если админ вставил собственную строчку. Считаем по
+  // тексту, а не по источнику.
+  const класть = (k, t, src) => {
+    const было = (собрано[k] = собрано[k] || []);
+    if (было.some(ф => ф.text.trim() === t.trim())) return;
+    было.push({ text: t, src });
+  };
+  Object.entries(FACTS_INLINE).forEach(([k, v]) => (v || []).forEach(t => класть(k, t, 'в файле')));
+  Object.entries(FIN).forEach(([k, v]) => (v || []).forEach(t => класть(k, t, 'прислали')));
+  Object.entries(MYFACT).forEach(([k, v]) => (v || []).forEach(f => класть(k, f.text, 'отсюда')));
+
+  const всего = Object.values(собрано).reduce((n, x) => n + x.length, 0);
+  box.innerHTML =
+    '<h2>Заявки на факты<small>' + число(всего) + ' ' +
+      plural(всего, 'штука', 'штуки', 'штук') + '</small></h2>' +
+    '<p class="note">Формат заявки — <code>{"key":"…","fact":"…"}</code>. ' +
+      'Готовым блоком заменяют <code>FACTS_INLINE</code> в файле. ' +
+      'Больше трёх фактов на трек страница не покажет.</p>' +
+    '<h3>Вставить присланное</h3>' +
+    '<textarea class="box" id="fIn" placeholder=\'{"key":"278|1|Ado — Ussewa","fact":"…"}\'></textarea>' +
+    '<div class="adm-act">' +
+      '<button type="button" class="btn" id="fAdd">Разобрать и добавить</button>' +
+      '<button type="button" class="btn ghost" id="fClear">Очистить присланное</button>' +
+    '</div>' +
+    '<h3>Собрано</h3><div class="adm-list" id="fList"></div>' +
+    '<h3>Готовый блок для файла</h3>' +
+    '<textarea class="box" id="fOut" readonly></textarea>' +
+    '<div class="adm-act"><button type="button" class="btn" id="fCopy">Скопировать блок</button></div>';
+
+  const список = $('fList');
+  if (!всего) список.innerHTML = '<p class="note">Пока пусто.</p>';
+  else Object.entries(собрано).forEach(([key, факты]) => {
+    const r = CAT.find(x => x.key === key);
+    факты.forEach((ф, i) => {
+      const row = document.createElement('div');
+      row.className = 'adm-row';
+      row.innerHTML =
+        '<span class="nm"><b>' + esc(r ? (r.title || '—') + ' — ' + (r.artist || '—') : key) + '</b>' +
+          '<span style="font-family:var(--b);font-size:12px;white-space:normal">' +
+          esc(ф.text.slice(0, 160)) + (ф.text.length > 160 ? '…' : '') + '</span></span>' +
+        '<span class="src' + (r ? '' : ' bad') + '">' + ф.src +
+          (r ? '' : ' · нет такого ключа') +
+          (ф.text.length > ФАКТ_МАКС ? ' · длиннее 400' : '') + '</span>' +
+        (ф.src === 'в файле' ? '' : '<button type="button" class="x" aria-label="Убрать">✕</button>');
+      const x = row.querySelector('.x');
+      if (x) x.addEventListener('click', () => {
+        if (FIN[key]) { FIN[key] = FIN[key].filter(t => t !== ф.text);
+                        if (!FIN[key].length) delete FIN[key]; saveFin(); }
+        if (MYFACT[key]) { MYFACT[key] = MYFACT[key].filter(f => f.text !== ф.text);
+                           if (!MYFACT[key].length) delete MYFACT[key]; save(); }
+        drawAdminФакты();
+      });
+      список.append(row);
+    });
+  });
+
+  const итог = {};
+  Object.entries(собрано).forEach(([k, ф]) => { итог[k] = ф.slice(0, ФАКТОВ).map(x => x.text); });
+  $('fOut').value = 'const FACTS_INLINE = {\n' +
+    Object.entries(итог).map(([k, v]) =>
+      '  ' + JSON.stringify(k) + ': [\n' +
+      v.map(t => '    ' + JSON.stringify(t)).join(',\n') + '\n  ]').join(',\n') +
+    (Object.keys(итог).length ? '\n' : '') + '};';
+
+  $('fAdd').addEventListener('click', () => {
+    const { найдено, плохих } = разобратьФакты($('fIn').value);
+    const n = Object.values(найдено).reduce((a, x) => a + x.length, 0);
+    if (!n) return toast(плохих ? 'Не разобрал ни одной заявки' : 'Пусто');
+    Object.entries(найдено).forEach(([k, v]) => {
+      FIN[k] = [...new Set([...(FIN[k] || []), ...v])];
+    });
+    saveFin(); drawAdminФакты();
+    toast('Добавлено: ' + n + (плохих ? ', пропущено: ' + плохих : ''));
+  });
+  $('fClear').addEventListener('click', () => {
+    if (!Object.keys(FIN).length) return;
+    FIN = {}; saveFin(); drawAdminФакты(); toast('Присланное очищено');
+  });
+  $('fCopy').addEventListener('click', () => копия($('fOut').value));
 }
 
 window.addEventListener('hashchange', route);
