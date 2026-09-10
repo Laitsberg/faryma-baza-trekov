@@ -9759,7 +9759,13 @@ const ЖИВЫЕ = {
   страны: ['https://raw.githubusercontent.com/Laitsberg/faryma.stats/main/data/countries.json',
            'https://farymastats.info/data/countries.json'],
   история: ['https://raw.githubusercontent.com/Laitsberg/faryma.stats/main/data/history.jsonl',
-            'https://farymastats.info/data/history.jsonl']
+            'https://farymastats.info/data/history.jsonl'],
+  /* Утверждённые обложки и факты лежат рядом со страницей, в её же
+     репозитории. Положил файл — через минуту его видят все, кто открыл
+     страницу: ни сервера, ни входа для этого не нужно. Встроенные
+     COVERS_INLINE и FACTS_INLINE остаются на случай, когда сети нет. */
+  обложки: ['https://raw.githubusercontent.com/Laitsberg/faryma-baza-trekov/main/covers.json'],
+  факты:   ['https://raw.githubusercontent.com/Laitsberg/faryma-baza-trekov/main/facts.json']
 };
 
 let СВЕЖО = false;      // удалось ли подтянуть таблицу с сайта статистики
@@ -9818,6 +9824,26 @@ async function подтянуть() {
     }
   } else if (csv) {
     СВЕЖО = true;   // доехала, но ровно та же — перестраивать нечего
+  }
+
+  // Общие обложки и факты — маленькие файлы, тянем сразу за таблицей.
+  const [обл, фкт] = await Promise.all([
+    достать(ЖИВЫЕ.обложки, true), достать(ЖИВЫЕ.факты, true)
+  ]);
+  if (обл && typeof обл === 'object') Object.assign(COVER, обл);
+  if (фкт && typeof фкт === 'object') Object.assign(FACT, фкт);
+  if (обл || фкт) {
+    // Свои заявки, которые за это время утвердили, больше не ждут.
+    const было = JSON.stringify([MYCOV, MYFACT]);
+    Object.keys(MYCOV).forEach(k => { if (COVER[k]) delete MYCOV[k]; });
+    Object.keys(MYFACT).forEach(k => {
+      const есть = (FACT[k] || []).map(t => t.trim());
+      MYFACT[k] = MYFACT[k].filter(f => !есть.includes(f.text.trim()));
+      if (!MYFACT[k].length) delete MYFACT[k];
+    });
+    if (JSON.stringify([MYCOV, MYFACT]) !== было) save();
+    render(true);
+    if (T.r) drawTrack();
   }
 
   // Дата архива — из истории сайта статистики, там по записи на день.
@@ -11817,7 +11843,8 @@ function drawAdmin() {
     '<h2>Заявки на обложки<small>' + число(все.length) + ' ' +
       plural(все.length, 'штука', 'штуки', 'штук') + '</small></h2>' +
     '<p class="note">Сюда вставляют строчки, которые присылают зрители — по одной или пачкой. ' +
-      'Внизу собирается готовый блок: им заменяют <code>COVERS_INLINE</code> в файле, и обложки появляются у всех.</p>' +
+      'Внизу собирается содержимое <code>covers.json</code>: заменить им файл в репозитории — ' +
+      'и через минуту обложки видны всем, кто открыл страницу.</p>' +
     '<h3>Вставить присланное</h3>' +
     '<textarea class="box" id="aIn" placeholder=\'{"key":"278|Ado — Ussewa","url":"https://…/cover.jpg"}\'></textarea>' +
     '<div class="adm-act">' +
@@ -11826,9 +11853,9 @@ function drawAdmin() {
     '</div>' +
     '<h3>Собрано</h3>' +
     '<div class="adm-list" id="aList"></div>' +
-    '<h3>Готовый блок для файла</h3>' +
+    '<h3>Содержимое covers.json</h3>' +
     '<textarea class="box" id="aOut" readonly></textarea>' +
-    '<div class="adm-act"><button type="button" class="btn" id="aCopy">Скопировать блок</button></div>';
+    '<div class="adm-act"><button type="button" class="btn" id="aCopy">Скопировать</button></div>';
 
   const list = $('aList');
   if (!все.length) {
@@ -11859,10 +11886,7 @@ function drawAdmin() {
   // Блок пишем в том же виде, в каком он лежит в файле.
   const итог = {};
   все.forEach(({ key, url }) => { итог[key] = url; });
-  $('aOut').value = 'const COVERS_INLINE = {\n' +
-    Object.entries(итог).map(([k, v]) =>
-      '  ' + JSON.stringify(k) + ': ' + JSON.stringify(v)).join(',\n') +
-    (Object.keys(итог).length ? '\n' : '') + '};';
+  $('aOut').value = JSON.stringify(итог, null, 1);
 
   $('aAdd').addEventListener('click', () => {
     const { найдено, плохих } = разобратьЗаявки($('aIn').value);
@@ -11943,8 +11967,8 @@ function drawAdminФакты() {
     '<h2>Заявки на факты<small>' + число(всего) + ' ' +
       plural(всего, 'штука', 'штуки', 'штук') + '</small></h2>' +
     '<p class="note">Формат заявки — <code>{"key":"…","fact":"…"}</code>. ' +
-      'Готовым блоком заменяют <code>FACTS_INLINE</code> в файле. ' +
-      'Больше трёх фактов на трек страница не покажет.</p>' +
+      'Внизу собирается содержимое <code>facts.json</code>: заменить им файл в репозитории — ' +
+      'и факты видны всем. Больше трёх на трек страница не покажет.</p>' +
     '<h3>Вставить присланное</h3>' +
     '<textarea class="box" id="fIn" placeholder=\'{"key":"278|1|Ado — Ussewa","fact":"…"}\'></textarea>' +
     '<div class="adm-act">' +
@@ -11952,9 +11976,9 @@ function drawAdminФакты() {
       '<button type="button" class="btn ghost" id="fClear">Очистить присланное</button>' +
     '</div>' +
     '<h3>Собрано</h3><div class="adm-list" id="fList"></div>' +
-    '<h3>Готовый блок для файла</h3>' +
+    '<h3>Содержимое facts.json</h3>' +
     '<textarea class="box" id="fOut" readonly></textarea>' +
-    '<div class="adm-act"><button type="button" class="btn" id="fCopy">Скопировать блок</button></div>';
+    '<div class="adm-act"><button type="button" class="btn" id="fCopy">Скопировать</button></div>';
 
   const список = $('fList');
   if (!всего) список.innerHTML = '<p class="note">Пока пусто.</p>';
@@ -11985,11 +12009,7 @@ function drawAdminФакты() {
 
   const итог = {};
   Object.entries(собрано).forEach(([k, ф]) => { итог[k] = ф.slice(0, ФАКТОВ).map(x => x.text); });
-  $('fOut').value = 'const FACTS_INLINE = {\n' +
-    Object.entries(итог).map(([k, v]) =>
-      '  ' + JSON.stringify(k) + ': [\n' +
-      v.map(t => '    ' + JSON.stringify(t)).join(',\n') + '\n  ]').join(',\n') +
-    (Object.keys(итог).length ? '\n' : '') + '};';
+  $('fOut').value = JSON.stringify(итог, null, 1);
 
   $('fAdd').addEventListener('click', () => {
     const { найдено, плохих } = разобратьФакты($('fIn').value);
