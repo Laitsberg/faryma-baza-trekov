@@ -463,6 +463,8 @@ input,select{font:inherit;color:inherit}
   text-align:center;color:var(--faint);font-size:13px;line-height:1.5}
 .vid-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .vid-hd .tc{font-family:var(--m);font-size:12.5px;color:var(--dim)}
+.vid-hd a.tc{text-decoration:none;border-bottom:1px dashed var(--line)}
+.vid-hd a.tc:hover{color:var(--ink);border-bottom-color:var(--brand)}
 .vid-hd button{margin-left:auto;background:var(--card-2);border-radius:5px;
   padding:8px 13px;font-size:12.5px;color:var(--dim);min-height:36px}
 .vid-hd button:hover{background:#44444C;color:var(--ink)}
@@ -11023,11 +11025,9 @@ function drawHero() {
             '<svg viewBox="0 0 12 12" fill="currentColor"><path d="M2 1l9 5-9 5z"/></svg>' +
             (r.link ? 'слушать в ' + esc(r.link.platform) : 'ссылки в таблице нет') + '</a>' +
           '<span class="act-sep"></span>' +
-          '<a class="act ic' + (r.moment ? '' : ' off') + '" target="_blank" rel="noopener noreferrer" href="' +
-            esc(r.moment || '#') + '" title="' + (r.moment ? 'Смотреть разнос' : 'Записи эфира нет') +
-            '" aria-label="' + (r.moment ? 'Смотреть разнос' : 'Записи эфира нет') + '">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
-            '<path d="M4.5 19.5L15 6"/><path d="M17 3l4 3-3 4-4-3z"/><path d="M4 4l5 5"/><path d="M9 4l-5 5"/></svg></a>' +
+          // Кнопки «смотреть разнос» здесь нет намеренно: запись
+          // встроена прямо под шапкой, а ссылка на неё висит на
+          // тайм-коде над плеером.
           '<button class="act ic" id="tFav" aria-pressed="false">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
             '<path d="M12 20s-7-4.6-7-9.3A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.7C19 15.4 12 20 12 20z"/></svg></button>' +
@@ -11149,12 +11149,17 @@ function tabRoast(box) {
 
   const hd = document.createElement('div');
   hd.className = 'vid-hd';
-  hd.innerHTML =
-    '<span class="tc">' +
-      (r.streamNum != null ? 'стрим №' + r.streamNum : 'эфир не записан') +
-      (r.date ? ' · ' + дата(r.date) : '') +
-      (r.sec != null ? ' · тайм-код ' + время(r.sec) : '') +
-    '</span>';
+  const подпись =
+    (r.streamNum != null ? 'стрим №' + r.streamNum : 'эфир не записан') +
+    (r.date ? ' · ' + дата(r.date) : '') +
+    (r.sec != null ? ' · тайм-код ' + время(r.sec) : '');
+  // Строка сама ведёт на запись: отдельной кнопки под это больше нет,
+  // а открыть эфир на нужной минуте иногда всё равно нужно — например,
+  // когда встроенный плеер не завёлся.
+  hd.innerHTML = r.moment
+    ? '<a class="tc" href="' + esc(r.moment) + '" target="_blank" rel="noopener noreferrer"' +
+      ' title="Открыть запись на этой минуте">' + подпись + '</a>'
+    : '<span class="tc">' + подпись + '</span>';
   box.append(hd);
 
   const vid = document.createElement('div');
