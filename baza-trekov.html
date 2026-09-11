@@ -614,7 +614,7 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
  <div class="tb-in">
   <div class="tb-search">
    <label class="vh" for="q">Поиск по треку, исполнителю и заказчику</label>
-   <input id="q" type="search" placeholder="Поиск трека…" autocomplete="off">
+   <input id="q" type="search" placeholder="Исполнитель, трек, кто заказал…" autocomplete="off">
    <button class="tb-ic" id="btnSearch" title="Искать" aria-label="Искать">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
    </button>
@@ -9716,6 +9716,55 @@ function применить() {
     F[k].forEach((v, key) => (v > 0 ? да : нет).add(key));
     FC[k] = { да, нет };
   });
+  разборЗапроса();
+}
+
+/* ---------- поиск ---------- */
+/* Строку режем на слова один раз — и у трека при сборке, и у запроса
+   при вводе. Дефисы, скобки, «feat.» и японские кавычки одинаково
+   считаются границей слова. */
+const слова = s => String(s).toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+
+/* В иероглифах пробелов нет, слово от слова не отделить — там ищем
+   куском строки, как раньше. Для латиницы и кириллицы кусок не
+   годится: «ado» — это исполнитель Ado, а не «shadow», «madoka» и
+   «paradox», которых в архиве полторы сотни. */
+const ИЕРОГЛИФ = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/u;
+
+const FQ = { слова: [], плоский: '', есть: false, мягко: false };
+let ЗАПРОС_КЭШ = null;
+
+function совпало(r, t, где) {
+  return ИЕРОГЛИФ.test(t) ? r.search.includes(t) : где.some(w => w.startsWith(t));
+}
+/* Запрос и таблица делят слова по-разному: «KICKBACK» у одного трека
+   и «KICK BACK» у другого — одна и та же песня. Поэтому пробуем ещё
+   и склейку: запрос без пробелов против слов и против соседних пар.
+   Начало слова при этом остаётся началом слова. */
+function склейкой(r) {
+  const t = FQ.плоский;
+  if (t.length < 4) return false;
+  const w = r.слова;
+  for (let i = 0; i < w.length; i++) {
+    if (w[i].startsWith(t)) return true;
+    if (i + 1 < w.length && (w[i] + w[i + 1]).startsWith(t)) return true;
+  }
+  return false;
+}
+const строго = r => FQ.слова.every(t => совпало(r, t, r.слова)) || склейкой(r);
+
+/* Мягкий заход — тот самый прежний поиск по любому куску строки.
+   Включаем его, только когда по началу слова не нашлось совсем
+   ничего: тогда середина слова — единственный шанс что-то найти, а
+   живую выдачу она мусором уже не зальёт. */
+function разборЗапроса() {
+  const ключ = F.q + '|' + CAT.length;
+  if (ЗАПРОС_КЭШ === ключ) return;
+  ЗАПРОС_КЭШ = ключ;
+  FQ.слова = слова(F.q);
+  FQ.плоский = F.q.replace(/[^\p{L}\p{N}]+/gu, '');
+  FQ.есть = FQ.слова.length > 0;
+  FQ.мягко = FQ.есть && !CAT.some(строго);
 }
 применить();
 
@@ -9986,7 +10035,12 @@ function build(raw, снова) {
       search: (w.full + ' ' + (r['Кто'] || '')).toLowerCase(),
       // то же без пробелов и знаков: «KICK BACK» и «KICKBACK» — одна
       // песня. Считаем один раз здесь, а не на каждую букву в поиске.
-      searchFlat: (w.full + ' ' + (r['Кто'] || '')).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '')
+      searchFlat: (w.full + ' ' + (r['Кто'] || '')).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ''),
+      // Отдельные слова — по ним поиск и идёт. Разбираем один раз при
+      // сборке: перебирать семь тысяч строк регуляркой на каждую
+      // напечатанную букву заметно дороже.
+      слова: слова((w.full + ' ' + (r['Кто'] || ''))),
+      словаИсп: слова(w.artist || '')
     });
   });
 
@@ -10039,7 +10093,9 @@ function mineRow(a) {
     vod: '', sec: null, way: '', sum: '', feat: '',
     mine: true, key: 'my|' + a.id,
     search: (a.artist + ' ' + a.title).toLowerCase(),
-    searchFlat: (a.artist + ' ' + a.title).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '')
+    searchFlat: (a.artist + ' ' + a.title).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ''),
+    слова: слова(a.artist + ' ' + a.title),
+    словаИсп: слова(a.artist || '')
   };
 }
 
@@ -10061,11 +10117,10 @@ function applyCountries() {
 
 /* ---------- отбор ---------- */
 function match(r, skip) {
-  if (F.q) {
-    const плоский = F.q.replace(/[^\p{L}\p{N}]+/gu, '');
-    const ok = плоский.length >= 4
-      ? (r.search.includes(F.q) || r.searchFlat.includes(плоский))
-      : r.search.includes(F.q);
+  if (FQ.есть) {
+    const ok = FQ.мягко
+      ? (r.search.includes(F.q) || (FQ.плоский.length >= 4 && r.searchFlat.includes(FQ.плоский)))
+      : строго(r);
     if (!ok) return false;
   }
   if (skip !== 'tier'   && !прошёл(FC.tier, оценкаКлючи(r.rate))) return false;
@@ -10110,10 +10165,26 @@ const SORTS = {
   az:   (a, b) => (a.title || '').localeCompare(b.title || '', 'ru')
 };
 
+/* Насколько запрос попал в самого исполнителя: 0 — имя целиком,
+   1 — все слова запроса нашлись в имени, 2 — совпало где-то ещё.
+   По «Ado» сначала идут сто пять треков Ado, а уже потом чужие
+   «Adore» и «Adolescence». */
+function вес(r) {
+  if (!FQ.есть) return 0;
+  if ((r.artist || '').toLowerCase() === F.q) return 0;
+  return FQ.слова.every(t => совпало(r, t, r.словаИсп)) ? 1 : 2;
+}
+
 function rows() {
   let list = CAT.filter(r => match(r));
   if (F.sort === 'old') list = list.slice().reverse();
   else if (SORTS[F.sort]) list = list.slice().sort(SORTS[F.sort]);
+  // Сортировка в JS устойчивая, поэтому внутри каждой ступени
+  // сохраняется выбранный порядок — «сначала новые» и остальные.
+  if (FQ.есть) {
+    const w = new Map(list.map(r => [r, вес(r)]));
+    list.sort((a, b) => w.get(a) - w.get(b));
+  }
   return list;
 }
 
@@ -10383,7 +10454,8 @@ function chips() {
   const HAS_NAME = { roast: 'с записью', link: 'со ссылкой',
                      fav: 'избранное', mine: 'мной оценённые' };
 
-  if (F.q) add('поиск', '«' + F.q + '»', () => { F.q = ''; $('q').value = ''; });
+  if (F.q) add('поиск', '«' + F.q + '»' + (FQ.мягко ? ' · по части слова' : ''),
+               () => { F.q = ''; $('q').value = ''; });
   if (F.tier.size)    add('оценка композера', свод(F.tier), () => F.tier.clear());
   if (F.myTier.size)  add('моя оценка', свод(F.myTier), () => F.myTier.clear());
   if (F.genre.size)   add('жанр', свод(F.genre), () => F.genre.clear());
