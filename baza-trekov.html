@@ -69,6 +69,9 @@ input,select{font:inherit;color:inherit}
 .tb-search input{flex:1;min-width:0;background:var(--card-2);
   border:1px solid var(--line);border-radius:5px;padding:7px 12px;color:var(--ink)}
 .tb-search input::placeholder{color:var(--faint)}
+/* Год выпуска под названием карточки: подсказка, а не второе название,
+   поэтому тем же цветом, что и остальная мелочь. */
+.aa .yr{color:var(--faint);margin-left:7px;font-variant-numeric:tabular-nums}
 .tb-search input:focus{outline:none;border-color:var(--brand)}
 .tb-ic{width:30px;height:30px;flex:none;display:grid;place-items:center;
   border-radius:6px;color:var(--brand);transition:background .14s,color .14s}
@@ -9641,6 +9644,12 @@ const tColor    = r => r ? TCOLOR[r.tier] : 'var(--faint)';
 let CAT = [];
 let CAT_COUNTRIES = {};
 let CAT_YEARS = [];
+/* Года выпуска треков. В таблице разносов их нет — их отдельно
+   собирает scripts/years.mjs в faryma.stats, спрашивая MusicBrainz.
+   Встроенной копии нет намеренно: файл растёт каждую ночь, а без сети
+   страница просто не показывает год и не рисует его фильтр. */
+let ГОДА = {};
+const YEAR_MIN_SCORE = 90;
 
 /* Архив — почти семь тысяч строк, и рисовать их разом нельзя: телефон
    на этом умирает. Поэтому выдача разбита на страницы; сколько карточек
@@ -9697,9 +9706,11 @@ const saveSp = () => { try { localStorage.setItem(SP_LS, JSON.stringify(SPC)); }
 const F = {
   q: '', sort: 'new', page: 0, per: 60,
   tier: new Map(), myTier: new Map(), genre: new Map(), origin: new Map(),
-  kind: new Map(), tag: new Map(), has: new Map(), country: new Map(), year: new Map()
+  kind: new Map(), tag: new Map(), has: new Map(), country: new Map(), year: new Map(),
+  release: new Map()
 };
-const ПОЛЯ = ['tier', 'myTier', 'genre', 'origin', 'kind', 'tag', 'has', 'country', 'year'];
+const ПОЛЯ = ['tier', 'myTier', 'genre', 'origin', 'kind', 'tag', 'has', 'country', 'year',
+              'release'];
 
 const плюс  = m => [...m].filter(([, v]) => v > 0).map(([k]) => k);
 const минус = m => [...m].filter(([, v]) => v < 0).map(([k]) => k);
@@ -9821,6 +9832,8 @@ const ЖИВЫЕ = {
            'https://farymastats.info/data/countries.json'],
   история: ['https://raw.githubusercontent.com/Laitsberg/faryma.stats/main/data/history.jsonl',
             'https://farymastats.info/data/history.jsonl'],
+  года:    ['https://raw.githubusercontent.com/Laitsberg/faryma.stats/main/data/years.json',
+            'https://farymastats.info/data/years.json'],
   /* Утверждённые обложки и факты лежат рядом со страницей, в её же
      репозитории. Положил файл — через минуту его видят все, кто открыл
      страницу: ни сервера, ни входа для этого не нужно. Встроенные
@@ -9925,6 +9938,14 @@ async function подтянуть() {
   if (страны && страны.artists) {
     CAT_COUNTRIES = страны.artists;
     applyCountries();
+    rail(); render(true);
+    if (T.r) drawTrack();
+  }
+
+  const года = await достать(ЖИВЫЕ.года, true);
+  if (года && года.tracks) {
+    ГОДА = года.tracks;
+    applyYears();
     rail(); render(true);
     if (T.r) drawTrack();
   }
@@ -10057,6 +10078,7 @@ function build(raw, снова) {
     .sort((a, b) => b - a);
 
   applyCountries();
+  applyYears();
   if (!снова) переехать();
   приписка();
 
@@ -10115,6 +10137,30 @@ function applyCountries() {
   });
 }
 
+/* ---------- год выпуска ----------
+   Ключ песни: исполнитель и название без хвостов в скобках. «Usseewa»,
+   «Usseewa (Live)» и «Usseewa (THE FIRST TAKE)» — одна песня, вышла
+   она один раз. ВАЖНО: ровно эта же пара функций живёт в
+   scripts/years.mjs. Разойдутся — года перестанут находиться. */
+const чистоеНазвание = t =>
+  String(t || '').replace(/\([^()]*\)/g, ' ').replace(/\s+/g, ' ').trim();
+const ключГода = (artist, title) =>
+  nameKey(artist) + '|' + nameKey(чистоеНазвание(title));
+
+function applyYears() {
+  CAT.forEach(r => {
+    r.year = null;
+    if (!r.artist || !r.title) return;
+    const hit = ГОДА[ключГода(r.artist, r.title)];
+    if (hit && hit.year && (hit.score ?? 0) >= YEAR_MIN_SCORE) r.year = hit.year;
+  });
+}
+
+/* Год отбирается на двух уровнях сразу — как оценка со ступенями и
+   плюсами: 1998 попадает и в «1990-е», и в «=1998». */
+const годКлючи = y => y ? [Math.floor(y / 10) * 10, '=' + y] : [];
+const годИмя = v => String(v).startsWith('=') ? String(v).slice(1) : v + '-е';
+
 /* ---------- отбор ---------- */
 function match(r, skip) {
   if (FQ.есть) {
@@ -10150,6 +10196,7 @@ function match(r, skip) {
 
   if (skip !== 'country' && !прошёл(FC.country, r.country ? [r.country] : [])) return false;
   if (skip !== 'year' && !прошёл(FC.year, r.date ? [r.date.getFullYear()] : [])) return false;
+  if (skip !== 'release' && !прошёл(FC.release, годКлючи(r.year))) return false;
   return true;
 }
 
@@ -10198,6 +10245,7 @@ function cnt(field, val) {
     switch (field) {
       case 'tier':    return оценкаКлючи(r.rate).includes(val);
       case 'myTier':  return мояКлючи(MY[r.key]).includes(val);
+      case 'release': return годКлючи(r.year).includes(val);
       case 'genre':   return r.genres.includes(val);
       case 'origin':  return r.origin === val;
       case 'kind':    return r.kind === val;
@@ -10295,7 +10343,7 @@ const подсказка = (b, текст) => {
 };
 
 /* Ступени или точные оценки — выбор вида запоминается на группу. */
-const ТОЧНО = { tier: false, myTier: false };
+const ТОЧНО = { tier: false, myTier: false, release: false };
 
 function оценки(b, поле) {
   const m = F[поле];
@@ -10317,6 +10365,15 @@ function оценки(b, поле) {
   кн.textContent = точно ? 'только ступени' : 'с плюсами и минусами';
   кн.addEventListener('click', () => { ТОЧНО[поле] = !точно; rail(); });
   b.append(кн);
+}
+
+/* Какие года выпуска вообще встречаются в архиве — десятилетиями или
+   поштучно, от новых к старым. */
+function годаСписок(точно) {
+  const s = new Set();
+  CAT.forEach(r => { if (r.year) s.add(точно ? '=' + r.year : Math.floor(r.year / 10) * 10); });
+  return [...s].sort((a, b) => parseInt(String(b).replace('=', ''), 10) -
+                               parseInt(String(a).replace('=', ''), 10));
 }
 
 /* Какие списки раскрыты кнопкой «больше». Рельс пересобирается на
@@ -10415,10 +10472,29 @@ function rail() {
 
   // Года релиза в таблице нет — есть только год эфира, когда разносили.
   { const { g, b } = group('год эфира', false,
-      'Год стрима, на котором трек разносили. Года выхода самого трека в таблице нет.');
+      'Год стрима, на котором трек разносили. Когда вышел сам трек — в соседней группе.');
     CAT_YEARS.forEach(y => opt(b, String(y), F.year.get(y) || 0, cnt('year', y), null,
       s => ход(F.year, y, s), 'year:' + y));
     box.append(g); }
+
+  /* Год выпуска знаем не у всех: его отдельно спрашивают у MusicBrainz,
+     и пока файл не доехал, показывать нечего — группы просто нет. */
+  { const значения = годаСписок(ТОЧНО.release);
+    if (значения.length) {
+      const { g, b } = group('год выпуска', false,
+        'Когда песня вышла — по данным MusicBrainz, а не из таблицы разносов. ' +
+        'Сначала десятилетия; строчкой ниже список разворачивается в отдельные года. ' +
+        'У треков, которых в MusicBrainz нет, года нет — под этот отбор они не попадают.');
+      список(b, 'release' + (ТОЧНО.release ? '!' : ''), значения, v =>
+        opt(b, годИмя(v), F.release.get(v) || 0, cnt('release', v), null,
+          s => ход(F.release, v, s), 'release:' + v));
+      const кн = document.createElement('button');
+      кн.type = 'button'; кн.className = 'more';
+      кн.textContent = ТОЧНО.release ? 'только десятилетия' : 'по годам';
+      кн.addEventListener('click', () => { ТОЧНО.release = !ТОЧНО.release; rail(); });
+      b.append(кн);
+      box.append(g);
+    } }
 
   { const { g, b } = group('тэги', false,
       'Пометки из таблицы: мем, повтор, каверы и прочее, что композитор отметил отдельно.');
@@ -10460,6 +10536,7 @@ function chips() {
   if (F.myTier.size)  add('моя оценка', свод(F.myTier), () => F.myTier.clear());
   if (F.genre.size)   add('жанр', свод(F.genre), () => F.genre.clear());
   if (F.year.size)    add('год эфира', свод(F.year), () => F.year.clear());
+  if (F.release.size) add('год выпуска', свод(F.release, годИмя), () => F.release.clear());
   if (F.country.size) add('страна', свод(F.country), () => F.country.clear());
   if (F.origin.size)  add('происхождение', свод(F.origin, v => имя(v).toLowerCase()),
                           () => F.origin.clear());
@@ -10576,7 +10653,9 @@ function card(r) {
     '</div>' +
     '<div class="body"><a class="tt" href="' + trackHref(r) + '">' +
         esc(r.title || '—') + '</a>' +
-      '<div class="aa">' + esc(r.artist || '—') + '</div></div>' +
+      '<div class="aa">' + esc(r.artist || '—') +
+        (r.year ? '<span class="yr" title="год выпуска">· ' + r.year + '</span>' : '') +
+      '</div></div>' +
     '<div class="foot">' +
       '<span class="rt-c" style="--tc:' + tColor(r.rate) + '" title="оценка композитора"><i class="tri"></i>' +
         esc(shortRate(r.rate)) + '</span>' +
@@ -11117,6 +11196,7 @@ function drawHero() {
 
   if (r.date) tgs.push(идти('year', r.date.getFullYear(),
     'эфир №' + r.streamNum + ' · ' + дата(r.date)));
+  if (r.year) tgs.push(идти('release', '=' + r.year, String(r.year)));
   if (r.country) tgs.push(идти('country', r.country, r.country));
   r.genres.forEach(g => tgs.push(идти('genre', g, g)));
   if (r.origin) tgs.push(идти('origin', r.origin, r.origin.toLowerCase()));
@@ -11455,6 +11535,7 @@ function tabInfo(box) {
     ? '<a href="' + esc(r.link.url) + '" target="_blank" rel="noopener noreferrer">' + esc(r.link.host) + '</a>'
     : '');
   пара('страна исполнителя', esc(r.country || ''));
+  пара('год выпуска', r.year ? String(r.year) : '');
   box.append(dl);
 
   const p = document.createElement('p');
