@@ -139,6 +139,17 @@ input,select{font:inherit;color:inherit}
 .q:hover{background:var(--brand);color:#151517}
 .fh .q{margin-left:auto}
 
+/* Строка поиска внутри группы рельса. Нужна там, где пунктов
+   десятки: страны и года по отдельности. */
+.find{width:100%;margin:0 0 6px;padding:5px 9px;border-radius:6px;
+  border:1px solid var(--line);background:var(--bg);color:var(--ink);
+  font:14px var(--b)}
+.find::placeholder{color:var(--faint)}
+.find:focus{outline:none;border-color:var(--brand)}
+/* .opt — flex, поэтому одного атрибута hidden ему мало. */
+.opt[hidden],.more[hidden],.none[hidden]{display:none}
+.none{color:var(--faint);font-size:13px;padding:4px 2px;font-style:italic}
+
 .more{align-self:flex-start;margin-top:3px;padding:3px 2px;
   color:var(--dim);font:italic 13.5px var(--b);display:flex;align-items:center;gap:8px}
 .more::before{content:'•••';font-style:normal;font-size:9px;letter-spacing:1px;color:var(--ink)}
@@ -10333,6 +10344,7 @@ function opt(body, label, state, count, color, поставить, id) {
     rail(); render();
   });
   body.append(row);
+  return row;
 }
 
 const подсказка = (b, текст) => {
@@ -10381,6 +10393,68 @@ function годаСписок(точно) {
    иначе список жанров схлопывался обратно, стоило отметить пункт. */
 const ПОЛНО = {};
 const ВИДНО = 6;
+
+/* Что набрано в поиске каждой группы. Рельс пересобирается на любой
+   щелчок, поэтому текст живёт снаружи — иначе он пропадал бы. */
+const ПОИСК = {};
+
+/* Список с поиском — для groups, где пунктов десятки.
+   Рисуем СРАЗУ ВСЕ пункты и прячем лишние: если рисовать только шесть,
+   поиску попросту не по чему искать. И фильтруем на месте, не вызывая
+   rail(): пересборка рельса отнимала бы у поля фокус на каждой букве. */
+function списокСПоиском(b, ключ, значения, подпись, имяПункта, рисовать) {
+  const полно = !!ПОЛНО[ключ];
+  const длинный = значения.length > ВИДНО;
+
+  let поле = null;
+  if (длинный) {
+    поле = document.createElement('input');
+    поле.type = 'search';
+    поле.className = 'find';
+    поле.placeholder = подпись;
+    поле.value = ПОИСК[ключ] || '';
+    b.append(поле);
+  }
+
+  const строки = значения.map((v, i) => {
+    const el = рисовать(v);
+    if (i >= ВИДНО) el.dataset.над = '1';
+    return { el, имя: String(имяПункта(v)).toLowerCase() };
+  });
+
+  const пусто = document.createElement('div');
+  пусто.className = 'none';
+  пусто.textContent = 'ничего не нашлось';
+  пусто.hidden = true;
+  b.append(пусто);
+
+  let кнопка = null;
+  if (длинный) {
+    кнопка = document.createElement('button');
+    кнопка.type = 'button'; кнопка.className = 'more';
+    кнопка.textContent = полно ? 'свернуть' : 'больше';
+    кнопка.addEventListener('click', () => { ПОЛНО[ключ] = !полно; rail(); });
+    b.append(кнопка);
+  }
+
+  const показать = () => {
+    const q = (ПОИСК[ключ] || '').trim().toLowerCase();
+    let видно = 0;
+    строки.forEach(({ el, имя }) => {
+      const подходит = !q || имя.includes(q);
+      el.hidden = !подходит || (!q && !полно && el.dataset.над === '1');
+      if (!el.hidden) видно++;
+    });
+    if (кнопка) кнопка.hidden = !!q;      // при поиске «больше» ни к чему
+    пусто.hidden = видно > 0;
+  };
+
+  if (поле) поле.addEventListener('input', () => {
+    ПОИСК[ключ] = поле.value;
+    показать();
+  });
+  показать();
+}
 
 function список(b, ключ, значения, рисовать) {
   const полно = !!ПОЛНО[ключ];
@@ -10437,7 +10511,7 @@ function rail() {
       const { g, b } = group('страна', false,
         'Страна исполнителя из справочника, а не страна релиза. ' +
         'В списке те, у кого в архиве хотя бы пять треков.');
-      список(b, 'country', list, c =>
+      списокСПоиском(b, 'country', list, 'найти страну', c => c, c =>
         opt(b, c, F.country.get(c) || 0, cnt('country', c), null,
           s => ход(F.country, c, s), 'country:' + c));
       box.append(g);
@@ -10485,9 +10559,13 @@ function rail() {
         'Когда песня вышла — по данным MusicBrainz, а не из таблицы разносов. ' +
         'Сначала десятилетия; строчкой ниже список разворачивается в отдельные года. ' +
         'У треков, которых в MusicBrainz нет, года нет — под этот отбор они не попадают.');
-      список(b, 'release' + (ТОЧНО.release ? '!' : ''), значения, v =>
-        opt(b, годИмя(v), F.release.get(v) || 0, cnt('release', v), null,
-          s => ход(F.release, v, s), 'release:' + v));
+      /* Десятилетий восемь — они и так все на виду; поиск нужен во
+         втором режиме, где годов под сотню. */
+      const ключ = 'release' + (ТОЧНО.release ? '!' : '');
+      const рисуй = v => opt(b, годИмя(v), F.release.get(v) || 0, cnt('release', v), null,
+        s => ход(F.release, v, s), 'release:' + v);
+      if (ТОЧНО.release) списокСПоиском(b, ключ, значения, 'найти год', годИмя, рисуй);
+      else список(b, ключ, значения, рисуй);
       const кн = document.createElement('button');
       кн.type = 'button'; кн.className = 'more';
       кн.textContent = ТОЧНО.release ? 'только десятилетия' : 'по годам';
