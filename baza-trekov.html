@@ -9669,7 +9669,6 @@ const tColor    = r => r ? TCOLOR[r.tier] : 'var(--faint)';
 
 let CAT = [];
 let CAT_COUNTRIES = {};
-let CAT_YEARS = [];
 /* Года выпуска треков. В таблице разносов их нет — их отдельно
    собирает scripts/years.mjs в faryma.stats, спрашивая MusicBrainz.
    Встроенной копии нет намеренно: файл растёт каждую ночь, а без сети
@@ -9732,10 +9731,13 @@ const saveSp = () => { try { localStorage.setItem(SP_LS, JSON.stringify(SPC)); }
 const F = {
   q: '', sort: 'new', page: 0, per: 60,
   tier: new Map(), myTier: new Map(), genre: new Map(), origin: new Map(),
-  kind: new Map(), tag: new Map(), has: new Map(), country: new Map(), year: new Map(),
+  kind: new Map(), tag: new Map(), has: new Map(), country: new Map(),
   release: new Map()
 };
-const ПОЛЯ = ['tier', 'myTier', 'genre', 'origin', 'kind', 'tag', 'has', 'country', 'year',
+/* Года эфира среди столбцов нет намеренно: отбирать архив по тому, в
+   каком стриме трек разносили, оказалось незачем — важен год самой
+   песни. Номер и дата эфира остались на карточке трека как справка. */
+const ПОЛЯ = ['tier', 'myTier', 'genre', 'origin', 'kind', 'tag', 'has', 'country',
               'release'];
 
 const плюс  = m => [...m].filter(([, v]) => v > 0).map(([k]) => k);
@@ -10106,9 +10108,6 @@ function build(raw, снова) {
   // Добавленное посетителем кладём наверх — как самое свежее.
   MINE.slice().reverse().forEach(a => CAT.unshift(mineRow(a)));
 
-  CAT_YEARS = [...new Set(CAT.map(r => r.date && r.date.getFullYear()).filter(Boolean))]
-    .sort((a, b) => b - a);
-
   applyCountries();
   applyYears();
   if (!снова) переехать();
@@ -10300,8 +10299,6 @@ function match(r, skip) {
   }
 
   if (skip !== 'country' && !прошёл(FC.country, r.country ? [r.country] : [])) return false;
-  if (skip !== 'year' && !прошёл(FC.year,
-      разы(r).map(x => x.date && x.date.getFullYear()).filter(Boolean))) return false;
   if (skip !== 'release' && !прошёл(FC.release, годКлючи(r.year))) return false;
   return true;
 }
@@ -10365,7 +10362,6 @@ function cnt(field, val) {
       case 'kind':    return r.kind === val;
       case 'tag':     return r.tags.includes(val);
       case 'country': return r.country === val;
-      case 'year':    return разы(r).some(x => x.date && x.date.getFullYear() === val);
       case 'has':     return val === 'roast' ? разы(r).some(x => x.moment)
                            : val === 'link'  ? разы(r).some(x => x.link)
                            : val === 'fav'   ? FAV.has(r.key)
@@ -10623,6 +10619,29 @@ function rail() {
       box.append(g);
     } }
 
+  /* Год выпуска знаем не у всех: его отдельно спрашивают у MusicBrainz,
+     и пока файл не доехал, показывать нечего — группы просто нет. */
+  { const значения = годаСписок(ТОЧНО.release);
+    if (значения.length) {
+      const { g, b } = group('год выпуска', false,
+        'Когда песня вышла — по данным MusicBrainz, а не из таблицы разносов. ' +
+        'Сначала десятилетия; строчкой ниже список разворачивается в отдельные года. ' +
+        'У треков, которых в MusicBrainz нет, года нет — под этот отбор они не попадают.');
+      /* Десятилетий восемь — они и так все на виду; поиск нужен во
+         втором режиме, где годов под сотню. */
+      const ключ = 'release' + (ТОЧНО.release ? '!' : '');
+      const рисуй = v => opt(b, годИмя(v), F.release.get(v) || 0, cnt('release', v), null,
+        s => ход(F.release, v, s), 'release:' + v);
+      if (ТОЧНО.release) списокСПоиском(b, ключ, значения, 'найти год', годИмя, рисуй);
+      else список(b, ключ, значения, рисуй);
+      const кн = document.createElement('button');
+      кн.type = 'button'; кн.className = 'more';
+      кн.textContent = ТОЧНО.release ? 'только десятилетия' : 'по годам';
+      кн.addEventListener('click', () => { ТОЧНО.release = !ТОЧНО.release; rail(); });
+      b.append(кн);
+      box.append(g);
+    } }
+
   { const { g, b } = group('разносы', false,
       'Что есть у трека, кроме самой оценки: запись эфира, ссылка на трек, ' +
       'твоё сердечко или твоя оценка.');
@@ -10649,36 +10668,6 @@ function rail() {
       opt(b, v, F.kind.get(v) || 0, cnt('kind', v), null,
         s => ход(F.kind, v, s), 'kind:' + v));
     box.append(g); }
-
-  // Года релиза в таблице нет — есть только год эфира, когда разносили.
-  { const { g, b } = group('год эфира', false,
-      'Год стрима, на котором трек разносили. Когда вышел сам трек — в соседней группе.');
-    CAT_YEARS.forEach(y => opt(b, String(y), F.year.get(y) || 0, cnt('year', y), null,
-      s => ход(F.year, y, s), 'year:' + y));
-    box.append(g); }
-
-  /* Год выпуска знаем не у всех: его отдельно спрашивают у MusicBrainz,
-     и пока файл не доехал, показывать нечего — группы просто нет. */
-  { const значения = годаСписок(ТОЧНО.release);
-    if (значения.length) {
-      const { g, b } = group('год выпуска', false,
-        'Когда песня вышла — по данным MusicBrainz, а не из таблицы разносов. ' +
-        'Сначала десятилетия; строчкой ниже список разворачивается в отдельные года. ' +
-        'У треков, которых в MusicBrainz нет, года нет — под этот отбор они не попадают.');
-      /* Десятилетий восемь — они и так все на виду; поиск нужен во
-         втором режиме, где годов под сотню. */
-      const ключ = 'release' + (ТОЧНО.release ? '!' : '');
-      const рисуй = v => opt(b, годИмя(v), F.release.get(v) || 0, cnt('release', v), null,
-        s => ход(F.release, v, s), 'release:' + v);
-      if (ТОЧНО.release) списокСПоиском(b, ключ, значения, 'найти год', годИмя, рисуй);
-      else список(b, ключ, значения, рисуй);
-      const кн = document.createElement('button');
-      кн.type = 'button'; кн.className = 'more';
-      кн.textContent = ТОЧНО.release ? 'только десятилетия' : 'по годам';
-      кн.addEventListener('click', () => { ТОЧНО.release = !ТОЧНО.release; rail(); });
-      b.append(кн);
-      box.append(g);
-    } }
 
   { const { g, b } = group('тэги', false,
       'Пометки из таблицы: мем, повтор, каверы и прочее, что композитор отметил отдельно.');
@@ -10719,7 +10708,6 @@ function chips() {
   if (F.tier.size)    add('оценка композера', свод(F.tier), () => F.tier.clear());
   if (F.myTier.size)  add('моя оценка', свод(F.myTier), () => F.myTier.clear());
   if (F.genre.size)   add('жанр', свод(F.genre, имя, ' + '), () => F.genre.clear());
-  if (F.year.size)    add('год эфира', свод(F.year), () => F.year.clear());
   if (F.release.size) add('год выпуска', свод(F.release, годИмя), () => F.release.clear());
   if (F.country.size) add('страна', свод(F.country), () => F.country.clear());
   if (F.origin.size)  add('происхождение', свод(F.origin, v => имя(v).toLowerCase()),
@@ -11407,8 +11395,9 @@ function drawHero() {
     '" data-знач="' + esc(String(знач)) + '" title="Показать всё с этим в каталоге">' +
     esc(текст) + '</button>';
 
-  if (r.date) tgs.push(идти('year', r.date.getFullYear(),
-    'эфир №' + r.streamNum + ' · ' + дата(r.date)));
+  // Эфир — справка, а не фильтр: отбирать по нему больше нечем.
+  if (r.date) tgs.push('<span class="tg">' +
+    esc('эфир №' + r.streamNum + ' · ' + дата(r.date)) + '</span>');
   if (r.year) tgs.push(идти('release', '=' + r.year, String(r.year)));
   if (r.country) tgs.push(идти('country', r.country, r.country));
   r.genres.forEach(g => tgs.push(идти('genre', g, g)));
@@ -11489,7 +11478,7 @@ function drawHero() {
 
   box.querySelectorAll('.tg.go').forEach(b => b.addEventListener('click', () => {
     const поле = b.dataset['поле'];
-    const знач = поле === 'year' ? +b.dataset['знач'] : b.dataset['знач'];
+    const знач = b.dataset['знач'];
     toCatalog(() => {
       reset_soft();
       F.q = ''; $('q').value = '';
