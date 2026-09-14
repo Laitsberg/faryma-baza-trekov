@@ -10183,11 +10183,15 @@ function match(r, skip) {
   if (skip !== 'tier'   && !прошёл(FC.tier, оценкаКлючи(r.rate))) return false;
   if (skip !== 'myTier' && !прошёл(FC.myTier, мояКлючи(MY[r.key]))) return false;
 
-  // Жанр исключается только у одножанровых: «метал / фолк» без фолка —
-  // всё ещё метал, и выбрасывать его из-за одного слова неправильно.
+  /* Жанры складываются, а не набираются: выбрал «поп» и «рэп» — значит
+     нужны треки, где есть и то и другое сразу. У композитора на трек
+     нередко стоит два-три жанра, и «поп ИЛИ рэп» давал бы почти весь
+     архив, а смысл отбора ровно в пересечении.
+     Исключение по-прежнему трогает только одножанровые: «метал / фолк»
+     без фолка — всё ещё метал. */
   if (skip !== 'genre') {
     const c = FC.genre;
-    if (c.да.size && !r.genres.some(g => c.да.has(g))) return false;
+    for (const g of c.да) if (!r.genres.includes(g)) return false;
     if (c.нет.size && r.genres.length === 1 && c.нет.has(r.genres[0])) return false;
   }
 
@@ -10257,7 +10261,15 @@ function cnt(field, val) {
       case 'tier':    return оценкаКлючи(r.rate).includes(val);
       case 'myTier':  return мояКлючи(MY[r.key]).includes(val);
       case 'release': return годКлючи(r.year).includes(val);
-      case 'genre':   return r.genres.includes(val);
+      /* У жанра счётчик особый: раз они складываются, полезное число —
+         сколько останется, если добавить этот жанр к уже выбранным.
+         Поэтому здесь, в отличие от остальных столбцов, своя группа не
+         сбрасывается: иначе рядом с «рэп» стояло бы число всех рэп-треков
+         архива, а нажатие давало бы горстку. Ноль — честный ответ, что
+         такого сочетания в архиве нет. */
+      case 'genre':
+        for (const g of FC.genre.да) if (!r.genres.includes(g)) return false;
+        return r.genres.includes(val);
       case 'origin':  return r.origin === val;
       case 'kind':    return r.kind === val;
       case 'tag':     return r.tags.includes(val);
@@ -10494,6 +10506,9 @@ function rail() {
 
   { const { g, b } = group('жанр', false,
       'Жанры проставлены в таблице разносов, у трека их бывает несколько. ' +
+      'Выбранные жанры складываются: отметил «поп» и «рэп» — останутся треки, ' +
+      'где есть оба сразу. Цифра рядом показывает, сколько останется, если ' +
+      'добавить этот жанр к уже выбранным. ' +
       'Исключение не трогает многожанровые: «метал / фолк» без фолка — всё ещё метал.');
     const все = частые(r => r.genres, 40);
     список(b, 'genre', все, v =>
@@ -10598,9 +10613,9 @@ function chips() {
   };
 
   const имя = v => String(v).replace(/^=/, '');
-  const свод = (m, f = имя) => {
+  const свод = (m, f = имя, шов = ', ') => {
     const п = плюс(m).map(f), н = минус(m).map(f);
-    return (п.length ? п.join(', ') : 'любые') +
+    return (п.length ? п.join(шов) : 'любые') +
            // «кроме электронное» звучит криво, а склонять жанры и страны
            // автоматически не выйдет — поэтому двоеточие.
            (н.length ? ' · исключено: ' + н.join(', ') : '');
@@ -10612,7 +10627,7 @@ function chips() {
                () => { F.q = ''; $('q').value = ''; });
   if (F.tier.size)    add('оценка композера', свод(F.tier), () => F.tier.clear());
   if (F.myTier.size)  add('моя оценка', свод(F.myTier), () => F.myTier.clear());
-  if (F.genre.size)   add('жанр', свод(F.genre), () => F.genre.clear());
+  if (F.genre.size)   add('жанр', свод(F.genre, имя, ' + '), () => F.genre.clear());
   if (F.year.size)    add('год эфира', свод(F.year), () => F.year.clear());
   if (F.release.size) add('год выпуска', свод(F.release, годИмя), () => F.release.clear());
   if (F.country.size) add('страна', свод(F.country), () => F.country.clear());
