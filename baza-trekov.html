@@ -9932,6 +9932,9 @@ async function подтянуть() {
   ]);
   if (обл && typeof обл === 'object') Object.assign(COVER, обл);
   if (фкт && typeof фкт === 'object') Object.assign(FACT, фкт);
+  // Склеенный трек мог получить обложку или факт на любой из своих
+  // ключей — общие файлы приезжают позже склейки, поэтому здесь снова.
+  if (обл || фкт) подобратьЧужое();
   if (обл || фкт) {
     // Свои заявки, которые за это время утвердили, больше не ждут.
     const было = JSON.stringify([MYCOV, MYFACT]);
@@ -10098,6 +10101,7 @@ function build(raw, снова) {
   });
 
   склеить();
+  подобратьЧужое();
 
   // Добавленное посетителем кладём наверх — как самое свежее.
   MINE.slice().reverse().forEach(a => CAT.unshift(mineRow(a)));
@@ -10236,10 +10240,16 @@ const ключГода = (artist, title) =>
 
 function applyYears() {
   CAT.forEach(r => {
-    r.year = null;
+    r.year = null; r.spCover = '';
     if (!r.artist || !r.title) return;
     const hit = ГОДА[ключГода(r.artist, r.title)];
-    if (hit && hit.year && (hit.score ?? 0) >= YEAR_MIN_SCORE) r.year = hit.year;
+    if (!hit) return;
+    if (hit.year && (hit.score ?? 0) >= YEAR_MIN_SCORE) r.year = hit.year;
+    /* Обложке верим, если трек нашли по ссылке — там совпадение точное
+       по самому id, — или если совпадение прошло тот же порог, что и
+       для года. Ставить чужую картинку хуже, чем не ставить никакой. */
+    if (hit.обложка && (hit.как === 'ссылка' || (hit.score ?? 0) >= YEAR_MIN_SCORE))
+      r.spCover = hit.обложка;
   });
 }
 
@@ -10751,12 +10761,20 @@ function railAfterRate() {
    от картинки осталась бы половина. */
 const ytCover = id => 'https://i.ytimg.com/vi/' + id + '/mqdefault.jpg';
 
-/* Какая картинка у трека и откуда она. Порядок такой: утверждённая
-   администратором бьёт всё остальное, дальше идёт своя заявка (её
-   видно только в этом браузере), и только потом превью с площадки. */
+/* Какая картинка у трека и откуда она. Утверждённая администратором
+   бьёт всё остальное, дальше своя заявка (видна только в этом
+   браузере), потом обложка альбома из Spotify и лишь затем превью с
+   площадки.
+
+   Spotify выше ютуба намеренно: превью ютуба — это кадр из ролика,
+   он часто мутный и с чёрными полями, а у Яндекс-музыки картинки не
+   отдаются вовсе. Обложка альбома квадратная и всегда одна и та же.
+   Захочется вернуть прежний порядок — поменять эти две строки
+   местами. */
 function coverOf(r) {
   if (COVER[r.key])  return { url: COVER[r.key] };
   if (MYCOV[r.key])  return { url: MYCOV[r.key].url, own: true };
+  if (r.spCover)     return { url: r.spCover };
   if (r.ytId)        return { url: ytCover(r.ytId) };
   if (r.spId)        return { url: SPC[r.spId] || '', sp: r.spId };
   return null;
