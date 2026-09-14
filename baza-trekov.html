@@ -77,6 +77,11 @@ input,select{font:inherit;color:inherit}
 .badge.strm.many{background:rgba(242,102,15,.86);color:#140c05;font-weight:700}
 
 /* Выбор эфира над плеером — для треков, которые разносили не раз. */
+/* Эфир с датой над плеером, прижат вправо. */
+.vid-hd{text-align:right;color:var(--faint);font-size:12.5px;margin:0 0 8px}
+.vid-hd a{color:var(--dim);border-bottom:1px solid var(--line)}
+.vid-hd a:hover{color:var(--brand-hi);border-color:var(--brand-hi)}
+
 .razy{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
 .razy-t{width:100%;color:var(--dim);font-size:13px}
 .raz{display:flex;align-items:center;gap:9px;padding:7px 12px;border-radius:var(--r);
@@ -11395,9 +11400,6 @@ function drawHero() {
     '" data-знач="' + esc(String(знач)) + '" title="Показать всё с этим в каталоге">' +
     esc(текст) + '</button>';
 
-  // Эфир — справка, а не фильтр: отбирать по нему больше нечем.
-  if (r.date) tgs.push('<span class="tg">' +
-    esc('эфир №' + r.streamNum + ' · ' + дата(r.date)) + '</span>');
   if (r.year) tgs.push(идти('release', '=' + r.year, String(r.year)));
   if (r.country) tgs.push(идти('country', r.country, r.country));
   r.genres.forEach(g => tgs.push(идти('genre', g, g)));
@@ -11600,7 +11602,24 @@ function vkEmbed(vod, sec) {
 function tabRoast(box) {
   const r = показ();
   const src = vkEmbed(r.vod, r.sec);
+
   переключатель(box);
+
+  /* Эфир и дата стоят здесь, вплотную над плеером справа, и больше
+     нигде: в шапке трека и в «Инфо» они только повторялись. Под
+     переключателем, а не над ним: у трека с четырьмя разносами тот
+     занимает пол-экрана на телефоне, и строка уезжала от плеера
+     далеко. Если запись есть — это ссылка на неё, иначе из «Инфо»
+     ушёл бы последний способ открыть эфир целиком. */
+  if (r.streamNum != null) {
+    const шапка = document.createElement('div');
+    шапка.className = 'vid-hd';
+    const текст = '№' + r.streamNum + (r.date ? ' · ' + дата(r.date) : '');
+    шапка.innerHTML = 'эфир ' + (r.vod
+      ? '<a href="' + esc(r.vod) + '" target="_blank" rel="noopener noreferrer">' + esc(текст) + '</a>'
+      : esc(текст));
+    box.append(шапка);
+  }
 
   // Строки «стрим №… · дата · тайм-код» здесь нет намеренно: всё это
   // написано в шапке трека и во вкладке «Инфо», а над плеером только
@@ -11752,21 +11771,13 @@ function tabInfo(box) {
   пара('тэги', esc(r.tags.join(', ')));
   пара('фича', esc(r.feat || ''));
   пара('заказал', esc(r.user || ''));
-  пара('как попал', esc([r.way, r.sum].filter(Boolean).join(' · ')));
   пара('откуда', esc(r.origin || ''));
   пара('оценка композера', r.rate
     ? '<b style="--tc:' + tColor(r.rate) + '">' + esc(r.rate.label) + '</b> · ' + r.rate.score.toFixed(1) + ' из 10'
     : '');
-  пара('эфир', r.streamNum != null
-    ? (r.vod ? '<a href="' + esc(r.vod) + '" target="_blank" rel="noopener noreferrer">№' + r.streamNum + '</a>'
-             : '№' + r.streamNum) + (r.date ? ' · ' + дата(r.date) : '')
-    : '');
   пара('тайм-код', r.sec != null
     ? (r.moment ? '<a href="' + esc(r.moment) + '" target="_blank" rel="noopener noreferrer">' + время(r.sec) + '</a>'
                 : время(r.sec))
-    : '');
-  пара('ссылка на трек', r.link
-    ? '<a href="' + esc(r.link.url) + '" target="_blank" rel="noopener noreferrer">' + esc(r.link.host) + '</a>'
     : '');
   пара('страна исполнителя', esc(r.country || ''));
   пара('год выпуска', r.year ? String(r.year) : '');
