@@ -184,9 +184,6 @@ input,select{font:inherit;color:inherit}
 .sortbtn .car{color:var(--brand);font-size:10px}
 .sortbtn select{background:none;border:0;font:600 16px var(--b);color:var(--ink);cursor:pointer}
 .sortbtn select:focus{outline:none;color:var(--brand-hi)}
-.sortbtn.per select{font:600 13.5px var(--b);color:var(--dim)}
-.sortbtn.per .car{font-size:8px;color:var(--dim)}
-.sortbtn.per:hover select,.sortbtn.per:hover .car{color:var(--ink)}
 
 .chip{display:inline-flex;align-items:center;gap:9px;background:var(--card-2);
   border-radius:5px;padding:4px 7px 4px 11px;font-size:13px;color:var(--ink)}
@@ -687,15 +684,6 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
       <option value="high">оценка сверху вниз</option>
       <option value="low">оценка снизу вверх</option>
       <option value="az">по алфавиту</option>
-     </select>
-    </span>
-    <span class="sortbtn per">
-     <span class="car">▼</span>
-     <select id="per" aria-label="Сколько треков на странице">
-      <option value="30">по 30 на странице</option>
-      <option value="60" selected>по 60 на странице</option>
-      <option value="120">по 120 на странице</option>
-      <option value="240">по 240 на странице</option>
      </select>
     </span>
     <span id="chips" style="display:contents"></span>
@@ -9682,8 +9670,9 @@ let ГОДА = {};
 const YEAR_MIN_SCORE = 90;
 
 /* Архив — почти семь тысяч строк, и рисовать их разом нельзя: телефон
-   на этом умирает. Поэтому выдача разбита на страницы; сколько карточек
-   на странице, выбирает сам зритель — это F.per. */
+   на этом умирает. Поэтому выдача разбита на страницы по F.per карточек.
+   Переключателя больше нет: выбирать размер страницы зрителю незачем,
+   шестьдесят подходят и телефону, и большому экрану. */
 
 const LS = 'faryma-catalog-v2';
 const store = (() => { try { return JSON.parse(localStorage.getItem(LS)) || {}; }
@@ -11160,7 +11149,6 @@ function controls() {
   window.addEventListener('load', сверить);
   window.addEventListener('pageshow', сверить);
   $('sort').addEventListener('change', e => { F.sort = e.target.value; render(); });
-  $('per').addEventListener('change', e => { F.per = +e.target.value; render(); });
 
   $('btnLuck').addEventListener('click', () => {
     if (!VIEW.length) return;
