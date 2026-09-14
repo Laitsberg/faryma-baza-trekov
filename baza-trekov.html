@@ -72,6 +72,21 @@ input,select{font:inherit;color:inherit}
 /* Год выпуска под названием карточки: подсказка, а не второе название,
    поэтому тем же цветом, что и остальная мелочь. */
 .aa .yr{color:var(--faint);margin-left:7px;font-variant-numeric:tabular-nums}
+/* Трек, который разносили не один раз: метка вместо номера эфира —
+   номер тут один не назовёшь, их несколько. */
+.badge.strm.many{background:rgba(242,102,15,.86);color:#140c05;font-weight:700}
+
+/* Выбор эфира над плеером — для треков, которые разносили не раз. */
+.razy{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
+.razy-t{width:100%;color:var(--dim);font-size:13px}
+.raz{display:flex;align-items:center;gap:9px;padding:7px 12px;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--card-2);color:var(--dim);
+  font:inherit;font-size:13px;cursor:pointer;text-align:left}
+.raz:hover{color:var(--ink);border-color:var(--faint)}
+.raz.on{border-color:var(--brand);background:rgba(242,102,15,.13);color:var(--ink)}
+.raz b{font-family:var(--m);font-weight:600}
+.raz .d{color:var(--faint);font-size:12px}
+.raz .rt{color:var(--tc);font-weight:600}
 .tb-search input:focus{outline:none;border-color:var(--brand)}
 .tb-ic{width:30px;height:30px;flex:none;display:grid;place-items:center;
   border-radius:6px;color:var(--brand);transition:background .14s,color .14s}
@@ -10082,6 +10097,8 @@ function build(raw, снова) {
     r.key = (r.streamNum ?? '?') + '|' + (r.num ? r.num + '|' : '') + r.full;
   });
 
+  склеить();
+
   // Добавленное посетителем кладём наверх — как самое свежее.
   MINE.slice().reverse().forEach(a => CAT.unshift(mineRow(a)));
 
@@ -10148,6 +10165,65 @@ function applyCountries() {
   });
 }
 
+/* ---------- повторы ----------
+   Один и тот же трек заказывают по второму разу, и в архиве он лежит
+   отдельной строкой на каждый эфир. В каталоге от этого выходило две
+   одинаковые карточки. Склеиваем их в одну, но ничего не выбрасываем:
+   каждый разнос остаётся в r.разы, со своей оценкой, эфиром и
+   тайм-кодом — оценки у повторов разные, у «Ado — Usseewa» их четыре
+   от «гениально - -» до «атлична».
+
+   Склеиваем по точному названию: «Darken» и «Darken (Twin Piano Live
+   Version)» — разные записи, и мешать их нельзя. */
+const разы = r => r.разы || [r];
+
+function склеить() {
+  const группы = new Map();
+  CAT.forEach(r => {
+    if (!r.artist || !r.title) return;              // без имени не сличить
+    const k = r.artistKey + '|' + nameKey(r.title);
+    (группы.get(k) || группы.set(k, []).get(k)).push(r);
+  });
+
+  const лишние = new Set();
+  группы.forEach(список => {
+    if (список.length < 2) return;
+    // Свежий разнос — главный: каталог ведут от новых к старым, и
+    // карточка должна показывать последнюю оценку.
+    список.sort((a, b) => (b.streamNum ?? -1) - (a.streamNum ?? -1));
+    const главный = список[0];
+    главный.разы = список;
+    список.slice(1).forEach(x => лишние.add(x));
+  });
+
+  if (лишние.size) {
+    // Своё — сердечко и оценка — могло быть поставлено на любой из
+    // склеенных ключей; переносим на главный, чтобы не пропало.
+    CAT.forEach(r => {
+      if (!r.разы) return;
+      r.разы.slice(1).forEach(x => {
+        if (FAV.has(x.key)) { FAV.add(r.key); FAV.delete(x.key); }
+        if (MY[x.key] && !MY[r.key]) { MY[r.key] = MY[x.key]; delete MY[x.key]; }
+      });
+    });
+    save();
+    CAT = CAT.filter(r => !лишние.has(r));
+  }
+}
+
+/* Обложку и факт могли предложить на любой из склеенных ключей, а
+   общие файлы приезжают уже после склейки — поэтому подбираем не при
+   сборке, а каждый раз, как они доехали. */
+function подобратьЧужое() {
+  CAT.forEach(r => {
+    if (!r.разы) return;
+    r.разы.slice(1).forEach(x => {
+      if (!COVER[r.key] && COVER[x.key]) COVER[r.key] = COVER[x.key];
+      if (!FACT[r.key] && FACT[x.key]) FACT[r.key] = FACT[x.key];
+    });
+  });
+}
+
 /* ---------- год выпуска ----------
    Ключ песни: исполнитель и название без хвостов в скобках. «Usseewa»,
    «Usseewa (Live)» и «Usseewa (THE FIRST TAKE)» — одна песня, вышла
@@ -10180,7 +10256,11 @@ function match(r, skip) {
       : строго(r);
     if (!ok) return false;
   }
-  if (skip !== 'tier'   && !прошёл(FC.tier, оценкаКлючи(r.rate))) return false;
+  /* У склеенного трека столько оценок и эфиров, сколько разносов.
+     Отбор считаем по всем: трек, взявший «гениально» в 69-м эфире и
+     «атлична» в 187-м, обязан находиться и по той, и по другой. */
+  if (skip !== 'tier' && !прошёл(FC.tier,
+      разы(r).flatMap(x => оценкаКлючи(x.rate)))) return false;
   if (skip !== 'myTier' && !прошёл(FC.myTier, мояКлючи(MY[r.key]))) return false;
 
   /* Жанры складываются, а не набираются: выбрал «поп» и «рэп» — значит
@@ -10202,7 +10282,7 @@ function match(r, skip) {
   if (skip !== 'has') {
     const c = FC.has;
     if (c.да.size || c.нет.size) {
-      const есть = { roast: !!r.moment, link: !!r.link,
+      const есть = { roast: разы(r).some(x => x.moment), link: разы(r).some(x => x.link),
                      fav: FAV.has(r.key), mine: !!MY[r.key] };
       for (const k of c.да)  if (!есть[k]) return false;
       for (const k of c.нет) if (есть[k])  return false;
@@ -10210,7 +10290,8 @@ function match(r, skip) {
   }
 
   if (skip !== 'country' && !прошёл(FC.country, r.country ? [r.country] : [])) return false;
-  if (skip !== 'year' && !прошёл(FC.year, r.date ? [r.date.getFullYear()] : [])) return false;
+  if (skip !== 'year' && !прошёл(FC.year,
+      разы(r).map(x => x.date && x.date.getFullYear()).filter(Boolean))) return false;
   if (skip !== 'release' && !прошёл(FC.release, годКлючи(r.year))) return false;
   return true;
 }
@@ -10258,7 +10339,7 @@ function cnt(field, val) {
   return CAT.filter(r => {
     if (!match(r, field)) return false;
     switch (field) {
-      case 'tier':    return оценкаКлючи(r.rate).includes(val);
+      case 'tier':    return разы(r).some(x => оценкаКлючи(x.rate).includes(val));
       case 'myTier':  return мояКлючи(MY[r.key]).includes(val);
       case 'release': return годКлючи(r.year).includes(val);
       /* У жанра счётчик особый: раз они складываются, полезное число —
@@ -10274,9 +10355,9 @@ function cnt(field, val) {
       case 'kind':    return r.kind === val;
       case 'tag':     return r.tags.includes(val);
       case 'country': return r.country === val;
-      case 'year':    return r.date && r.date.getFullYear() === val;
-      case 'has':     return val === 'roast' ? !!r.moment
-                           : val === 'link'  ? !!r.link
+      case 'year':    return разы(r).some(x => x.date && x.date.getFullYear() === val);
+      case 'has':     return val === 'roast' ? разы(r).some(x => x.moment)
+                           : val === 'link'  ? разы(r).some(x => x.link)
                            : val === 'fav'   ? FAV.has(r.key)
                            : !!MY[r.key];
     }
@@ -10739,7 +10820,13 @@ function card(r) {
       '<button class="badge fav" aria-pressed="' + fav + '" aria-label="В избранное">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.6-7-9.3A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.7C19 15.4 12 20 12 20z"/></svg>' +
         '<span></span></button>' +
-      (r.streamNum != null
+      (r.разы
+        ? '<span class="badge strm many" title="' +
+          esc('Трек разносили ' + r.разы.length + ' раза: ' +
+              r.разы.map(x => '№' + x.streamNum + ' — ' + (x.rate ? x.rate.label : 'без оценки')).join(', ')) +
+          '">×' + r.разы.length + ' разноса' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg></span>'
+        : r.streamNum != null
         ? '<span class="badge strm" title="номер эфира">№' + r.streamNum +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg></span>'
         : (r.mine ? '<span class="badge strm">твой</span>' : '')) +
@@ -11122,7 +11209,21 @@ function controls() {
    и на то же место прокрутки, откуда ушёл.
    ============================================================ */
 
-const T = { r: null, tab: 'roast', fresh: false, панели: {}, панелиКлюч: '' };
+const T = { r: null, раз: 0, tab: 'roast', fresh: false, панели: {}, панелиКлюч: '' };
+
+/* Страница трека показывает один разнос из нескольких. Ключ, оценки
+   зрителя, обложка и факты — общие на трек, поэтому подменяем только
+   то, что у каждого разноса своё. */
+const ПОЛЯ_РАЗА = ['rate', 'streamNum', 'date', 'sec', 'vod', 'moment',
+                   'num', 'user', 'way', 'sum', 'link', 'full', 'ytId', 'spId'];
+function показ() {
+  const r = T.r;
+  const x = разы(r)[T.раз];
+  if (!x || x === r) return r;
+  const v = Object.assign({}, r);
+  ПОЛЯ_РАЗА.forEach(k => { v[k] = x[k]; });
+  return v;
+}
 let BACK_Y = 0;
 
 /* Прокрутку возвращаем сами. Браузер помнит свою и на «назад»
@@ -11167,6 +11268,7 @@ function route() {
 
 function showTrack(r) {
   if (!T.r) BACK_Y = window.scrollY;   // куда вернуть, когда уйдёшь назад
+  T.раз = 0;                           // открыли трек — показываем свежий разнос
   T.r = r;
   $('page').hidden = true;
   $('footNote').hidden = true;
@@ -11273,7 +11375,7 @@ function reset_soft() {
 }
 
 function drawHero() {
-  const r = T.r;
+  const r = показ();
   const box = $('tHero');
   const bg = covUrl(r);
   const my = MY[r.key];
@@ -11433,8 +11535,8 @@ function drawTabs() {
    тоже не трогает — по той же причине. */
 function drawTab() {
   const кор = $('tTab');
-  if (T.панелиКлюч !== T.r.key) {
-    T.панелиКлюч = T.r.key;
+  if (T.панелиКлюч !== T.r.key + '|' + T.раз) {
+    T.панелиКлюч = T.r.key + '|' + T.раз;
     T.панели = {};
     кор.textContent = '';
   }
@@ -11445,6 +11547,37 @@ function drawTab() {
   T.панели[T.tab] = el;
   кор.append(el);
   (T.tab === 'roast' ? tabRoast : T.tab === 'info' ? tabInfo : tabSim)(el);
+}
+
+/* Трек могли разносить не один раз. Тогда над плеером встаёт выбор
+   эфира, и по нему меняется вся страница: оценка в шапке, тайм-код,
+   запись, вкладка «Инфо». Оценка зрителя и факты остаются — они про
+   песню, а не про конкретный эфир. */
+function переключатель(box) {
+  const все = разы(T.r);
+  if (все.length < 2) return;
+
+  const шапка = document.createElement('div');
+  шапка.className = 'razy';
+  шапка.innerHTML = '<span class="razy-t">Разносили ' + все.length +
+    ' раза — выбери эфир:</span>';
+
+  все.forEach((x, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'raz' + (i === T.раз ? ' on' : '');
+    b.innerHTML = '<b>№' + (x.streamNum ?? '?') + '</b>' +
+      (x.date ? '<span class="d">' + esc(дата(x.date)) + '</span>' : '') +
+      '<span class="rt" style="--tc:' + tColor(x.rate) + '">' +
+        esc(x.rate ? x.rate.label : 'без оценки') + '</span>';
+    b.addEventListener('click', () => {
+      if (i === T.раз) return;
+      T.раз = i;
+      drawTrack();          // перерисовываем целиком: меняется и шапка
+    });
+    шапка.append(b);
+  });
+  box.append(шапка);
 }
 
 /* Встроенный плеер VK: записи эфиров лежат на vkvideo.ru, а он умеет
@@ -11458,8 +11591,9 @@ function vkEmbed(vod, sec) {
 }
 
 function tabRoast(box) {
-  const r = T.r;
+  const r = показ();
   const src = vkEmbed(r.vod, r.sec);
+  переключатель(box);
 
   // Строки «стрим №… · дата · тайм-код» здесь нет намеренно: всё это
   // написано в шапке трека и во вкладке «Инфо», а над плеером только
@@ -11594,7 +11728,7 @@ function когда(ts) {
 /* Вся строка таблицы как есть: витрина показывает не все колонки,
    а на странице трека им самое место. */
 function tabInfo(box) {
-  const r = T.r;
+  const r = показ();
   const dl = document.createElement('dl');
   dl.className = 'facts';
   const пара = (k, v) => {
@@ -11792,7 +11926,11 @@ function drawMine() {
 const ФАКТОВ_ВСЕГО = 5;
 
 function drawFacts() {
-  const r = T.r;
+  /* Половина фактов — про конкретный разнос: место в эфире, кто
+     заказал, как оценка смотрится на фоне архива. Значит и они идут
+     за переключателем. Свои и общие факты привязаны к ключу, а ключ
+     у склеенного трека один. */
+  const r = показ();
   const box = $('tFacts');
   const факты = [];
   const цвет = 'style="--tc:' + tColor(r.rate) + '"';
