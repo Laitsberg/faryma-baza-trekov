@@ -71,7 +71,8 @@ input,select{font:inherit;color:inherit}
 .tb-search input::placeholder{color:var(--faint)}
 /* Год выпуска под названием карточки: подсказка, а не второе название,
    поэтому тем же цветом, что и остальная мелочь. */
-.aa .yr{color:var(--faint);margin-left:7px;font-variant-numeric:tabular-nums}
+.aa .yr{color:var(--faint);margin-left:7px;font-variant-numeric:tabular-nums;
+  flex:none;white-space:nowrap}
 /* Трек, который разносили не один раз: метка вместо номера эфира —
    номер тут один не назовёшь, их несколько. */
 .badge.strm.many{background:rgba(242,102,15,.86);color:#140c05;font-weight:700}
@@ -275,8 +276,20 @@ input,select{font:inherit;color:inherit}
   /* название — ссылка на страницу трека, но выглядит по-прежнему текстом */
   color:inherit;text-decoration:none}
 .tt:hover{color:var(--brand-hi)}
-.aa{color:var(--dim);font-size:13px;margin-top:1px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Приписка в скобках: тем же кеглем, но обычным начертанием и тусклее —
+   глаз цепляется за имя, а приписка остаётся читаемой. Инлайн, а не
+   отдельной строкой: у .tt стоит обрезка на двух строках, и блочная
+   приписка съедала бы у длинных названий всю вторую. */
+.tt-sub{font-weight:400;color:var(--dim)}
+.hero-b h1 .tt-sub{font-weight:500;font-size:.72em;color:var(--dim)}
+/* Имя исполнителя и год — два отдельных куска строки, а не один текст с
+   многоточием. Раньше год лежал внутри обрезаемой строки и у длинных
+   имён уезжал за край вместе с ними: у «Михаил Шуфутинский» его не
+   было видно вовсе, у «Meaningful Stone» оставалось «20…». Теперь
+   режется только имя, а год держит своё место справа. */
+.aa{display:flex;align-items:baseline;color:var(--dim);font-size:13px;
+  margin-top:1px;min-width:0}
+.aa .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .body{min-height:56px}
 .foot{display:flex;align-items:center;gap:9px;padding:10px 12px 12px}
 /* nowrap обязателен: дефис — место переноса, и «атл--» разрывалось на
@@ -10455,7 +10468,7 @@ const подсказка = (b, текст) => {
 };
 
 /* Ступени или точные оценки — выбор вида запоминается на группу. */
-const ТОЧНО = { tier: false, myTier: false, release: false };
+const ТОЧНО = { tier: false, myTier: false };
 
 function оценки(b, поле) {
   const m = F[поле];
@@ -10486,6 +10499,69 @@ function годаСписок(точно) {
   CAT.forEach(r => { if (r.year) s.add(точно ? '=' + r.year : Math.floor(r.year / 10) * 10); });
   return [...s].sort((a, b) => parseInt(String(b).replace('=', ''), 10) -
                                parseInt(String(a).replace('=', ''), 10));
+}
+
+/* Десятилетия щелчком, точный год — поиском, и всё это в одном месте.
+   Прежде это были два режима с переключателем «по годам / только
+   десятилетия»: чтобы отобрать 1998-й, надо было сперва догадаться
+   нажать кнопку, а после неё десятилетия пропадали с глаз.
+
+   Устроено так же, как остальные списки рельса: рисуются сразу все
+   пункты, лишние прячутся. Перерисовывать по букве нельзя — rail()
+   пересобирает рельс целиком, и поле теряло бы фокус на каждом знаке.
+
+   Что видно: пока в поиске пусто — десятилетия (и те точные года, что
+   уже выбраны, иначе снять их из списка было бы нечем). Как только
+   набрали — только подходящие года. */
+function годаГруппа(b, десятилетия) {
+  const ключ = 'release';
+  const года = годаСписок(true);
+  const полно = !!ПОЛНО[ключ];
+
+  const поле = document.createElement('input');
+  поле.type = 'search';
+  поле.className = 'find';
+  поле.placeholder = 'найти год';
+  поле.value = ПОИСК[ключ] || '';
+  b.append(поле);
+
+  const рисуй = v => opt(b, годИмя(v), F.release.get(v) || 0, cnt('release', v), null,
+    s => ход(F.release, v, s), 'release:' + v);
+
+  const дес = десятилетия.map((v, i) => ({ el: рисуй(v), над: i >= ВИДНО }));
+  const точн = года.map(v => ({ el: рисуй(v), имя: String(годИмя(v)), знач: v }));
+
+  const пусто = document.createElement('div');
+  пусто.className = 'none';
+  пусто.textContent = 'ничего не нашлось';
+  пусто.hidden = true;
+  b.append(пусто);
+
+  const кнопка = document.createElement('button');
+  кнопка.type = 'button';
+  кнопка.className = 'more';
+  кнопка.textContent = полно ? 'свернуть' : 'больше';
+  кнопка.hidden = десятилетия.length <= ВИДНО;
+  кнопка.addEventListener('click', () => { ПОЛНО[ключ] = !полно; rail(); });
+  b.append(кнопка);
+
+  const показать = () => {
+    const q = (ПОИСК[ключ] || '').trim().toLowerCase();
+    let видно = 0;
+    дес.forEach(({ el, над }) => {
+      el.hidden = !!q || (!полно && над);
+      if (!el.hidden) видно++;
+    });
+    точн.forEach(({ el, имя, знач }) => {
+      el.hidden = q ? !имя.includes(q) : !F.release.has(знач);
+      if (!el.hidden) видно++;
+    });
+    кнопка.hidden = !!q || десятилетия.length <= ВИДНО;
+    пусто.hidden = видно > 0;
+  };
+
+  поле.addEventListener('input', () => { ПОИСК[ключ] = поле.value; показать(); });
+  показать();
 }
 
 /* Какие списки раскрыты кнопкой «больше». Рельс пересобирается на
@@ -10622,24 +10698,13 @@ function rail() {
 
   /* Год выпуска знаем не у всех: его отдельно спрашивают у MusicBrainz,
      и пока файл не доехал, показывать нечего — группы просто нет. */
-  { const значения = годаСписок(ТОЧНО.release);
-    if (значения.length) {
+  { const десятилетия = годаСписок(false);
+    if (десятилетия.length) {
       const { g, b } = group('год выпуска', false,
         'Когда песня вышла — по данным MusicBrainz, а не из таблицы разносов. ' +
-        'Сначала десятилетия; строчкой ниже список разворачивается в отдельные года. ' +
+        'Десятилетия выбираются щелчком; нужен точный год — набери его в поиске. ' +
         'У треков, которых в MusicBrainz нет, года нет — под этот отбор они не попадают.');
-      /* Десятилетий восемь — они и так все на виду; поиск нужен во
-         втором режиме, где годов под сотню. */
-      const ключ = 'release' + (ТОЧНО.release ? '!' : '');
-      const рисуй = v => opt(b, годИмя(v), F.release.get(v) || 0, cnt('release', v), null,
-        s => ход(F.release, v, s), 'release:' + v);
-      if (ТОЧНО.release) списокСПоиском(b, ключ, значения, 'найти год', годИмя, рисуй);
-      else список(b, ключ, значения, рисуй);
-      const кн = document.createElement('button');
-      кн.type = 'button'; кн.className = 'more';
-      кн.textContent = ТОЧНО.release ? 'только десятилетия' : 'по годам';
-      кн.addEventListener('click', () => { ТОЧНО.release = !ТОЧНО.release; rail(); });
-      b.append(кн);
+      годаГруппа(b, десятилетия);
       box.append(g);
     } }
 
@@ -10806,12 +10871,29 @@ function initials(r) {
 }
 
 /* ---------- карточка ---------- */
+/* Хвост в скобках — это чаще всего не имя песни, а приписка:
+   «(Official video)», «(Live Symphony Version)», «(feat. …)». Читать
+   её наравне с названием мешает, поэтому показываем тусклее.
+
+   Выбрасывать нельзя: «Darken» и «Darken (Twin Piano Live Version)» —
+   разные записи архива, и различить их можно только по приписке.
+
+   Название, которое со скобки начинается, не трогаем: у «(Anesthesia)
+   Pulling Teeth» скобка и есть часть имени. Поэтому перед скобкой
+   требуется хоть один непробельный знак. */
+function имяСПрипиской(title) {
+  const s = String(title || '');
+  const m = s.match(/^([^(]*\S)\s*(\(.*)$/);
+  return m ? { имя: m[1], приписка: m[2] } : { имя: s, приписка: '' };
+}
+
 function card(r) {
   const el = document.createElement('article');
   el.className = 'card';
   el.dataset.key = r.key;
 
   const fav = FAV.has(r.key);
+  const имя = имяСПрипиской(r.title);
   el.innerHTML =
     '<div class="cover">' +
       '<div class="art-fb" style="--tc:' + tColor(r.rate) + '">' + esc(initials(r)) + '</div>' +
@@ -10839,8 +10921,10 @@ function card(r) {
         : (r.mine ? '<span class="badge strm">твой</span>' : '')) +
     '</div>' +
     '<div class="body"><a class="tt" href="' + trackHref(r) + '">' +
-        esc(r.title || '—') + '</a>' +
-      '<div class="aa">' + esc(r.artist || '—') +
+        esc(имя.имя || '—') +
+        (имя.приписка ? ' <span class="tt-sub">' + esc(имя.приписка) + '</span>' : '') +
+        '</a>' +
+      '<div class="aa"><span class="nm">' + esc(r.artist || '—') + '</span>' +
         (r.year ? '<span class="yr" title="год выпуска">· ' + r.year + '</span>' : '') +
       '</div></div>' +
     '<div class="foot">' +
@@ -11403,12 +11487,15 @@ function drawHero() {
   if (r.mine) tgs.push('<span class="tg brand">предложено тобой</span>');
   if (MYCOV[r.key]) tgs.push('<span class="tg brand">твоя обложка · ждёт проверки</span>');
 
+  const заг = имяСПрипиской(r.title || r.full);
   box.innerHTML =
     (bg ? '<div class="hero-bg" style="background-image:url(' + esc(bg) + ')"></div>' : '') +
     '<div class="hero-in">' +
       '<div class="hero-cov">' + covHtml(r) + '</div>' +
       '<div class="hero-b">' +
-        '<h1>' + esc(r.title || r.full || '—') + '</h1>' +
+        '<h1>' + esc(заг.имя || '—') +
+          (заг.приписка ? ' <span class="tt-sub">' + esc(заг.приписка) + '</span>' : '') +
+        '</h1>' +
         '<p class="hero-art">' + esc([r.artist, r.source].filter(Boolean).join(' · ') || '—') + '</p>' +
         (tgs.length ? '<div class="tgs">' + tgs.join('') + '</div>' : '') +
         '<div class="hero-rt">' +
