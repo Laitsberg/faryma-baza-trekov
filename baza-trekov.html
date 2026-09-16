@@ -69,10 +69,6 @@ input,select{font:inherit;color:inherit}
 .tb-search input{flex:1;min-width:0;background:var(--card-2);
   border:1px solid var(--line);border-radius:5px;padding:7px 12px;color:var(--ink)}
 .tb-search input::placeholder{color:var(--faint)}
-/* Год выпуска под названием карточки: подсказка, а не второе название,
-   поэтому тем же цветом, что и остальная мелочь. */
-.aa .yr{color:var(--faint);margin-left:7px;font-variant-numeric:tabular-nums;
-  flex:none;white-space:nowrap}
 /* Трек, который разносили не один раз: метка вместо номера эфира —
    номер тут один не назовёшь, их несколько. */
 .badge.strm.many{background:rgba(242,102,15,.86);color:#140c05;font-weight:700}
@@ -282,14 +278,13 @@ input,select{font:inherit;color:inherit}
    приписка съедала бы у длинных названий всю вторую. */
 .tt-sub{font-weight:400;color:var(--dim)}
 .hero-b h1 .tt-sub{font-weight:500;font-size:.72em;color:var(--dim)}
-/* Имя исполнителя и год — два отдельных куска строки, а не один текст с
-   многоточием. Раньше год лежал внутри обрезаемой строки и у длинных
-   имён уезжал за край вместе с ними: у «Михаил Шуфутинский» его не
-   было видно вовсе, у «Meaningful Stone» оставалось «20…». Теперь
-   режется только имя, а год держит своё место справа. */
-.aa{display:flex;align-items:baseline;color:var(--dim);font-size:13px;
-  margin-top:1px;min-width:0}
-.aa .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+/* В строке под названием только исполнитель — год с карточки убран,
+   она нарочно скупая. Если год когда-нибудь вернётся, класть его
+   внутрь этой строки нельзя: обрезка многоточием уносила его за край
+   вместе с длинным именем, у «Михаил Шуфутинский» года не было видно
+   вовсе. Понадобится — flex и `flex:none` у года. */
+.aa{color:var(--dim);font-size:13px;margin-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .body{min-height:56px}
 .foot{display:flex;align-items:center;gap:9px;padding:10px 12px 12px}
 /* nowrap обязателен: дефис — место переноса, и «атл--» разрывалось на
@@ -10910,24 +10905,33 @@ function card(r) {
       '<button class="badge fav" aria-pressed="' + fav + '" aria-label="В избранное">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.6-7-9.3A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.7C19 15.4 12 20 12 20z"/></svg>' +
         '<span></span></button>' +
+      /* Значок разноса. Раньше тут стоял номер эфира и значок плеера —
+         номер съедал полкарточки, а плеер обещал запись, которой у
+         части эфиров нет. Облачко честнее: разнос — это то, что
+         композитор про трек сказал. Номер никуда не делся: он в
+         подсказке значка, в шапке страницы трека и во вкладке «Инфо».
+         У повторов число оставлено — это не номер, а «сколько раз». */
       (r.разы
         ? '<span class="badge strm many" title="' +
           esc('Трек разносили ' + r.разы.length + ' раза: ' +
               r.разы.map(x => '№' + x.streamNum + ' — ' + (x.rate ? x.rate.label : 'без оценки')).join(', ')) +
-          '">×' + r.разы.length + ' разноса' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg></span>'
+          '">×' + r.разы.length + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3v4l5-4h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>' + '</span>'
         : r.streamNum != null
-        ? '<span class="badge strm" title="номер эфира">№' + r.streamNum +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg></span>'
+        ? '<span class="badge strm" title="' + esc('разнос в эфире №' + r.streamNum) + '">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3v4l5-4h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>' + '</span>'
         : (r.mine ? '<span class="badge strm">твой</span>' : '')) +
     '</div>' +
-    '<div class="body"><a class="tt" href="' + trackHref(r) + '">' +
-        esc(имя.имя || '—') +
-        (имя.приписка ? ' <span class="tt-sub">' + esc(имя.приписка) + '</span>' : '') +
-        '</a>' +
-      '<div class="aa"><span class="nm">' + esc(r.artist || '—') + '</span>' +
-        (r.year ? '<span class="yr" title="год выпуска">· ' + r.year + '</span>' : '') +
-      '</div></div>' +
+    /* Карточка нарочно скупая: имя песни, исполнитель, две оценки. Всё
+       остальное — приписка в скобках, год, номер эфира — переехало на
+       страницу трека, во вкладку «Инфо».
+
+       Скобки различают 48 пар архива («Crab Rave» и «Crab Rave
+       (Monstercat Release)»), поэтому полное название остаётся в
+       подсказке ссылки — иначе такие пары в сетке не отличить. */
+    '<div class="body"><a class="tt" href="' + trackHref(r) + '"' +
+        (имя.приписка ? ' title="' + esc(r.title) + '"' : '') + '>' +
+        esc(имя.имя || '—') + '</a>' +
+      '<div class="aa">' + esc(r.artist || '—') + '</div></div>' +
     '<div class="foot">' +
       '<span class="rt-c" style="--tc:' + tColor(r.rate) + '" title="оценка композитора"><i class="tri"></i>' +
         esc(shortRate(r.rate)) + '</span>' +
@@ -11852,7 +11856,14 @@ function tabInfo(box) {
     dl.append(dt, dd);
   };
   пара('исполнитель', esc(r.artist || ''));
-  пара('название', esc(r.title || ''));
+  /* Название и приписка в скобках — разными строчками. На карточке
+     приписки нет вовсе (она нарочно скупая), так что это единственное
+     место, где её видно целиком: «(Official video)», «(Live Symphony
+     Version)», «(Сейю: …)». Строчки без приписки просто не будет —
+     пара() пропускает пустое. */
+  const назв = имяСПрипиской(r.title);
+  пара('название', esc(назв.имя || ''));
+  пара('уточнение', esc(назв.приписка || ''));
   пара('источник', esc(r.source || ''));
   /* Альбом и длительность приезжают из Spotify вместе с годом и
      обложкой. В шапку не ставлю: там уже стоит «источник» из таблицы,
