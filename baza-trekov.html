@@ -9928,8 +9928,9 @@ async function подтянуть() {
     СВЕЖО = true;
     if (CAT.length !== было) {
       const d = CAT.length - было;
+      // Разница в CAT — это разница в карточках, а не в разносах.
       toast('Таблица обновилась: ' + (d > 0 ? '+' + d : d) + ' ' +
-        plural(Math.abs(d), 'разнос', 'разноса', 'разносов'));
+        plural(Math.abs(d), 'трек', 'трека', 'треков'));
     }
   } else if (csv) {
     СВЕЖО = true;   // доехала, но ровно та же — перестраивать нечего
@@ -11096,8 +11097,13 @@ function render(keep) {
     grid.append(frag);
   }
 
+  /* Считаем карточки, поэтому и подписываем их треками. Раньше стояло
+     «разносов», и число врало: повторы склеены в одну карточку, а
+     разносов за ними больше — 45 треков заказывали не по разу, это
+     48 разносов сверх 6 751 карточки. Сколько разносов у трека,
+     написано на нём самом меткой «×N разноса». */
   const n = VIEW.length;
-  $('count').textContent = число(n) + ' ' + plural(n, 'разнос', 'разноса', 'разносов') +
+  $('count').textContent = число(n) + ' ' + plural(n, 'трек', 'трека', 'треков') +
     (n < CAT.length ? ' из ' + число(CAT.length) : '');
   страницы(страниц);
   chips();
@@ -12061,7 +12067,7 @@ function drawFacts() {
     const средняя = оц.length ? оц.reduce((s, x) => s + x.rate.score, 0) / оц.length : 0;
     const лучший = оц.length ? оц.reduce((a, x) => sc(x) > sc(a) ? x : a) : null;
     факты.push('У исполнителя в архиве <b>' + свои.length + '</b> ' +
-      plural(свои.length, 'разнос', 'разноса', 'разносов') +
+      plural(свои.length, 'трек', 'трека', 'треков') +
       (оц.length ? ', средняя оценка — <b>' + средняя.toFixed(1) + '</b> из 10' : '') +
       (лучший === r ? ', и этот — лучший из них.' : '.'));
   } else if (свои.length === 1 && r.artist) {
@@ -12162,7 +12168,7 @@ function drawDist() {
 
   box.innerHTML =
     '<h2>Оценки ' + по + '<small>' + esc(имя) + ' · ' + число(list.length) + ' ' +
-      plural(list.length, 'разнос', 'разноса', 'разносов') + '</small></h2>' +
+      plural(list.length, 'трек', 'трека', 'треков') + '</small></h2>' +
     '<div class="dist">' + TIERS.map((t, i) =>
       '<span class="nm">' + TSHORT[t.key] + '</span>' +
       '<span class="ba" style="--tc:' + TCOLOR[t.key] + '"><i style="width:' +
