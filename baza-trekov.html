@@ -142,6 +142,11 @@ input,select{font:inherit;color:inherit}
 .opt.off .bx{background:var(--t-krin)}
 .opt.off .bx::after{content:'';position:absolute;left:3px;top:6.5px;width:9px;height:2px;
   background:#151517;border-radius:1px}
+/* «Только этот жанр»: та же галочка, что у выбранного, плюс метка —
+   иначе третье состояние от второго на глаз не отличить. */
+.opt.only .lb::after{content:'только';margin-left:7px;font-size:10px;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--brand-hi);border:1px solid currentColor;
+  border-radius:4px;padding:0 4px;vertical-align:1px}
 .opt.on .lb{color:var(--ink)}
 .opt.off .lb{color:var(--faint);text-decoration:line-through}
 .lb{display:flex;align-items:center;gap:8px;min-width:0}
@@ -9750,7 +9755,8 @@ const ПОЛЯ = ['tier', 'myTier', 'genre', 'origin', 'kind', 'tag', 'has', 'co
 
 const плюс  = m => [...m].filter(([, v]) => v > 0).map(([k]) => k);
 const минус = m => [...m].filter(([, v]) => v < 0).map(([k]) => k);
-/* Щелчки идут по кругу: не тронут → выбран → исключён → не тронут. */
+/* Щелчки идут по кругу: не тронут → выбран → исключён → не тронут.
+   У жанра круг длиннее: не тронут → есть → без → только этот → не тронут. */
 const ход = (m, key, s) => { s ? m.set(key, s) : m.delete(key); };
 
 /* Отбор в разобранном виде — по два множества на столбец. Собираем их
@@ -9759,9 +9765,16 @@ const ход = (m, key, s) => { s ? m.set(key, s) : m.delete(key); };
 const FC = {};
 function применить() {
   ПОЛЯ.forEach(k => {
-    const да = new Set(), нет = new Set();
-    F[k].forEach((v, key) => (v > 0 ? да : нет).add(key));
-    FC[k] = { да, нет };
+    /* Состояний у пункта три, а не два: «есть» (1), «без» (−1) и, у
+       жанра, «только этот» (2). Двойку кладём и в «да» тоже — трек,
+       у которого жанр ровно «метал», метал содержит заведомо, и
+       счётчики от этого считают то же самое. */
+    const да = new Set(), нет = new Set(), только = new Set();
+    F[k].forEach((v, key) => {
+      if (v === 2) { только.add(key); да.add(key); }
+      else (v > 0 ? да : нет).add(key);
+    });
+    FC[k] = { да, нет, только };
   });
   разборЗапроса();
 }
@@ -10346,6 +10359,13 @@ function match(r, skip) {
     const c = FC.genre;
     for (const g of c.да) if (!r.genres.includes(g)) return false;
     if (c.нет.size && r.genres.length === 1 && c.нет.has(r.genres[0])) return false;
+    /* «Только этот жанр» — третий щелчок. Отсекает смешанные: у трека
+       список жанров обязан совпасть с выбранным в точности. Выбрано
+       два «только» — значит нужен трек ровно с этой парой, по той же
+       логике сложения, что и у обычного выбора. */
+    if (c.только.size &&
+        (r.genres.length !== c.только.size || !r.genres.every(g => c.только.has(g))))
+      return false;
   }
 
   if (skip !== 'origin' && !прошёл(FC.origin, r.origin ? [r.origin] : [])) return false;
@@ -10419,9 +10439,19 @@ function cnt(field, val) {
          сбрасывается: иначе рядом с «рэп» стояло бы число всех рэп-треков
          архива, а нажатие давало бы горстку. Ноль — честный ответ, что
          такого сочетания в архиве нет. */
-      case 'genre':
-        for (const g of FC.genre.да) if (!r.genres.includes(g)) return false;
-        return r.genres.includes(val);
+      case 'genre': {
+        const c = FC.genre;
+        for (const g of c.да) if (!r.genres.includes(g)) return false;
+        if (!r.genres.includes(val)) return false;
+        /* Когда где-то выбрано «только этот жанр», число обязано
+           считать по тому же правилу. Иначе у соседних пунктов
+           стояли бы сотни, а щелчок давал бы ноль: «только метал» и
+           «есть фолк» вместе не живут по определению. */
+        if (c.только.size &&
+            (r.genres.length !== c.только.size || !r.genres.every(g => c.только.has(g))))
+          return false;
+        return true;
+      }
       case 'origin':  return r.origin === val;
       case 'kind':    return r.kind === val;
       case 'tag':     return r.tags.includes(val);
@@ -10483,6 +10513,18 @@ const ДВОЙНОЙ = 1000;
 let ЩЕЛЧОК = { id: '', когда: 0 };
 
 function следующее(state, id) {
+  /* У жанра круг на одну ступень длиннее: есть → без → только этот →
+     снято. Третий щелчок оставляет треки, у которых этот жанр
+     единственный: «метал», но не «метал / фолк».
+
+     Времени здесь не место. У остальных столбцов второй щелчок
+     исключает пункт, только если он пришёл сразу, — иначе снимает. С
+     таким правилом до третьей ступени было бы не дойти предсказуемо:
+     замешкался на секунду — и круг начался заново. Поэтому у жанра
+     щелчки считаются просто по порядку. */
+  if (String(id).startsWith('genre:')) {
+    return state > 1 ? 0 : state < 0 ? 2 : state > 0 ? -1 : 1;
+  }
   const подряд = ЩЕЛЧОК.id === id && Date.now() - ЩЕЛЧОК.когда < ДВОЙНОЙ;
   ЩЕЛЧОК = { id, когда: Date.now() };
   if (state > 0) return подряд ? -1 : 0;
@@ -10494,10 +10536,12 @@ function opt(body, label, state, count, color, поставить, id) {
   const row = document.createElement('button');
   row.type = 'button';
   row.className = 'opt' + (count ? '' : ' zero') +
-    (state > 0 ? ' on' : state < 0 ? ' off' : '');
+    (state === 2 ? ' on only' : state > 0 ? ' on' : state < 0 ? ' off' : '');
   row.setAttribute('aria-pressed', state > 0 ? 'true' : 'false');
-  row.title = state > 0 ? 'выбрано · щелчок сразу — исключить, позже — снять'
-            : state < 0 ? 'исключено · щелчок снимает'
+  const жанр = String(id).startsWith('genre:');
+  row.title = state === 2 ? 'только этот жанр и никакой больше · щелчок снимает'
+            : state > 0 ? (жанр ? 'выбрано · щелчок исключает' : 'выбрано · щелчок сразу — исключить, позже — снять')
+            : state < 0 ? (жанр ? 'исключено · щелчок оставит треки только с этим жанром' : 'исключено · щелчок снимает')
             : 'щёлкни, чтобы оставить только это';
   row.innerHTML = '<span class="bx"></span><span class="lb">' +
     (color ? '<i style="background:' + color + '"></i>' : '') + esc(label) + '</span>' +
@@ -10704,6 +10748,8 @@ function rail() {
   шапка.innerHTML = 'отбор<span class="q" role="note" tabindex="0" title="' +
     esc('Щелчок оставляет только этот пункт. Сразу второй — исключает его из выдачи, ' +
         'а если вернуться к пункту позже, щелчок просто снимает отметку. ' +
+        'У жанра щелчки считаются по порядку и ступеней на одну больше: ' +
+        'есть такой жанр → без него → только он и никакой другой → снято. ' +
         'Цифра справа — сколько треков за пунктом с учётом остального отбора.') + '">?</span>';
   box.append(шапка);
 
@@ -10720,10 +10766,12 @@ function rail() {
 
   { const { g, b } = group('жанр', false,
       'Жанры проставлены в таблице разносов, у трека их бывает несколько. ' +
-      'Выбранные жанры складываются: отметил «поп» и «рэп» — останутся треки, ' +
+      'Выбранные жанры складываются: отметил «поп» и «хип-хоп» — останутся треки, ' +
       'где есть оба сразу. Цифра рядом показывает, сколько останется, если ' +
       'добавить этот жанр к уже выбранным. ' +
-      'Исключение не трогает многожанровые: «метал / фолк» без фолка — всё ещё метал.');
+      'Исключение не трогает многожанровые: «метал / фолк» без фолка — всё ещё метал. ' +
+      'Третий щелчок — «только этот жанр»: остаются треки, где он стоит один, ' +
+      'и «метал / фолк» под него уже не попадает.');
     const все = частые(r => r.genres, 40);
     список(b, 'genre', все, v =>
       opt(b, v, F.genre.get(v) || 0, cnt('genre', v), null,
@@ -10823,7 +10871,15 @@ function chips() {
                () => { F.q = ''; $('q').value = ''; });
   if (F.tier.size)    add('оценка композера', свод(F.tier), () => F.tier.clear());
   if (F.myTier.size)  add('моя оценка', свод(F.myTier), () => F.myTier.clear());
-  if (F.genre.size)   add('жанр', свод(F.genre, имя, ' + '), () => F.genre.clear());
+  /* У жанра есть третье состояние, и в сводке его надо назвать своими
+     словами: «метал» и «только метал» отбирают совсем разное. */
+  if (F.genre.size) add('жанр', (() => {
+    const п = [...F.genre].filter(([, v]) => v > 0)
+      .map(([k, v]) => (v === 2 ? 'только ' : '') + имя(k));
+    const н = минус(F.genre).map(имя);
+    return (п.length ? п.join(' + ') : 'любые') +
+           (н.length ? ' · исключено: ' + н.join(', ') : '');
+  })(), () => F.genre.clear());
   if (F.release.size) add('год выпуска', свод(F.release, годИмя), () => F.release.clear());
   if (F.country.size) add('страна', свод(F.country), () => F.country.clear());
   if (F.origin.size)  add('происхождение', свод(F.origin, v => имя(v).toLowerCase()),
