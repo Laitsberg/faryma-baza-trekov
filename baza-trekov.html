@@ -468,6 +468,18 @@ input,select{font:inherit;color:inherit}
 .hero-b{min-width:0;flex:1;display:flex;flex-direction:column;gap:10px}
 .hero-b h1{font:800 29px/1.12 var(--d);margin:0;overflow-wrap:anywhere}
 .hero-art{color:var(--dim);font-size:15px;margin:-6px 0 0}
+/* ---------- своя подсказка ----------
+   Вместо браузерного title. У того вид системной плашки Windows, ждёт
+   он секунду с лишним, и на телефоне не показывается вовсе — а мы туда
+   убрали полное название трека и номер эфира. */
+.tip{position:fixed;z-index:60;max-width:min(320px,calc(100vw - 16px));
+  background:var(--card-2);color:var(--ink);border:1px solid var(--line);
+  border-radius:8px;padding:8px 11px;font:400 12.5px/1.45 var(--b);
+  box-shadow:0 12px 30px rgba(0,0,0,.5);pointer-events:none;
+  opacity:0;transform:translateY(3px);transition:opacity .13s ease,transform .13s ease}
+.tip.on{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.tip{transition:none}}
+
 .tgs{display:flex;flex-wrap:wrap;gap:6px}
 .tg{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;
   padding:3px 10px;font-size:12px;color:var(--dim);white-space:nowrap}
@@ -671,13 +683,13 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   <div class="tb-search">
    <label class="vh" for="q">Поиск по треку, исполнителю и заказчику</label>
    <input id="q" type="search" placeholder="Исполнитель, трек, кто заказал…" autocomplete="off">
-   <button class="tb-ic" id="btnSearch" title="Искать" aria-label="Искать">
+   <button class="tb-ic" id="btnSearch" data-tip="Искать" aria-label="Искать">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
    </button>
-   <button class="tb-ic" id="btnAdd" title="Предложить трек" aria-label="Предложить трек">
+   <button class="tb-ic" id="btnAdd" data-tip="Предложить трек" aria-label="Предложить трек">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
    </button>
-   <button class="tb-ic" id="btnLuck" title="Случайный трек" aria-label="Случайный трек">
+   <button class="tb-ic" id="btnLuck" data-tip="Случайный трек" aria-label="Случайный трек">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.5c-.4-2.1-1.7-3.3-3.4-3.5C6.4 17.7 4.8 16.2 4.8 14.2c0-1.8 1.4-3.2 3.2-3.2.85 0 1.6.33 2.15.86-.63-.6-1.02-1.45-1.02-2.4 0-1.8 1.42-3.22 3.22-3.22s3.22 1.42 3.22 3.22c0 .95-.39 1.8-1.02 2.4a3.1 3.1 0 0 1 2.15-.86c1.8 0 3.2 1.4 3.2 3.2 0 2-1.6 3.5-3.8 3.8-1.7.2-3 1.4-3.4 3.5z"/></svg>
    </button>
   </div>
@@ -689,7 +701,7 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
    <a href="#">помощь</a>
   </nav>
 
-  <div class="ava" title="твой профиль">🦉</div>
+  <div class="ava" data-tip="твой профиль">🦉</div>
  </div>
 </header>
 
@@ -9688,7 +9700,7 @@ const tColor    = r => r ? TCOLOR[r.tier] : 'var(--faint)';
 let CAT = [];
 let CAT_COUNTRIES = {};
 /* Года выпуска треков. В таблице разносов их нет — их отдельно
-   собирает scripts/years.mjs в faryma.stats, спрашивая MusicBrainz.
+   собирает scripts/years.mjs в faryma.stats, спрашивая Spotify.
    Встроенной копии нет намеренно: файл растёт каждую ночь, а без сети
    страница просто не показывает год и не рисует его фильтр. */
 let ГОДА = {};
@@ -10494,7 +10506,7 @@ function group(title, closed, справка) {
   // Пояснения живут в вопросике у заголовка, а не строкой под списком:
   // текстом они забивали рельс, а нужны раз в жизни.
   h.innerHTML = '<span class="car">' + (closed ? '▼' : '▲') + '</span><span>' + esc(title) + '</span>' +
-    (справка ? '<span class="q" title="' + esc(справка) + '" role="note" tabindex="0">?</span>' : '');
+    (справка ? '<span class="q" data-tip="' + esc(справка) + '" role="note" tabindex="0" aria-label="' + esc(справка) + '">?</span>' : '');
   const q = h.querySelector('.q');
   if (q) q.addEventListener('click', e => e.stopPropagation());
   const b = document.createElement('div');
@@ -10545,7 +10557,7 @@ function opt(body, label, state, count, color, поставить, id) {
     (state === 2 ? ' on only' : state > 0 ? ' on' : state < 0 ? ' off' : '');
   row.setAttribute('aria-pressed', state > 0 ? 'true' : 'false');
   const жанр = String(id).startsWith('genre:');
-  row.title = state === 2 ? 'только этот жанр и никакой больше · щелчок снимает'
+  row.dataset.tip = state === 2 ? 'только этот жанр и никакой больше · щелчок снимает'
             : state > 0 ? (жанр ? 'выбрано · щелчок исключает' : 'выбрано · щелчок сразу — исключить, позже — снять')
             : state < 0 ? (жанр ? 'исключено · щелчок оставит треки только с этим жанром' : 'исключено · щелчок снимает')
             : 'щёлкни, чтобы оставить только это';
@@ -10751,7 +10763,7 @@ function rail() {
 
   const шапка = document.createElement('div');
   шапка.className = 'rail-hd';
-  шапка.innerHTML = 'отбор<span class="q" role="note" tabindex="0" title="' +
+  шапка.innerHTML = 'отбор<span class="q" role="note" tabindex="0" data-tip="' +
     esc('Щелчок оставляет только этот пункт. Сразу второй — исключает его из выдачи, ' +
         'а если вернуться к пункту позже, щелчок просто снимает отметку. ' +
         'У жанра щелчки считаются по порядку и ступеней на одну больше: ' +
@@ -10766,7 +10778,7 @@ function rail() {
     box.append(g); }
 
   { const { g, b } = group('моя оценка', true,
-      'Оценки, которые ты сам поставил трекам. Они живут в этом браузере и видны только тебе.');
+      'Живут в этом браузере и видны только тебе.');
     оценки(b, 'myTier');
     box.append(g); }
 
@@ -10800,21 +10812,19 @@ function rail() {
       box.append(g);
     } }
 
-  /* Год выпуска знаем не у всех: его отдельно спрашивают у MusicBrainz,
+  /* Год выпуска знаем не у всех: его отдельно спрашивают у Spotify,
      и пока файл не доехал, показывать нечего — группы просто нет. */
   { const десятилетия = годаСписок(false);
     if (десятилетия.length) {
       const { g, b } = group('год выпуска', false,
-        'Когда песня вышла — по данным MusicBrainz, а не из таблицы разносов. ' +
+        'Когда вышла сама песня, а не когда её разносили. Год приезжает из Spotify. ' +
         'Десятилетия выбираются щелчком; нужен точный год — набери его в поиске. ' +
-        'У треков, которых в MusicBrainz нет, года нет — под этот отбор они не попадают.');
+        'Там, где год спорный, его нет вовсе — такие треки под этот отбор не попадают.');
       годаГруппа(b, десятилетия);
       box.append(g);
     } }
 
-  { const { g, b } = group('разносы', false,
-      'Что есть у трека, кроме самой оценки: запись эфира, ссылка на трек, ' +
-      'твоё сердечко или твоя оценка.');
+  { const { g, b } = group('разносы', false);
     const п = (key, label) => opt(b, label, F.has.get(key) || 0, cnt('has', key), null,
       s => ход(F.has, key, s), 'has:' + key);
     п('roast', 'есть запись разноса');
@@ -10823,24 +10833,21 @@ function rail() {
     п('mine',  'мной оценённые');
     box.append(g); }
 
-  { const { g, b } = group('происхождение', false,
-      'Откуда трек пришёл на стрим: аниме, игра и прочее — колонка «Откуда» в таблице.');
+  { const { g, b } = group('происхождение', false);
     const все = частые(r => [r.origin], 20);
     список(b, 'origin', все, v =>
       opt(b, v.toLowerCase(), F.origin.get(v) || 0, cnt('origin', v), null,
         s => ход(F.origin, v, s), 'origin:' + v));
     box.append(g); }
 
-  { const { g, b } = group('тип трека', true,
-      'Что это за запись: опенинг, эндинг, саундтрек, обычный трек.');
+  { const { g, b } = group('тип трека', true);
     const все = частые(r => [r.kind], 20);
     список(b, 'kind', все, v =>
       opt(b, v, F.kind.get(v) || 0, cnt('kind', v), null,
         s => ход(F.kind, v, s), 'kind:' + v));
     box.append(g); }
 
-  { const { g, b } = group('тэги', false,
-      'Пометки из таблицы: мем, повтор, каверы и прочее, что композитор отметил отдельно.');
+  { const { g, b } = group('тэги', false);
     const все = частые(r => r.tags, 30);
     список(b, 'tag', все, v =>
       opt(b, v, F.tag.get(v) || 0, cnt('tag', v), null,
@@ -11028,12 +11035,12 @@ function card(r) {
          подсказке значка, в шапке страницы трека и во вкладке «Инфо».
          У повторов число оставлено — это не номер, а «сколько раз». */
       (r.разы
-        ? '<span class="badge strm many" title="' +
+        ? '<span class="badge strm many" data-tip="' +
           esc('Трек разносили ' + r.разы.length + ' раза: ' +
               r.разы.map(x => '№' + x.streamNum + ' — ' + (x.rate ? x.rate.label : 'без оценки')).join(', ')) +
           '">×' + r.разы.length + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3v4l5-4h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>' + '</span>'
         : r.streamNum != null
-        ? '<span class="badge strm" title="' + esc('разнос в эфире №' + r.streamNum) + '">' +
+        ? '<span class="badge strm" data-tip="' + esc('разнос в эфире №' + r.streamNum) + '">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3v4l5-4h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>' + '</span>'
         : (r.mine ? '<span class="badge strm">твой</span>' : '')) +
     '</div>' +
@@ -11045,13 +11052,13 @@ function card(r) {
        (Monstercat Release)»), поэтому полное название остаётся в
        подсказке ссылки — иначе такие пары в сетке не отличить. */
     '<div class="body"><a class="tt" href="' + trackHref(r) + '"' +
-        (имя.приписка ? ' title="' + esc(r.title) + '"' : '') + '>' +
+        (имя.приписка ? ' data-tip="' + esc(r.title) + '"' : '') + '>' +
         esc(имя.имя || '—') + '</a>' +
       '<div class="aa">' + esc(r.artist || '—') + '</div></div>' +
     '<div class="foot">' +
-      '<span class="rt-c" style="--tc:' + tColor(r.rate) + '" title="оценка композитора"><i class="tri"></i>' +
+      '<span class="rt-c" style="--tc:' + tColor(r.rate) + '" data-tip="оценка композитора"><i class="tri"></i>' +
         esc(shortRate(r.rate)) + '</span>' +
-      '<span class="rt-u" title="твоя оценка">' +
+      '<span class="rt-u" data-tip="твоя оценка">' +
         '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>' +
         '<span class="mv">–</span></span>' +
       '<button class="play" aria-label="Что можно сделать с треком «' + esc(r.title) + '»">' +
@@ -11576,7 +11583,8 @@ function drawCrumbs() {
     const b = d < 0 ? $('tPrev') : $('tNext');
     b.disabled = i < 0 || !n;
     b.onclick = n ? () => openTrack(n) : null;
-    b.title = n ? (n.title || '—') + ' — ' + (n.artist || '—') : '';
+    if (n) b.dataset.tip = (n.title || '—') + ' — ' + (n.artist || '—');
+    else delete b.dataset.tip;
   };
   step(-1); step(1);
 }
@@ -11612,7 +11620,7 @@ function drawHero() {
   const tgs = [];
   const идти = (поле, знач, текст, класс) =>
     '<button type="button" class="tg go ' + (класс || '') + '" data-поле="' + поле +
-    '" data-знач="' + esc(String(знач)) + '" title="Показать всё с этим в каталоге">' +
+    '" data-знач="' + esc(String(знач)) + '" data-tip="Показать всё с этим в каталоге">' +
     esc(текст) + '</button>';
 
   if (r.year) tgs.push(идти('release', '=' + r.year, String(r.year)));
@@ -11659,14 +11667,14 @@ function drawHero() {
           '<button class="act ic" id="tFav" aria-pressed="false">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
             '<path d="M12 20s-7-4.6-7-9.3A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.7C19 15.4 12 20 12 20z"/></svg></button>' +
-          '<button class="act ic" id="tCopy" title="Копировать ссылку" aria-label="Копировать ссылку">' +
+          '<button class="act ic" id="tCopy" data-tip="Копировать ссылку" aria-label="Копировать ссылку">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
             '<path d="M10 13a4 4 0 0 0 5.7.4l3-3A4 4 0 0 0 13 4.7l-1.7 1.7"/>' +
             '<path d="M14 11a4 4 0 0 0-5.7-.4l-3 3A4 4 0 0 0 11 19.3l1.7-1.7"/></svg></button>' +
-          '<button class="act ic" id="tShare" title="Поделиться" aria-label="Поделиться">' +
+          '<button class="act ic" id="tShare" data-tip="Поделиться" aria-label="Поделиться">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
             '<path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M5 14v5h14v-5"/></svg></button>' +
-          '<button class="act ic" id="tCover" title="' +
+          '<button class="act ic" id="tCover" data-tip="' +
             (MYCOV[r.key] ? 'Заменить обложку' : 'Предложить обложку') + '" aria-label="' +
             (MYCOV[r.key] ? 'Заменить обложку' : 'Предложить обложку') + '">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
@@ -11693,8 +11701,8 @@ function drawHero() {
     fav.classList.toggle('on', on);
     fav.setAttribute('aria-pressed', String(on));
     // Подписи у кнопки больше нет — состояние живёт в подсказке и цвете.
-    fav.title = on ? 'В избранном' : 'В избранное';
-    fav.setAttribute('aria-label', fav.title);
+    fav.dataset.tip = on ? 'В избранном' : 'В избранное';
+    fav.setAttribute('aria-label', fav.dataset.tip);
   };
   paintFav();
   fav.addEventListener('click', () => {
@@ -11740,6 +11748,88 @@ function копия(текст) {
     i.remove();
   }
 }
+
+/* ---------- подсказки ----------
+   Одна плашка на всю страницу. Мышью — через небольшую задержку, чтобы
+   не мелькала при проходе курсора; с клавиатуры — сразу по фокусу;
+   пальцем — по касанию, но только там, где касание ничего больше не
+   делает: у ссылки или кнопки палец должен нажимать их, а не вызывать
+   подсказку. */
+const ПОДСКАЗКА = (() => {
+  const ЗАДЕРЖКА = 130, ДЕРЖАТЬ = 3500;
+  let плашка = null, цель = null, таймер = 0, уход = 0;
+
+  const создать = () => {
+    if (плашка) return плашка;
+    плашка = document.createElement('div');
+    плашка.className = 'tip';
+    плашка.setAttribute('role', 'tooltip');
+    плашка.hidden = true;
+    document.body.append(плашка);
+    return плашка;
+  };
+
+  const спрятать = () => {
+    clearTimeout(таймер); clearTimeout(уход);
+    цель = null;
+    if (плашка) { плашка.classList.remove('on'); плашка.hidden = true; }
+  };
+
+  const показать = т => {
+    const текст = т.dataset.tip;
+    if (!текст) return;
+    цель = т;
+    const п = создать();
+    п.textContent = текст;
+    п.hidden = false;
+    /* Размер плашки известен только после того, как она в потоке —
+       поэтому место считаем уже по готовой, а не на глаз. */
+    const к = т.getBoundingClientRect();
+    const р = п.getBoundingClientRect();
+    const зазор = 8;
+    let верх = к.top - р.height - зазор;
+    if (верх < 6) верх = Math.min(к.bottom + зазор, innerHeight - р.height - 6);
+    const лево = Math.max(8, Math.min(к.left + к.width / 2 - р.width / 2,
+                                      innerWidth - р.width - 8));
+    п.style.top = Math.max(6, верх) + 'px';
+    п.style.left = лево + 'px';
+    requestAnimationFrame(() => п.classList.add('on'));
+  };
+
+  const кликабельна = т => {
+    const б = т.closest('a,button,input,select,textarea,[role="button"]');
+    return !!б && б !== т;
+  };
+
+  document.addEventListener('pointerover', e => {
+    if (e.pointerType === 'touch') return;        // палец идёт через click
+    const т = e.target.closest?.('[data-tip]');
+    if (!т || т === цель) return;
+    clearTimeout(таймер);
+    таймер = setTimeout(() => показать(т), ЗАДЕРЖКА);
+  });
+  document.addEventListener('pointerout', e => {
+    const т = e.target.closest?.('[data-tip]');
+    if (т && т === цель || т) спрятать();
+  });
+  document.addEventListener('focusin', e => {
+    const т = e.target.closest?.('[data-tip]');
+    if (т) показать(т); else спрятать();
+  });
+  document.addEventListener('focusout', спрятать);
+  document.addEventListener('click', e => {
+    const т = e.target.closest?.('[data-tip]');
+    if (!т || кликабельна(т)) { спрятать(); return; }
+    показать(т);
+    clearTimeout(уход);
+    уход = setTimeout(спрятать, ДЕРЖАТЬ);
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') спрятать(); });
+  addEventListener('scroll', спрятать, { passive: true, capture: true });
+  addEventListener('resize', спрятать);
+
+  return { спрятать };
+})();
 
 /* ---------- вкладки ---------- */
 /* Вкладка «О чём трек» стоит последней и появляется не у всех: пересказ
@@ -12120,7 +12210,7 @@ function drawMine() {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'seg';
     b.innerHTML = '<i></i>';
-    b.title = t.key;
+    b.dataset.tip = t.key;
     b.setAttribute('aria-label', 'Поставить «' + t.key + '»');
     b.addEventListener('click', () => {
       const cur = MY[r.key];
@@ -12304,7 +12394,7 @@ function drawFacts() {
   if (!кн) return;
   if (ручные.length >= ФАКТОВ && !мои.length) {
     кн.disabled = true;
-    кн.title = 'Про этот трек уже собрано три факта';
+    кн.dataset.tip = 'Про этот трек уже собрано три факта';
   } else кн.addEventListener('click', () => openFact(r));
 }
 /* ---------- распределение оценок ---------- */
