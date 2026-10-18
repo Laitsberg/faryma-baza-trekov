@@ -191,6 +191,12 @@ input,select{font:inherit;color:inherit}
 .sortbtn select{background:none;border:0;font:600 16px var(--b);color:var(--ink);cursor:pointer}
 .sortbtn select:focus{outline:none;color:var(--brand-hi)}
 
+/* Кнопка «вид» — ростом с чипы отбора и стоит с ними в одном ряду. */
+.viewbtn{display:inline-flex;align-items:center;gap:7px;background:var(--card-2);
+  border-radius:5px;padding:5px 11px;font-size:13px;color:var(--ink)}
+.viewbtn:hover{background:#4A4A52}
+.viewbtn svg{width:14px;height:14px;color:var(--brand-hi);flex:none}
+
 .chip{display:inline-flex;align-items:center;gap:9px;background:var(--card-2);
   border-radius:5px;padding:4px 7px 4px 11px;font-size:13px;color:var(--ink)}
 .chip button{width:17px;height:17px;display:grid;place-items:center;
@@ -263,13 +269,63 @@ input,select{font:inherit;color:inherit}
 .mods{display:flex;justify-content:space-between;width:100%;max-width:150px}
 .mods[hidden]{display:none}
 .mod{width:32px;height:26px;display:grid;place-items:center;border-radius:6px;
-  color:#fff;font-size:21px;line-height:1}
+  color:#fff;font-size:21px;line-height:1;text-shadow:0 1px 6px #000}
 .mod:hover:not(:disabled){background:rgba(255,255,255,.2)}
 .mod:disabled{opacity:.28;cursor:default}
 .clr{font-size:10.5px;color:rgba(255,255,255,.6);
-  text-decoration:underline;text-underline-offset:3px}
+  text-decoration:underline;text-underline-offset:3px;text-shadow:0 1px 6px #000}
 .clr[hidden]{display:none}
 .clr:hover{color:var(--like)}
+
+/* ---------- когда показывать шкалу ----------
+   Слой оценки лежит поверх обложки, и показывать его можно
+   по-разному. Режима три, потому что и устройства разные, и люди:
+
+   «наведение» (по умолчанию на мыши) — шкала выезжает под курсором,
+     витрина при этом чистая, видны одни обложки;
+   «сразу» — шкала видна на каждой обложке. Пестрее, зато оценка
+     ставится одним касанием. На телефоне это единственный рабочий
+     режим: наведения там нет вовсе, а палец по карточке открывает
+     трек, и до слоя оценки добраться нечем;
+   «без» — шкалы на карточке нет совсем, оценку ставят на странице
+     трека, где она большая и с подписями.
+
+   Выбранное лежит в localStorage; при первом заходе спрашиваем
+   окном #mView. */
+body[data-rater="always"] .rater{opacity:1;pointer-events:auto;padding-top:10px;
+  background:linear-gradient(180deg,rgba(0,0,0,.74) 0,rgba(0,0,0,.34) 52%,transparent 88%)}
+/* Шкалу поднимаем под самый верх — там подложка темнее всего и
+   обложки она закрывает меньше. Подпись и кнопки уходят под неё
+   порядком, а не отступом: иначе шкала прыгала бы вверх-вниз, когда
+   подпись появляется под курсором. */
+body[data-rater="always"] .rt{order:2}
+body[data-rater="always"] .mods{order:3}
+body[data-rater="always"] .clr{order:4}
+/* Тонкая рамка сегмента теряется на пёстрой обложке — на незамыленной
+   карточке даём ей собственную подложку и тень. */
+body[data-rater="always"] .card:not(:hover):not(:focus-within) .seg{
+  background:rgba(0,0,0,.55);box-shadow:0 1px 7px rgba(0,0,0,.75)}
+/* У оценённой карточки под шкалой стоят ещё подпись, плюс-минус и
+   «убрать» — их держим на виду и без курсора (на телефоне курсора
+   нет вовсе, и иначе свою оценку было бы не поправить), а значит и
+   подложку тянем ниже. */
+body[data-rater="always"] .card.rated:not(:hover):not(:focus-within) .rater{
+  background:linear-gradient(180deg,rgba(0,0,0,.8) 0,rgba(0,0,0,.62) 50%,
+    rgba(0,0,0,.26) 84%,transparent 100%)}
+/* Приглашение «оцени этот трек!» над каждой обложкой разом — шум:
+   пока на карточку не навели, сказать ему нечего. Прячем видимостью,
+   а не display: иначе шкала прыгала бы на каждом наведении.
+   Поставленную оценку (.named) не прячем — она тут к месту, и
+   плюс-минус с «убрать» тоже остаются: на телефоне иначе свою оценку
+   нельзя было бы ни поправить, ни снять. */
+body[data-rater="always"] .card:not(:hover):not(:focus-within) .rt:not(.named){visibility:hidden}
+
+body[data-rater="off"] .rater{display:none}
+/* Мылить обложку не для чего, если под ней ничего не появится. */
+body[data-rater="off"] .card:hover .art,
+body[data-rater="off"] .card:hover .art-fb,
+body[data-rater="off"] .card:focus-within .art,
+body[data-rater="off"] .card:focus-within .art-fb{filter:none}
 
 /* ---------- низ карточки ---------- */
 .body{padding:11px 12px 0;flex:1}
@@ -345,10 +401,15 @@ input,select{font:inherit;color:inherit}
 .foot-note a{color:var(--brand-hi)}
 
 /* ---------- окна ---------- */
-.modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;
+/* Центруем окно не выравниванием сетки, а автополями самого окна.
+   С place-items:center окно выше экрана вылезало за оба края разом, и
+   прокрутить к нижнему краю было нечем: на 320×800 кнопка «Готово»
+   оказывалась недостижима. С margin:auto лишнее место делится, а
+   когда его нет — окно встаёт сверху и спокойно прокручивается. */
+.modal{position:fixed;inset:0;z-index:60;display:grid;overflow:auto;padding:20px;
   background:rgba(10,10,12,.78)}
 .modal[hidden]{display:none}
-.mbox{position:relative;width:min(640px,100%);background:var(--card);
+.mbox{position:relative;width:min(640px,100%);margin:auto;background:var(--card);
   border-radius:12px;padding:24px}
 .mx{position:absolute;right:12px;top:10px;width:32px;height:32px;
   display:grid;place-items:center;border-radius:5px;color:var(--dim);font-size:17px}
@@ -370,6 +431,69 @@ input,select{font:inherit;color:inherit}
 .choice.off{opacity:.35;cursor:not-allowed}
 .choice.off:hover{transform:none;color:var(--dim)}
 .choice.off:hover .ic{color:var(--dim)}
+
+/* ---------- окно «как показывать шкалу» ----------
+   Образцы живые: это те же обложка-заглушка и шкала, только мельче,
+   и на них можно навести. Рисованных картинок тут нет намеренно —
+   картинка расходится с кодом в первый же месяц, а объяснять она
+   должна как раз то, что код делает. */
+.vopts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.vopt{display:flex;flex-direction:column;gap:10px;padding:11px 11px 13px;text-align:left;
+  background:var(--card-2);border:1.5px solid transparent;border-radius:10px;
+  color:var(--dim);transition:border-color .14s,color .14s}
+.vopt:hover{color:var(--ink)}
+.vopt[aria-pressed="true"]{border-color:var(--brand);color:var(--ink)}
+.vopt .txt{display:flex;flex-direction:column;gap:5px;min-width:0}
+.vopt b{font-size:13.5px;color:var(--ink);display:flex;align-items:baseline;
+  flex-wrap:wrap;gap:7px}
+.vopt .mark{font:600 9.5px var(--m);letter-spacing:.06em;text-transform:uppercase;
+  color:var(--brand-hi)}
+.vopt .mark.dim{color:var(--faint)}
+.vopt[aria-pressed="true"] .mark.on{display:inline}
+.vopt .mark.on{display:none}
+.vopt small{font-size:12px;line-height:1.45}
+
+.vprev{position:relative;aspect-ratio:1;border-radius:7px;overflow:hidden;background:#1F1F22}
+.vfb{position:absolute;inset:0;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--t-hor) 0,#1D1D21 82%);
+  font:800 34px/1 var(--d);letter-spacing:-.05em;color:rgba(255,255,255,.2);
+  transition:filter .22s}
+.vsc{position:absolute;left:0;right:0;top:0;display:flex;justify-content:center;gap:4px;
+  padding:11px 0 17px;transition:opacity .22s;
+  background:linear-gradient(180deg,rgba(0,0,0,.74) 0,transparent 100%)}
+.vsc i{width:12px;height:15px;border:1.3px solid rgba(255,255,255,.85);border-radius:3.5px;
+  background:rgba(0,0,0,.3)}
+.vsc i.on{background:var(--t-hor);border-color:var(--t-hor)}
+/* Нарисованный курсор: без него «при наведении» с картинки не
+   прочитать, а на телефоне наводить и вовсе нечем. */
+.vcur{position:absolute;right:24%;top:30%;width:16px;height:16px;opacity:0;
+  color:#fff;filter:drop-shadow(0 1px 3px #000)}
+.vcur svg{width:100%;height:100%;display:block}
+
+/* Образец «при наведении» показывает себя сам, по кругу: иначе на
+   нём не видно ничего, кроме обложки. Под курсором показ
+   выключается и работает настоящее поведение. */
+.vopt[data-mode="hover"] .vsc{opacity:0;animation:vdemo-sc 3.6s ease-in-out infinite}
+.vopt[data-mode="hover"] .vcur{animation:vdemo-cur 3.6s ease-in-out infinite}
+.vopt[data-mode="hover"] .vfb{animation:vdemo-blur 3.6s ease-in-out infinite}
+.vopt[data-mode="hover"]:hover .vsc{animation:none;opacity:1}
+.vopt[data-mode="hover"]:hover .vcur{animation:none;opacity:0}
+.vopt[data-mode="hover"]:hover .vfb{animation:none;filter:blur(5px) brightness(.4)}
+@keyframes vdemo-sc{0%,30%{opacity:0}42%,88%{opacity:1}100%{opacity:0}}
+@keyframes vdemo-cur{0%,20%{opacity:0;transform:translate(7px,7px)}
+  34%,86%{opacity:1;transform:none}100%{opacity:0;transform:none}}
+@keyframes vdemo-blur{0%,30%{filter:none}42%,88%{filter:blur(5px) brightness(.4)}
+  100%{filter:none}}
+/* Третий образец: шкалу не убираем, а гасим и перечёркиваем. Пустая
+   обложка ничем не отличалась бы от первого образца в его спокойной
+   фазе, а так с картинки видно, чего именно не будет. */
+.vopt[data-mode="off"] .vsc{opacity:.36}
+.vopt[data-mode="off"] .vsc i.on{background:none;border-color:rgba(255,255,255,.85)}
+.vopt[data-mode="off"] .vsc::after{content:'';position:absolute;left:8%;right:8%;top:17px;
+  height:2px;border-radius:2px;background:#fff;transform:rotate(-9deg);
+  box-shadow:0 1px 4px rgba(0,0,0,.9)}
+
+.vhint{margin:16px 0 0;color:var(--faint);font-size:12.5px}
 
 .field{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}
 .field label{font-size:12.5px;color:var(--dim)}
@@ -410,12 +534,30 @@ input,select{font:inherit;color:inherit}
   .hd-l{grid-row:2}
   .grid{grid-template-columns:repeat(auto-fill,minmax(144px,1fr));gap:12px}
   .art-fb{font-size:40px}
+  /* Шесть сегментов по 22px — это 157px, а карточка на экране 360px
+     шириной 152: шкалу срезало по краям. Мельче она нажимается всё
+     так же: 17×24 — это больше пальцевого минимума. */
+  .scale{gap:4px}
+  .seg{width:17px;height:24px}
   .choices{grid-template-columns:1fr}
   .choice{flex-direction:row;text-align:left;gap:14px;padding:13px 15px}
   .choice .ic{width:30px;height:30px;flex:none}
+  /* Три квадрата в столбик занимают три экрана — кладём образец
+     сбоку от подписи, как у .choice выше. */
+  .vopts{grid-template-columns:1fr}
+  .vopt{flex-direction:row;align-items:center;gap:13px;padding:11px 13px}
+  .vopt .vprev{width:88px;flex:none}
+  /* Шесть сегментов по 12px с зазорами в образец шириной 88px уже
+     не влезают — по краям их срезало. */
+  .vsc{gap:3px}
+  .vsc i{width:9px;height:12px}
+  .vopt[data-mode="off"] .vsc::after{top:15px}
 }
 @media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{transition-duration:.001ms!important}
+  *,*::before,*::after{transition-duration:.001ms!important;animation:none!important}
+  /* Образец «при наведении» показывал себя движением — без движения
+     показываем сразу итог, иначе на нём пустая обложка. */
+  .vopt[data-mode="hover"] .vsc{opacity:1}
 }
 
 /* ============================================================
@@ -723,6 +865,11 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
       <option value="az">по алфавиту</option>
      </select>
     </span>
+    <button class="viewbtn" id="btnView" type="button"
+      data-tip="когда показывать шкалу оценки на карточке">
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+     <span id="viewName">—</span>
+    </button>
     <span id="chips" style="display:contents"></span>
    </div>
   </div>
@@ -864,6 +1011,56 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
     <button type="submit" class="btn">Отправить</button>
    </div>
   </form>
+ </div>
+</div>
+
+<!-- Как показывать шкалу оценки на карточке. Окно открывается само
+     при первом заходе и потом по кнопке «вид» над сеткой. Образцы
+     живые: на них можно навести и щёлкнуть, прежде чем выбрать. -->
+<div class="modal" id="mView" hidden>
+ <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="vTitle">
+  <button class="mx" data-close aria-label="Закрыть">✕</button>
+  <div class="mhd">
+   <div class="k" style="color:var(--brand)">вид карточек</div>
+   <h2 id="vTitle">Как ставить свою оценку?</h2>
+   <p>У каждой карточки есть шкала на шесть ступеней — ею ты ставишь треку свою
+      оценку, она же потом работает фильтром. Выбери, когда её показывать.</p>
+  </div>
+  <div class="vopts" id="vOpts">
+   <button class="vopt" type="button" data-mode="hover" aria-pressed="false">
+    <span class="vprev">
+     <span class="vfb">AD</span>
+     <span class="vsc"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span>
+     <span class="vcur"><svg viewBox="0 0 24 24" fill="currentColor" stroke="#000" stroke-width="1.2" stroke-linejoin="round"><path d="M5 3l13 8.5-5.6 1.3L9.6 19z"/></svg></span>
+    </span>
+    <span class="txt">
+     <b>при наведении<span class="mark on">выбрано</span></b>
+     <small>Наводишь мышь — обложка уходит в размытие, и на ней выезжает шкала. Витрина остаётся чистой: видны одни обложки.</small>
+    </span>
+   </button>
+   <button class="vopt" type="button" data-mode="always" aria-pressed="false">
+    <span class="vprev">
+     <span class="vfb">AD</span>
+     <span class="vsc"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span>
+    </span>
+    <span class="txt">
+     <b>всегда на виду<span class="mark on">выбрано</span></b>
+     <small>Шкала стоит на каждой обложке. Оценка ставится одним касанием, без наведения — на телефоне работает только так.</small>
+    </span>
+   </button>
+   <button class="vopt" type="button" data-mode="off" aria-pressed="false">
+    <span class="vprev">
+     <span class="vfb">AD</span>
+     <span class="vsc"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span>
+    </span>
+    <span class="txt">
+     <b>не показывать<span class="mark on">выбрано</span></b>
+     <small>Карточки только для просмотра. Оценку ставишь на странице трека: открой любую карточку — шкала там большая и с подписями.</small>
+    </span>
+   </button>
+  </div>
+  <p class="vhint">Поменять можно когда угодно — кнопка «вид» над сеткой.</p>
+  <div class="mact"><button type="button" class="btn" data-close>Готово</button></div>
  </div>
 </div>
 
@@ -9730,9 +9927,32 @@ const ФАКТ_МАКС = 400;
 const FACT = Object.assign({}, FACTS_INLINE);
 let MYFACT = store.facts || {};
 
+/* ---------- вид карточек ----------
+   Когда показывать шкалу оценки поверх обложки: 'hover' (выезжает
+   под курсором), 'always' (видна всегда), 'off' (только на странице
+   трека). Правила вида — в CSS по body[data-rater]; здесь только
+   выбор и память о нём.
+
+   Сенсорному гостю по умолчанию ставим 'always': наведения на
+   телефоне нет вовсе, и в режиме 'hover' шкала была бы недостижима —
+   палец по карточке открывает трек. */
+const ВИДЫ = {
+  hover:  'шкала при наведении',
+  always: 'шкала всегда на виду',
+  off:    'шкала только на странице трека'
+};
+const ВИД_КОРОТКО = { hover: 'по наведению', always: 'шкала всегда', off: 'без шкалы' };
+const СЕНСОР = (() => { try { return matchMedia('(hover: none)').matches; } catch { return false; } })();
+const ВИД_СОВЕТ = СЕНСОР ? 'always' : 'hover';
+let ВИД = ВИДЫ[store.вид] ? store.вид : ВИД_СОВЕТ;
+let ВИД_СПРОШЕН = !!store.видСпрошен;
+// Ставим до первой отрисовки: иначе сетка моргнёт чужим режимом.
+document.body.dataset.rater = ВИД;
+
 const save = () => { try {
   localStorage.setItem(LS, JSON.stringify({
-    rates: MY, favs: [...FAV], adds: MINE, covers: MYCOV, facts: MYFACT
+    rates: MY, favs: [...FAV], adds: MINE, covers: MYCOV, facts: MYFACT,
+    вид: ВИД, видСпрошен: ВИД_СПРОШЕН
   }));
 } catch {} };
 
@@ -11131,6 +11351,10 @@ function card(r) {
   }
   function paint() {
     const v = MY[r.key];
+    // Оценённая карточка в режиме «шкала всегда» несёт поверх обложки
+    // целую панель — подпись, плюс-минус, «убрать». Ей нужна подложка
+    // потемнее, иначе на пёстрой обложке этого не прочитать.
+    el.classList.toggle('rated', !!v);
     if (v) {
       const t = TIERS.find(x => x.key === v.t) || TIERS[0];
       draw(v.t, v.m, TCOLOR[t.key]);
@@ -11340,6 +11564,51 @@ function toast(msg) {
 }
 
 /* ---------- пульт ---------- */
+/* Выбор вида: кнопка над сеткой и то же окно при первом заходе.
+   Щелчок по образцу применяется сразу — окно для того и открыто,
+   чтобы попробовать, а не угадать по подписи. */
+function видInit() {
+  const окно = $('mView');
+  const опции = [...document.querySelectorAll('#vOpts .vopt')];
+
+  // «Советуем» зависит от устройства, а не от вкуса автора страницы,
+  // поэтому метку ставит код, а не разметка.
+  const пометить = (mode, текст, тускло) => {
+    const o = опции.find(x => x.dataset.mode === mode); if (!o) return;
+    const m = document.createElement('span');
+    m.className = 'mark' + (тускло ? ' dim' : '');
+    m.textContent = текст;
+    o.querySelector('b').append(m);
+  };
+  пометить(ВИД_СОВЕТ, СЕНСОР ? 'для телефона' : 'советуем', false);
+  // На сенсорном экране «при наведении» наводить нечем — об этом
+  // честнее сказать, чем дать выбрать и оставить без шкалы вовсе.
+  if (СЕНСОР) пометить('hover', 'нужна мышь', true);
+
+  const показать = () => {
+    document.body.dataset.rater = ВИД;
+    $('viewName').textContent = ВИД_КОРОТКО[ВИД];
+    $('btnView').setAttribute('data-tip', ВИДЫ[ВИД] + ' — нажми, чтобы поменять');
+    опции.forEach(o => o.setAttribute('aria-pressed', String(o.dataset.mode === ВИД)));
+  };
+  показать();
+
+  $('btnView').addEventListener('click', () => { окно.hidden = false; });
+  $('vOpts').addEventListener('click', e => {
+    const o = e.target.closest('.vopt'); if (!o) return;
+    ВИД = o.dataset.mode; save(); показать();
+  });
+
+  /* Первый заход. Не спрашиваем поверх присланной ссылки на трек:
+     туда шли за разносом, а не за настройками, — и спрашиваем один
+     раз, даже если окно закрыли, ничего не выбрав: кнопка «вид»
+     никуда не девается. */
+  if (!ВИД_СПРОШЕН && !location.hash.startsWith('#t=')) {
+    окно.hidden = false;
+    ВИД_СПРОШЕН = true; save();
+  }
+}
+
 function controls() {
   const q = $('q');
   let timer;
@@ -11401,6 +11670,7 @@ function controls() {
 
   coverInit();
   factInit();
+  видInit();
 
   const ft = $('fToggle');
   ft.addEventListener('click', () => {
