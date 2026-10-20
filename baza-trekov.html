@@ -9634,8 +9634,27 @@ function youtubeId(url) {
   const host = u.hostname.replace(/^www\.|^m\./, '');
   let id = '';
   if (host === 'youtu.be') id = u.pathname.slice(1);
-  else if (/(^|\.)youtube\.com$/.test(host)) id = u.searchParams.get('v') || '';
-  return /^[\w-]{11}$/.test(id) ? id : '';
+  else if (/(^|\.)youtube\.com$/.test(host))
+    // трансляции и шортсы держат id в пути: /live/ID, /shorts/ID
+    id = u.searchParams.get('v') || (u.pathname.match(/^\/(?:live|shorts|embed)\/([^/]+)/) || [])[1] || '';
+  /* К ссылке в таблице иногда прилипает хвост: «…J5c\», «…vHc.»,
+     «…ang)», «…GuAA». У ютуба id ровно одиннадцать знаков — их и
+     берём. Сверено по архиву: все восемнадцать таких ссылок ведут
+     ровно на тот трек, что записан в строке. */
+  const m = id.match(/^[\w-]{11}/);
+  return m ? m[0] : '';
+}
+
+/* С какой секунды играть. У ссылок на трансляции время стоит в самой
+   ссылке (&t=2977): без него плеер включил бы трёхчасовой эфир с
+   начала, а не песню. Бывает и «1h2m3s», и «2977s». */
+function youtubeStart(url) {
+  let u;
+  try { u = new URL(url); } catch { return 0; }
+  const t = u.searchParams.get('t') || u.searchParams.get('start') || '';
+  if (/^\d+s?$/.test(t)) return parseInt(t, 10);
+  const m = t.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
+  return m && t ? (+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0) : 0;
 }
 
 /* Id трека в Spotify. Ссылки на альбом не годятся: играть надо
@@ -9645,6 +9664,18 @@ function spotifyId(url) {
   try { u = new URL(url); } catch { return ''; }
   if (!/(^|\.)spotify\.com$/.test(u.hostname)) return '';
   const m = u.pathname.match(/\/track\/([A-Za-z0-9]{22})/);
+  return m ? m[1] : '';
+}
+
+/* Ссылка на альбом, а не на трек. В архиве их тринадцать, и почти
+   все — синглы, выложенные альбомом из одной песни: «Shusho» у
+   Macaroni Empitsu. Spotify такой альбом играет и обложку его отдаёт —
+   а обложка альбома и есть обложка трека. */
+function spotifyAlbum(url) {
+  let u;
+  try { u = new URL(url); } catch { return ''; }
+  if (!/(^|\.)spotify\.com$/.test(u.hostname)) return '';
+  const m = u.pathname.match(/\/album\/([A-Za-z0-9]{22})/);
   return m ? m[1] : '';
 }
 
@@ -9658,6 +9689,14 @@ function yandexTrack(url) {
   if (both) return both[2] + '/' + both[1];
   const one = u.pathname.match(/\/track\/(\d+)/);
   return one ? one[1] : '';
+}
+/* Альбом в Яндекс.Музыке — тот же случай, что у Spotify. */
+function yandexAlbum(url) {
+  let u;
+  try { u = new URL(url); } catch { return ''; }
+  if (!/(^|\.)music\.yandex\.(ru|com|by|kz|uz)$/.test(u.hostname)) return '';
+  const m = u.pathname.match(/^\/album\/(\d+)\/?$/);
+  return m ? m[1] : '';
 }
 
 /* Ссылка на нужную минуту записи. Без тайм-кода — просто на стрим. */
@@ -10319,7 +10358,9 @@ function build(raw, снова) {
     CAT.push({
       rate, link,
       ytId: link ? youtubeId(link.url) : '',
+      ytStart: link ? youtubeStart(link.url) : 0,
       spId: link ? spotifyId(link.url) : '',
+      spAlbum: link ? spotifyAlbum(link.url) : '',
       artist: w.artist, title: w.title || 'без названия', full: w.full,
       // Номер трека в эфире. Нужен в ключе: в архиве попадаются два
       // трека с одинаковым названием в одном эфире, и без номера ключ
@@ -10403,7 +10444,9 @@ function mineRow(a) {
   return {
     rate: null, link,
     ytId: link ? youtubeId(link.url) : '',
+    ytStart: link ? youtubeStart(link.url) : 0,
     spId: link ? spotifyId(link.url) : '',
+    spAlbum: link ? spotifyAlbum(link.url) : '',
     artist: a.artist, title: a.title, full: a.artist + ' — ' + a.title,
     artistKey: '', parts: [], user: '', origin: '', source: '', kind: '',
     genres: [], tags: [], country: null, streamNum: null, date: null, moment: '', num: '',
@@ -11171,6 +11214,7 @@ function coverOf(r) {
   if (r.spCover)     return { url: r.spCover };
   if (r.ytId)        return { url: ytCover(r.ytId) };
   if (r.spId)        return { url: SPC[r.spId] || '', sp: r.spId };
+  if (r.spAlbum)     return { url: SPC['album/' + r.spAlbum] || '', sp: 'album/' + r.spAlbum };
   return null;
 }
 
@@ -11196,7 +11240,9 @@ function imgHtml(r, cls) {
    иначе на девятьсот треков вышло бы девятьсот запросов подряд. */
 function spCover(img, id) {
   if (SPC[id]) return set(SPC[id]);
-  fetch('https://open.spotify.com/oembed?url=' + encodeURIComponent('https://open.spotify.com/track/' + id))
+  // id трека — просто id, у альбома впереди «album/»
+  const адрес = 'https://open.spotify.com/' + (id.includes('/') ? id : 'track/' + id);
+  fetch('https://open.spotify.com/oembed?url=' + encodeURIComponent(адрес))
     .then(r => r.ok ? r.json() : null)
     .then(j => { if (j && j.thumbnail_url) { SPC[id] = j.thumbnail_url; saveSp(); set(j.thumbnail_url); } })
     .catch(() => {});
@@ -11657,7 +11703,8 @@ const T = { r: null, раз: 0, tab: 'roast', fresh: false, панели: {}, п
    зрителя, обложка и факты — общие на трек, поэтому подменяем только
    то, что у каждого разноса своё. */
 const ПОЛЯ_РАЗА = ['rate', 'streamNum', 'date', 'sec', 'vod', 'moment',
-                   'num', 'user', 'way', 'sum', 'link', 'full', 'ytId', 'spId'];
+                   'num', 'user', 'way', 'sum', 'link', 'full', 'ytId', 'spId',
+                   'ytStart', 'spAlbum'];
 function показ() {
   const r = T.r;
   const x = разы(r)[T.раз];
@@ -11726,7 +11773,7 @@ function showTrack(r) {
   if (T.r && T.r !== r) уходСТрека();
   // Открыли трек — показываем свежий разнос. Кроме случая, когда у него
   // в фоне играет другой: тогда тот самый, чтобы не завести второй плеер.
-  const з = ВК.сейчас;
+  const з = ЗВУК.сейчас;
   T.раз = з && з.трек === r.key ? з.раз : 0;
   T.r = r;
   $('page').hidden = true;
@@ -12155,7 +12202,7 @@ function drawTab() {
     T.панели = {};
     // Вернулись на трек, чей разнос всё это время играл в фоне, — берём
     // ту же панель, а не заводим вторую: иначе запись звучала бы дважды.
-    if (ВК.фон && ВК.фон.dataset.ключ === ключ) { T.панели.roast = ВК.фон; ВК.фон = null; }
+    if (ЗВУК.фон && ЗВУК.фон.dataset.ключ === ключ) { T.панели.roast = ЗВУК.фон; ЗВУК.фон = null; }
   }
   Object.entries(T.панели).forEach(([id, el]) => { el.hidden = id !== T.tab; });
   if (!T.панели[T.tab]) {
@@ -12170,18 +12217,18 @@ function drawTab() {
   плашкаЭфира();
 }
 
-/* Панели прошлого трека убираем — кроме той, где сейчас играет разнос:
+/* Панели прошлого трека убираем — кроме той, где сейчас что-то играет:
    она остаётся в документе спрятанной и доигрывает, а управлять ею
    можно из шапки. Перенести плеер в другое место нельзя — рамка при
-   переносе грузится заново и начинает запись сначала. */
+   переносе грузится заново и начинает сначала. */
 function отпустить(панели) {
   Object.values(панели).forEach(el => {
-    const з = ВК.сейчас;
+    const з = ЗВУК.сейчас;
     if (з && з.панель === el && з.играет) {
-      if (ВК.фон && ВК.фон !== el) убрать(ВК.фон);
+      if (ЗВУК.фон && ЗВУК.фон !== el) убрать(ЗВУК.фон);
       el.hidden = true;
       стопОригинал(el);
-      ВК.фон = el;
+      ЗВУК.фон = el;
       return;
     }
     убрать(el);
@@ -12189,26 +12236,32 @@ function отпустить(панели) {
 }
 
 function убрать(el) {
-  el.querySelectorAll('iframe').forEach(f => {
-    if (!f._вк) return;
-    f._вк.игрок.destroy();
-    if (ВК.сейчас === f._вк) ВК.сейчас = null;
+  [...el.querySelectorAll('iframe'), ...el.querySelectorAll('.pan.orig')].forEach(x => {
+    const з = x._звук;
+    if (!з) return;
+    try { з.игрок.destroy(); } catch {}
+    if (ЗВУК.сейчас === з) ЗВУК.сейчас = null;
   });
-  if (ВК.фон === el) ВК.фон = null;
+  if (ЗВУК.фон === el) ЗВУК.фон = null;
   el.remove();
 }
 
-/* Со страницы трека ушли — в каталог, в прикольчики, в заявки. Музыка
-   из оригинала замолкает: держать её фоном нечем, у этих плееров нет
-   управления снаружи. Разнос продолжает играть, и его видно в шапке. Но
-   только если плеер ВК отозвался: без его скрипта не узнать, играет ли
-   он вообще, и тогда запись просто выключаем — как и было задумано
-   на случай, если управление не заведётся. */
+/* Со страницы трека ушли — в каталог, в прикольчики, в заявки. То, что
+   играет, доигрывает, и его видно в шапке. Остальное замолкает. Плеер,
+   чей пульт не отозвался, — тоже: не узнать, играет ли он, поэтому
+   меняем рамку на её копию. Просто переприсвоить src нельзя: у рамки
+   loading="lazy", и спрятанная страница откладывала перезагрузку —
+   старая запись тем временем играла дальше. */
 function уходСТрека() {
-  Object.values(T.панели).forEach(стопОригинал);
-  const глухой = Object.values(T.панели).some(el =>
-    [...el.querySelectorAll('iframe.vk')].some(f => !f._вк));
-  if (глухой) { Object.values(T.панели).forEach(убрать); T.панели = {}; T.панелиКлюч = ''; }
+  Object.values(T.панели).forEach(el => {
+    стопОригинал(el);
+    el.querySelectorAll('iframe.vk').forEach(f => {
+      if (f._звук) return;
+      const н = f.cloneNode();
+      f.replaceWith(н);
+      подключитьВК(н, f._панель, f._r);
+    });
+  });
 }
 
 /* Трек могли разносить не один раз. Тогда над плеером встаёт выбор
@@ -12254,72 +12307,121 @@ function vkEmbed(vod, sec) {
     (sec > 0 ? '&t=' + vkTime(sec) : '');
 }
 
-/* ---------- управление записью эфира ----------
-   У плеера ВК есть свой скрипт: через него видно, играет ли запись, и
-   её можно поставить на паузу. Грузим его, только когда на странице
-   появился плеер, и не держим на нём ничего важного: не загрузился —
-   страница работает как раньше, а запись выключается при уходе. */
-const ВК = { загрузка: null, сейчас: null, фон: null };
+/* ---------- что играет ----------
+   Звук на странице трека один из трёх: запись разноса ВК, оригинал на
+   ютубе или в Spotify. У всех трёх плееров есть свой скрипт, через
+   который видно, играет ли он, и его можно поставить на паузу. Грузим
+   скрипт, только когда на странице появился его плеер, и ничего
+   важного на нём не держим: не загрузился — плеер просто замолкает,
+   когда со страницы уходят.
+
+   У Яндекс.Музыки такого скрипта нет вовсе, поэтому её плеер держать
+   фоном нечем: уходишь — он замолкает.
+
+   Играть может только что-то одно: новый звук ставит на паузу прежний,
+   где бы тот ни был. Тот, что играет, — в ЗВУК.сейчас; панель, которая
+   доигрывает за пределами открытого трека, — в ЗВУК.фон. */
+const ЗВУК = { сейчас: null, фон: null };
+const ПУЛЬТЫ = {};
+
+function скрипт(src, ошибка) {
+  const s = document.createElement('script');
+  s.src = src;
+  s.onerror = ошибка;
+  document.head.append(s);
+}
 
 function вкАпи() {
   if (window.VK && VK.VideoPlayer) return Promise.resolve(VK.VideoPlayer);
-  if (!ВК.загрузка) ВК.загрузка = new Promise(готово => {
-    const s = document.createElement('script');
-    s.src = 'https://vk.com/js/api/videoplayer.js';
-    s.onload = () => готово(window.VK && VK.VideoPlayer || null);
-    s.onerror = () => готово(null);
+  return ПУЛЬТЫ.vk || (ПУЛЬТЫ.vk = new Promise(готово => {
+    скрипт('https://vk.com/js/api/videoplayer.js', () => готово(null));
+    const ждать = setInterval(() => {
+      if (window.VK && VK.VideoPlayer) { clearInterval(ждать); готово(VK.VideoPlayer); }
+    }, 50);
     // Подвисшая загрузка не должна держать страницу вечно.
-    setTimeout(() => готово(window.VK && VK.VideoPlayer || null), 10000);
-    document.head.append(s);
-  });
-  return ВК.загрузка;
+    setTimeout(() => { clearInterval(ждать); готово(window.VK && VK.VideoPlayer || null); }, 10000);
+  }));
+}
+
+function ютубАпи() {
+  if (window.YT && YT.Player) return Promise.resolve(YT);
+  return ПУЛЬТЫ.yt || (ПУЛЬТЫ.yt = new Promise(готово => {
+    const было = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => { if (было) было(); готово(window.YT); };
+    скрипт('https://www.youtube.com/iframe_api', () => готово(null));
+    setTimeout(() => готово(window.YT && YT.Player ? YT : null), 10000);
+  }));
+}
+
+function спотифайАпи() {
+  return ПУЛЬТЫ.sp || (ПУЛЬТЫ.sp = new Promise(готово => {
+    window.onSpotifyIframeApiReady = api => готово(api);
+    скрипт('https://open.spotify.com/embed/iframe-api/v1', () => готово(null));
+    setTimeout(() => готово(null), 10000);
+  }));
+}
+
+/* Один звук. игрок — то, что умеет play, pause и destroy; у каждого
+   плеера они называются по-своему, поэтому сводим их к одному виду. */
+function звук(вид, площадка, игрок, панель, r) {
+  const з = { вид, площадка, игрок, панель, r, трек: T.r.key, раз: T.раз, играет: false };
+  з.идёт = () => {
+    if (з.играет && ЗВУК.сейчас === з) return;   // Spotify сообщает о ходе каждую секунду
+    if (ЗВУК.сейчас && ЗВУК.сейчас !== з) ЗВУК.сейчас.игрок.pause();
+    if (ЗВУК.фон && ЗВУК.фон !== панель) убрать(ЗВУК.фон);
+    // Плееры без пульта поставить на паузу нельзя — их замолкаем
+    // перезагрузкой, иначе два звука пошли бы разом.
+    панель.querySelectorAll('.pan.orig').forEach(p => {
+      if (!p._звук && p._сброс) p._сброс();
+    });
+    ЗВУК.сейчас = з;
+    з.играет = true;
+    плашкаЭфира();
+  };
+  з.стоит = () => {
+    if (!з.играет) return;
+    з.играет = false;
+    плашкаЭфира();
+  };
+  return з;
 }
 
 function подключитьВК(f, панель, r) {
   f.addEventListener('load', () => вкАпи().then(VP => {
-    if (!VP || !f.isConnected || f._вк) return;
+    if (!VP || !f.isConnected || f._звук) return;
     let игрок;
     try { игрок = VP(f); } catch { return; }
-    const з = { игрок, панель, r, трек: T.r.key, раз: T.раз, играет: false };
-    f._вк = з;
-    const идёт = () => {
-      // Новый разнос заглушает прежний, где бы тот ни играл, а вместе с
-      // ним и оригинал рядом: два звука сразу никому не нужны.
-      if (ВК.сейчас && ВК.сейчас !== з) ВК.сейчас.игрок.pause();
-      if (ВК.фон && ВК.фон !== панель) убрать(ВК.фон);
-      стопОригинал(панель);
-      ВК.сейчас = з;
-      з.играет = true;
-      плашкаЭфира();
-    };
-    const стоит = () => { з.играет = false; плашкаЭфира(); };
-    игрок.on('started', идёт);
-    игрок.on('resumed', идёт);
-    игрок.on('paused', стоит);
-    игрок.on('ended', стоит);
-    игрок.on('error', стоит);
+    const з = звук('разнос', 'VK', игрок, панель, r);
+    f._звук = з;
+    игрок.on('started', з.идёт);
+    игрок.on('resumed', з.идёт);
+    игрок.on('paused', з.стоит);
+    игрок.on('ended', з.стоит);
+    игрок.on('error', з.стоит);
   }), { once: true });
 }
 
-/* Плашка в шапке: что за разнос играет, пауза и выключить. Видна, только
-   когда самого плеера не видно — на витрине, на другом треке или на
-   соседней вкладке. Рядом с плеером она бы его просто повторяла. */
+/* Плашка в шапке: что играет, пауза и выключить. Видна, только когда
+   самого плеера не видно — на витрине, на другом треке или на соседней
+   вкладке. Рядом с плеером она бы его просто повторяла. */
 const ИК_ПАУЗА = '<svg viewBox="0 0 12 12" fill="currentColor"><path d="M2.5 1.5h2.6v9H2.5zM6.9 1.5h2.6v9H6.9z"/></svg>';
 const ИК_ИГРАТЬ = '<svg viewBox="0 0 12 12" fill="currentColor"><path d="M2.5 1l8.5 5-8.5 5z"/></svg>';
 
 function плашкаЭфира() {
   const бар = $('np');
-  const з = ВК.сейчас;
+  const з = ЗВУК.сейчас;
   const видно = з && з.панель.isConnected && з.панель.offsetParent !== null;
   if (!з || видно || !з.панель.isConnected) { бар.hidden = true; return; }
   бар.hidden = false;
+  const что = з.вид === 'разнос'
+    ? 'разнос' + (з.r.streamNum != null ? ' №' + з.r.streamNum : '')
+    : 'оригинал · ' + з.площадка;
   бар.innerHTML =
     '<button type="button" class="pp" aria-label="' + (з.играет ? 'Пауза' : 'Продолжить') + '">' +
       (з.играет ? ИК_ПАУЗА : ИК_ИГРАТЬ) + '</button>' +
-    '<button type="button" class="nt" data-tip="Открыть трек"><small>разнос' +
-      (з.r.streamNum != null ? ' №' + з.r.streamNum : '') + '</small>' +
+    '<button type="button" class="nt" data-tip="Открыть трек"><small>' + esc(что) + '</small>' +
       esc((з.r.title || '—') + ' — ' + (з.r.artist || '—')) + '</button>' +
-    '<button type="button" class="nx" aria-label="Выключить запись" data-tip="Выключить">✕</button>';
+    '<button type="button" class="nx" aria-label="Выключить" data-tip="Выключить">✕</button>';
   бар.querySelector('.pp').addEventListener('click', () => {
     з.играет ? з.игрок.pause() : з.игрок.play();
   });
@@ -12329,15 +12431,15 @@ function плашкаЭфира() {
   });
   бар.querySelector('.nx').addEventListener('click', () => {
     з.игрок.pause();
-    if (ВК.фон === з.панель) убрать(ВК.фон);
-    if (ВК.сейчас === з) ВК.сейчас = null;
+    if (ЗВУК.фон === з.панель) убрать(ЗВУК.фон);
+    if (ЗВУК.сейчас === з) ЗВУК.сейчас = null;
     плашкаЭфира();
   });
 }
 
 function tabRoast(box) {
   const r = показ();
-  box.append(панельРазноса(r, box), панельОригинала(r));
+  box.append(панельРазноса(r, box), панельОригинала(r, box));
 }
 
 function панельРазноса(r, duo) {
@@ -12371,6 +12473,7 @@ function панельРазноса(r, duo) {
     f.loading = 'lazy';
     f.title = 'Запись разноса';
     vid.append(f);
+    f._панель = duo; f._r = r;
     подключитьВК(f, duo, r);
   } else {
     vid.innerHTML = '<div class="stub">' + esc(r.moment
@@ -12396,19 +12499,27 @@ function панельРазноса(r, duo) {
    years.json, где его нашли по ссылке или по названию с тем же порогом
    доверия, что у года и обложки. У остальных площадок встроить нечего —
    остаётся ссылка. Выбор площадки запоминается: у кого Spotify без ВПН
-   не играет, тому незачем каждый раз переключать его на ютуб. */
+   не играет, тому незачем каждый раз переключать его на ютуб.
+
+   Ютуб и Spotify подключены к общему пульту (см. «что играет»): песня
+   доигрывает, если уйти со страницы, и её видно в шапке. */
 const ПЛОЩАДКИ = [['yt', 'YouTube'], ['sp', 'Spotify'], ['ya', 'Я.Музыка']];
 const ПЛ_LS = 'faryma-catalog-plat';
 
+/* Что можно встроить. У Spotify и Яндекса — путь вида «track/ID» или
+   «album/ID»: ссылка в таблице бывает и на альбом, обычно сингл из
+   одной песни. Spotify из years.json — всегда трек. */
 function оригиналы(r) {
+  const яТрек = r.link ? yandexTrack(r.link.url) : '';
+  const яАльбом = r.link ? yandexAlbum(r.link.url) : '';
   return {
     yt: r.ytId || '',
-    sp: r.spId || r.spSid || '',
-    ya: r.link ? yandexTrack(r.link.url) : ''
+    sp: r.spId ? 'track/' + r.spId : r.spSid ? 'track/' + r.spSid : r.spAlbum ? 'album/' + r.spAlbum : '',
+    ya: яТрек ? 'track/' + яТрек : яАльбом ? 'album/' + яАльбом : ''
   };
 }
 
-function панельОригинала(r) {
+function панельОригинала(r, duo) {
   const есть = оригиналы(r);
   const pan = document.createElement('section');
   pan.className = 'pan orig';
@@ -12431,8 +12542,20 @@ function панельОригинала(r) {
   try { любимая = localStorage.getItem(ПЛ_LS) || ''; } catch {}
   let сейчас = [любимая, из, 'yt', 'sp', 'ya'].find(k => k && есть[k]) || '';
   const длит = r.длит ? ' · ' + время(r.длит) : '';
+  const альбом = путь => путь.startsWith('album/') ? ' · ссылка на альбом' : '';
+
+  // Прежний плеер уходит вместе со своим пультом.
+  const забыть = () => {
+    const з = pan._звук;
+    pan._звук = null;
+    if (!з) return;
+    if (ЗВУК.сейчас === з) ЗВУК.сейчас = null;
+    try { з.игрок.destroy(); } catch {}
+    плашкаЭфира();
+  };
 
   const рисовать = (k, играть) => {
+    забыть();
     сейчас = k;
     ссылка.hidden = false;
     pan.querySelectorAll('.plat button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.k === k)));
@@ -12443,28 +12566,56 @@ function панельОригинала(r) {
     if (k === 'yt') {
       /* Домен youtube.com, а не youtube-nocookie.com: на сайте
          статистики выяснилось, что у части зрителей второй закрыт
-         наглухо, хотя обычный ютуб открывается. */
+         наглухо, хотя обычный ютуб открывается. enablejsapi — чтобы
+         подключить пульт; start — у ссылок на трансляции песня идёт
+         не с начала ролика. */
       vid.innerHTML = играть
-        ? кадр('https://www.youtube.com/embed/' + есть.yt + '?autoplay=1', 'Оригинал на YouTube')
+        ? кадр('https://www.youtube.com/embed/' + есть.yt + '?autoplay=1&enablejsapi=1' +
+            (r.ytStart ? '&start=' + r.ytStart : ''), 'Оригинал на YouTube')
         : '<button type="button" class="face" aria-label="Слушать на YouTube">' +
             '<img alt="" loading="lazy" src="https://i.ytimg.com/vi/' + esc(есть.yt) + '/hqdefault.jpg">' +
             '<span class="yt"></span></button>';
       const face = vid.querySelector('.face');
       if (face) face.addEventListener('click', () => {
-        // Включили песню — разнос замолкает, иначе они звучат вместе.
-        if (ВК.сейчас && ВК.сейчас.играет) ВК.сейчас.игрок.pause();
+        // Включили песню — прежний звук замолкает сразу, не дожидаясь
+        // пульта ютуба: тот может и не загрузиться.
+        if (ЗВУК.сейчас && ЗВУК.сейчас.играет) ЗВУК.сейчас.игрок.pause();
         рисовать('yt', true);
+      });
+      const f = vid.querySelector('iframe');
+      if (f) ютубАпи().then(YT => {
+        if (!YT || !f.isConnected) return;
+        const з = звук('оригинал', 'YouTube', null, duo, r);
+        const п = new YT.Player(f, { events: { onStateChange: e => {
+          if (e.data === 1) з.идёт();
+          else if (e.data === 0 || e.data === 2) з.стоит();
+        } } });
+        з.игрок = { play: () => п.playVideo(), pause: () => п.pauseVideo(), destroy: () => п.destroy() };
+        pan._звук = з;
       });
       ссылка.href = r.ytId && r.link ? r.link.url : 'https://youtu.be/' + есть.yt;
       ссылка.textContent = 'YouTube ↗' + длит;
     } else if (k === 'sp') {
-      vid.innerHTML = кадр('https://open.spotify.com/embed/track/' + есть.sp, 'Оригинал в Spotify');
-      ссылка.href = 'https://open.spotify.com/track/' + есть.sp;
-      ссылка.textContent = 'Spotify ↗' + длит;
+      /* Плеер Spotify ставит его собственный скрипт — тогда к нему есть
+         пульт. Скрипт не загрузился — обычная рамка, просто без пульта. */
+      vid.innerHTML = '<div class="sp-host"></div>';
+      const место = vid.firstChild;
+      спотифайАпи().then(API => {
+        if (!место.isConnected) return;
+        if (!API) { vid.innerHTML = кадр('https://open.spotify.com/embed/' + есть.sp, 'Оригинал в Spotify'); return; }
+        API.createController(место, { uri: 'spotify:' + есть.sp.replace('/', ':'), width: '100%', height: '100%' }, c => {
+          const з = звук('оригинал', 'Spotify', { play: () => c.resume(), pause: () => c.pause(), destroy: () => c.destroy() }, duo, r);
+          pan._звук = з;
+          c.addListener('playback_update', e => { e.data.isPaused ? з.стоит() : з.идёт(); });
+        });
+      });
+      ссылка.href = r.spId || r.spAlbum ? r.link.url : 'https://open.spotify.com/' + есть.sp;
+      ссылка.textContent = 'Spotify ↗' + альбом(есть.sp) + длит;
     } else if (k === 'ya') {
-      vid.innerHTML = кадр('https://music.yandex.ru/iframe/track/' + есть.ya, 'Оригинал в Яндекс.Музыке');
+      // У Яндекса пульта нет: уходишь со страницы — плеер замолкает.
+      vid.innerHTML = кадр('https://music.yandex.ru/iframe/' + есть.ya, 'Оригинал в Яндекс.Музыке');
       ссылка.href = r.link.url;
-      ссылка.textContent = 'Яндекс.Музыка ↗' + длит;
+      ссылка.textContent = 'Яндекс.Музыка ↗' + альбом(есть.ya) + длит;
     } else {
       vid.innerHTML = '<div class="stub"><span>' + (r.link
         ? esc('Плеера у площадки «' + r.link.platform + '» нет — только ссылка.') +
@@ -12480,14 +12631,26 @@ function панельОригинала(r) {
     try { localStorage.setItem(ПЛ_LS, b.dataset.k); } catch {}
     рисовать(b.dataset.k, false);
   }));
-  // Уйти со страницы — значит замолчать: держать песню фоном нечем.
-  pan._сброс = () => { if (vid.querySelector('iframe')) рисовать(сейчас, false); };
+  /* Замолчать. Плеер с пультом ставим на паузу — так он и место в песне
+     помнит. Без пульта (Яндекс, или скрипт не загрузился) остаётся
+     только перезагрузить рамку. */
+  pan._сброс = () => {
+    const з = pan._звук;
+    if (з) { if (з.играет) з.игрок.pause(); return; }
+    if (vid.querySelector('iframe')) рисовать(сейчас, false);
+  };
   рисовать(сейчас, false);
   return pan;
 }
 
+/* Всё, что в панели может звучать, замолкает — кроме того, что играет
+   сейчас: оно доигрывает и видно в шапке. */
 function стопОригинал(el) {
-  el.querySelectorAll('.pan.orig').forEach(p => p._сброс && p._сброс());
+  el.querySelectorAll('.pan.orig').forEach(p => {
+    const з = ЗВУК.сейчас;
+    if (з && p._звук === з && з.играет) return;
+    if (p._сброс) p._сброс();
+  });
 }
 
 /* ---------- комментарии ----------
@@ -13471,11 +13634,12 @@ const ИГРА = { r: null, ответ: false, площадки: null };
 
 /* Откуда брать треки. Ютуб первым и включён с порога: на сайте
    статистики выяснилось, что он единственный открывается у
-   большинства зрителей без ВПН. */
+   большинства зрителей без ВПН. Ссылки на альбом в игру не берём:
+   угадывают одну песню, а альбом заиграл бы с первой. */
 const ИГРА_ПЛ = [
   { k: 'yt', name: 'YouTube',       есть: r => !!оригиналы(r).yt },
-  { k: 'sp', name: 'Spotify',       есть: r => !!оригиналы(r).sp },
-  { k: 'ya', name: 'Яндекс.Музыка', есть: r => !!оригиналы(r).ya }
+  { k: 'sp', name: 'Spotify',       есть: r => оригиналы(r).sp.startsWith('track/') },
+  { k: 'ya', name: 'Яндекс.Музыка', есть: r => оригиналы(r).ya.startsWith('track/') }
 ];
 
 const играСчёт = () => {
@@ -13553,14 +13717,15 @@ function играСледующий() {
       box.innerHTML = '<button type="button" class="face" aria-label="Слушать">' +
         '<img alt="" src="https://i.ytimg.com/vi/' + esc(есть.yt) + '/hqdefault.jpg"><span class="yt"></span></button>';
       box.querySelector('.face').addEventListener('click', () => {
-        box.innerHTML = кадр('https://www.youtube.com/embed/' + есть.yt + '?autoplay=1');
+        box.innerHTML = кадр('https://www.youtube.com/embed/' + есть.yt + '?autoplay=1' +
+          (r.ytStart ? '&start=' + r.ytStart : ''));
       });
-    } else if (k === 'sp') box.innerHTML = кадр('https://open.spotify.com/embed/track/' + есть.sp);
-    else box.innerHTML = кадр('https://music.yandex.ru/iframe/track/' + есть.ya);
+    } else if (k === 'sp') box.innerHTML = кадр('https://open.spotify.com/embed/' + есть.sp);
+    else box.innerHTML = кадр('https://music.yandex.ru/iframe/' + есть.ya);
   };
   ИГРА.сброс();
   if (k === 'yt') { где = 'на ютубе'; адрес = 'https://youtu.be/' + есть.yt; }
-  else if (k === 'sp') { где = 'в Spotify'; адрес = 'https://open.spotify.com/track/' + есть.sp; }
+  else if (k === 'sp') { где = 'в Spotify'; адрес = 'https://open.spotify.com/' + есть.sp; }
   else { где = 'в Яндекс.Музыке'; адрес = r.link.url; }
   // Понять из скрипта, что чужой плеер не открылся, нельзя — поэтому
   // запасной выход держим рядом всегда.
