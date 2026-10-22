@@ -106,7 +106,9 @@ input,select{font:inherit;color:inherit}
   border-left:7px solid var(--brand);
   border-top:5px solid transparent;border-bottom:5px solid transparent}
 .nav a:hover{color:var(--brand-hi)}
-.nav a[aria-current="page"]{color:#fff}
+/* Страница, на которой стоишь, — оранжевым: белый от соседних пунктов
+   на глаз не отличался. */
+.nav a[aria-current="page"]{color:var(--brand-hi)}
 
 .ava{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;
   background:#111;border:1px solid var(--line);font-size:17px}
@@ -183,16 +185,27 @@ input,select{font:inherit;color:inherit}
 
 
 /* ---------- шапка выдачи ---------- */
-.hd{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;
+.hd{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 20px;
   align-items:start;margin-bottom:16px}
-.hd-l{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-width:0}
+/* Выбранный отбор — под заголовком, во всю ширину. Справа от заголовка
+   остаётся одна сортировка. */
+.hd-l{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}
+.hd-l:empty{display:none}
 .sortbtn{display:flex;align-items:center;gap:9px;font-weight:600;font-size:16px;color:var(--ink)}
 .sortbtn .car{color:var(--brand);font-size:10px}
 .sortbtn select{background:none;border:0;font:600 16px var(--b);color:var(--ink);cursor:pointer}
+/* Раскрытый список у выпадашки рисует браузер, и без подсказки он
+   белый. color-scheme просит тёмный, а цвет пунктов задаём сами. */
+select{color-scheme:dark}
+select option{background:var(--card-2);color:var(--ink)}
 .sortbtn select:focus{outline:none;color:var(--brand-hi)}
 
-.chip{display:inline-flex;align-items:center;gap:9px;background:var(--card-2);
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--card-2);
   border-radius:5px;padding:4px 7px 4px 11px;font-size:13px;color:var(--ink)}
+/* У оценки впереди кружок её цвета — как в рельсе. */
+.chip i{width:8px;height:8px;border-radius:50%;flex:none;background:var(--tc)}
+/* Исключённое — зачёркнуто, как в самом рельсе. */
+.chip.off .v{text-decoration:line-through;color:var(--dim)}
 .chip button{width:17px;height:17px;display:grid;place-items:center;
   border-radius:3px;color:var(--dim)}
 .chip button:hover{background:#4A4A52;color:#fff}
@@ -201,7 +214,7 @@ input,select{font:inherit;color:inherit}
 .chip.reset:hover{background:#4A4A52}
 
 .h1{margin:0;font-family:var(--d);font-weight:800;color:var(--brand-hi);
-  font-size:clamp(22px,2.4vw,30px);letter-spacing:-.02em;line-height:1.05;text-align:right}
+  font-size:clamp(22px,2.4vw,30px);letter-spacing:-.02em;line-height:1.05}
 .h1 small{display:block;margin-top:6px;font-family:var(--m);font-size:11px;
   font-weight:500;color:var(--faint);letter-spacing:.03em;
   font-variant-numeric:tabular-nums}
@@ -214,7 +227,11 @@ input,select{font:inherit;color:inherit}
   grid-template-columns:repeat(auto-fill,
     minmax(max(196px, calc((100% - (var(--n) - 1) * 18px) / var(--n))), 1fr))}
 
-.card{background:var(--card);border-radius:var(--r);overflow:hidden;cursor:pointer;
+/* Трек, который ты уже оценил, отмечен полоской цвета твоей оценки по
+   левому краю: видно и издалека, и не мешает обложке. */
+.card.my::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;z-index:6;
+  background:var(--mc);pointer-events:none}
+.card{position:relative;background:var(--card);border-radius:var(--r);overflow:hidden;cursor:pointer;
   display:flex;flex-direction:column;transition:transform .16s}
 .card:hover{transform:translateY(-2px)}
 .card.flash{box-shadow:0 0 0 2px var(--brand)}
@@ -235,16 +252,21 @@ input,select{font:inherit;color:inherit}
 
 /* z-index выше слоя оценки: тот растянут на всю обложку и на наведении
    ловит мышь, из-за чего сердечко под ним не нажималось. */
-.badge{position:absolute;z-index:4;bottom:8px;
-  display:flex;align-items:center;gap:5px;
-  font-family:var(--m);font-size:12px;color:#fff;
-  text-shadow:0 1px 5px rgba(0,0,0,.85)}
-.badge svg{width:15px;height:15px}
-.fav{left:9px}
-.fav:hover{color:var(--like)}
-.fav[aria-pressed="true"]{color:var(--like)}
+/* Сердечко и облачко — на полупрозрачной тёмной плашке: на белой
+   обложке голый значок пропадал. */
+.badge{position:absolute;z-index:4;bottom:8px;min-width:32px;height:32px;padding:0 7px;
+  display:flex;align-items:center;justify-content:center;gap:5px;border-radius:8px;
+  background:rgba(14,14,16,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  font-family:var(--m);font-size:12.5px;color:#fff}
+.badge svg{width:19px;height:19px}
+.badge:empty{display:none}
+.fav{left:8px}
+/* Лайк — оранжевым, а не красным: оранжевый на странице значит «это
+   сделал ты сам». Красный остался за ошибками. */
+.fav:hover{color:var(--brand-hi)}
+.fav[aria-pressed="true"]{color:var(--brand)}
 .fav[aria-pressed="true"] svg{fill:currentColor}
-.strm{right:9px;color:rgba(255,255,255,.9)}
+.strm{right:8px;color:rgba(255,255,255,.92)}
 
 /* ---------- слой оценки ---------- */
 .rater{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;
@@ -262,6 +284,22 @@ input,select{font:inherit;color:inherit}
   transition:width .2s}
 .mods{display:flex;justify-content:space-between;width:100%;max-width:150px}
 .mods[hidden]{display:none}
+/* «Перейти к треку» — в свободной середине обложки, под шкалой и над
+   значками. Щелчок по любому пустому месту ведёт туда же; надпись
+   говорит об этом прямо. */
+.goto-w{flex:1;display:grid;place-items:center;padding-bottom:42px;min-height:0}
+.goto{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);
+  color:#fff;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap}
+.goto:hover{background:var(--brand);border-color:var(--brand);color:#151517}
+/* Шкала на компьютере шире и выше: квадратики по 22 пикселя были
+   мельче пальца и мыши. На телефоне они в самый раз — не трогаем. */
+@media(min-width:761px){
+  .rater .scale{width:100%;max-width:236px;gap:6px}
+  .rater .seg{flex:1;width:auto;height:34px;border-radius:7px}
+  .rater .mods{max-width:236px}
+  .rater .rt{font-size:14px}
+}
 .mod{width:32px;height:26px;display:grid;place-items:center;border-radius:6px;
   color:#fff;font-size:21px;line-height:1}
 .mod:hover:not(:disabled){background:rgba(255,255,255,.2)}
@@ -402,9 +440,7 @@ input,select{font:inherit;color:inherit}
   .tb-search{order:3;flex-basis:100%}
   .nav{margin-left:0;order:2;gap:15px;font-size:14px;overflow-x:auto}
   .nav a{font-size:14px;white-space:nowrap}
-  .hd{grid-template-columns:1fr}
-  .h1{text-align:left;grid-row:1}
-  .hd-l{grid-row:2}
+  .sortbtn,.sortbtn select{font-size:14px}
   .grid{grid-template-columns:repeat(auto-fill,minmax(144px,1fr));gap:12px}
   .art-fb{font-size:40px}
   .choices{grid-template-columns:1fr}
@@ -450,13 +486,25 @@ input,select{font:inherit;color:inherit}
 
 /* ---------- шапка трека ---------- */
 .hero{position:relative;background:var(--card);border-radius:var(--r);overflow:hidden}
-/* Обложка ещё раз, размазанная в фон: карточка перестаёт быть серым
-   прямоугольником, а читать поверх неё не мешает — сверху лежит
-   почти непрозрачная заливка цвета страницы. */
-.hero-bg{position:absolute;inset:-40px;background-size:cover;background-position:center;
-  filter:blur(34px) saturate(1.3)}
-.hero-bg::after{content:'';position:absolute;inset:0;
-  background:linear-gradient(155deg,rgba(27,27,29,.62),rgba(27,27,29,.95))}
+/* Когда под страницей есть фон из обложки, шапка трека полупрозрачная:
+   глухая, она лежала бы на нём серой заплаткой. */
+.atmo-on .hero{background:rgba(30,30,34,.55);border:1px solid rgba(255,255,255,.06)}
+
+/* ---------- фон страницы трека ----------
+   Обложка, размытая во весь верх страницы и тающая книзу до нашего
+   обычного тёмного — к середине первого экрана её уже нет. Лежит за
+   всем содержимым и прокручивается вместе со страницей. */
+.atmo{position:absolute;left:0;right:0;top:0;height:1100px;z-index:-1;overflow:hidden;
+  pointer-events:none;
+  -webkit-mask-image:linear-gradient(#000 0%,rgba(0,0,0,.55) 35%,transparent 80%);
+          mask-image:linear-gradient(#000 0%,rgba(0,0,0,.55) 35%,transparent 80%)}
+.atmo[hidden]{display:none}
+.atmo i{position:absolute;inset:-120px;background-size:cover;background-position:center 30%;
+  filter:blur(70px) saturate(1.35);opacity:.5}
+/* Шапка над таким фоном — тёмным стеклом: окрашена тем же фоном, но
+   темнее страницы, а не светлее, и не торчит серой полосой. */
+.atmo-on .tb{background:rgba(14,14,16,.62);backdrop-filter:blur(18px) saturate(1.2);
+  -webkit-backdrop-filter:blur(18px) saturate(1.2);box-shadow:0 1px 0 rgba(255,255,255,.04)}
 .hero-in{position:relative;display:flex;gap:18px;padding:18px}
 .hero-cov{position:relative;width:196px;height:196px;flex:none;border-radius:var(--r);
   overflow:hidden;background:#1F1F22;padding:0;cursor:zoom-in}
@@ -523,7 +571,7 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
    трека разной длины и глазу не за что зацепиться. */
 .act.off{opacity:.35;pointer-events:none}
 .act svg{width:15px;height:15px;flex:none}
-.act.on{color:var(--like)}
+.act.on{color:var(--brand)}
 .act.on svg{fill:currentColor}
 /* У поданной заявки на обложку кнопка подсвечена: подписи, которая
    раньше говорила «заменить обложку», больше нет. */
@@ -537,11 +585,16 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 .act-sep{width:1px;height:22px;align-self:center;margin:0 4px;background:var(--line)}
 
 /* ---------- вкладки и панели ---------- */
-.tabs{display:flex;gap:8px;flex-wrap:wrap}
-.tab{background:var(--card);border-radius:5px;padding:10px 16px;font-size:13px;
-  color:var(--dim);min-height:38px}
+/* Вкладки — словами, без плашек: четыре серых прямоугольника подряд
+   рябили. Выбранная — белая и жирная, с оранжевой чертой снизу; под
+   всем рядом тонкая линия. */
+.tabs{display:flex;gap:4px 26px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:0 4px}
+.tab{position:relative;padding:10px 0 12px;font-size:15px;font-weight:600;color:var(--dim);
+  min-height:38px}
 .tab:hover{color:var(--ink)}
-.tab[aria-selected="true"]{background:var(--card-2);color:var(--ink);font-weight:600}
+.tab[aria-selected="true"]{color:#fff;font-weight:700}
+.tab[aria-selected="true"]::after{content:'';position:absolute;left:0;right:0;bottom:-1px;
+  height:2px;border-radius:2px;background:var(--brand)}
 .pan{background:var(--card);border-radius:var(--r);padding:16px}
 .pan:empty{display:none}
 .pan h2{font:700 15px var(--d);margin:0 0 12px;display:flex;align-items:baseline;
@@ -582,6 +635,12 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 /* Ютуб не вставляется сразу: сначала превью с кнопкой. Страница не
    тянет плеер ради каждого трека, и у кого ютуб не открывается, тот
    видит картинку и ссылку, а не серое битое окно. */
+/* Плеер Spotify рисуется только в трёх высотах — 152, 232 и 352, а
+   ниже них рамка пустая: в окне 16:9 под плеером зиял провал. Поэтому
+   рисуем его в ближайшей высоте не меньше окна и ужимаем масштабом
+   (--k считает скрипт): плеер занимает окно целиком. */
+.vid.sp iframe{inset:auto;left:0;top:0;width:calc(100% / var(--k,1));height:calc(100% / var(--k,1));
+  transform:scale(var(--k,1));transform-origin:0 0}
 .face{position:absolute;inset:0;width:100%;height:100%;padding:0;display:block}
 .face img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .face .yt{position:absolute;left:50%;top:50%;width:64px;height:44px;margin:-22px 0 0 -32px;
@@ -673,9 +732,16 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 .cnt{margin-left:auto;font-family:var(--m);font-size:11.5px;color:var(--faint)}
 .cnt.over{color:var(--like)}
 
-.ff{margin:0;padding:0;list-style:none;display:grid;gap:11px}
-.ff li{display:flex;gap:10px;font-size:13.5px;line-height:1.45;color:var(--dim)}
-.ff li i{flex:none;width:6px;height:6px;margin-top:7px;border-radius:50%;background:var(--brand)}
+/* Факты нумеруются «01, 02» вместо точек и разделены еле заметной
+   чертой. Черта начинается от текста, а не от номера: во всю ширину
+   она резала панель на полосы. */
+.ff{margin:0;padding:0;list-style:none;display:grid;gap:17px;counter-reset:факт}
+.ff li{position:relative;display:flex;gap:12px;font-size:13.5px;line-height:1.5;color:var(--dim);
+  counter-increment:факт}
+.ff li + li::before{content:'';position:absolute;left:32px;right:0;top:-9px;height:1px;
+  background:rgba(255,255,255,.07)}
+.ff li i{flex:none;width:20px;font:600 12px/1.9 var(--m);font-style:normal;color:var(--brand)}
+.ff li i::before{content:counter(факт,decimal-leading-zero)}
 .ff b{color:var(--ink);font-weight:600}
 .ff b.k{font-family:var(--m);color:var(--tc,var(--ink))}
 
@@ -839,6 +905,7 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 <meta name="theme-color" content="#1B1B1D">
 </head>
 <body>
+<div class="atmo" id="atmo" hidden><i></i></div>
 
 <header class="tb">
  <div class="tb-in">
@@ -878,7 +945,6 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
  <main>
   <div class="hd">
    <h1 class="h1">база треков<small id="count">—</small></h1>
-   <div class="hd-l">
     <span class="sortbtn">
      <span class="car">▼</span>
      <select id="sort" aria-label="Сортировка">
@@ -889,8 +955,7 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
       <option value="az">по алфавиту</option>
      </select>
     </span>
-    <span id="chips" style="display:contents"></span>
-   </div>
+   <div class="hd-l" id="chips"></div>
   </div>
 
   <div class="grid" id="grid"><div class="boot" id="boot">Читаю таблицу…</div></div>
@@ -11119,50 +11184,53 @@ function rail() {
     box.append(g); }
 }
 
-/* ---------- плашки отбора ---------- */
+/* ---------- плашки отбора ----------
+   По плашке на каждое выбранное значение, и в ней только само значение:
+   «Россия», «гениально», «#баллада», а не «страна: Россия». Что это
+   страна, а то жанр — видно по самому слову. У оценки впереди кружок
+   её цвета, у своей оценки — пометка «моя», иначе её не отличить от
+   оценки композитора. Исключённое зачёркнуто, как в рельсе. Крестик
+   снимает одно значение, а не всю группу. */
 function chips() {
   const box = $('chips');
   box.textContent = '';
-  const add = (label, val, off) => {
+  const add = (текст, снять, { цвет = '', прочь = false, подпись = '' } = {}) => {
     const c = document.createElement('span');
-    c.className = 'chip';
-    c.innerHTML = esc(label) + ': <b>' + esc(val) + '</b>' +
-      '<button aria-label="Убрать: ' + esc(label) + '">' +
+    c.className = 'chip' + (прочь ? ' off' : '');
+    c.innerHTML = (цвет ? '<i style="--tc:' + цвет + '"></i>' : '') +
+      '<span class="v">' + esc(текст) + '</span>' +
+      '<button aria-label="Убрать: ' + esc(подпись || текст) + '">' +
       '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>';
-    c.querySelector('button').addEventListener('click', () => { off(); rail(); render(); });
+    c.querySelector('button').addEventListener('click', () => { снять(); rail(); render(); });
     box.append(c);
   };
-
   const имя = v => String(v).replace(/^=/, '');
-  const свод = (m, f = имя, шов = ', ') => {
-    const п = плюс(m).map(f), н = минус(m).map(f);
-    return (п.length ? п.join(шов) : 'любые') +
-           // «кроме электронное» звучит криво, а склонять жанры и страны
-           // автоматически не выйдет — поэтому двоеточие.
-           (н.length ? ' · исключено: ' + н.join(', ') : '');
+  const тир = v => TCOLOR[TIERS.find(t => имя(v).startsWith(t.key)).key];
+  const HAS_NAME = { fav: 'в избранном', mine: 'мной оценённые', nocover: 'без обложки' };
+  const ПОКАЗ = {
+    tier:    v => имя(v),
+    myTier:  v => 'моя ' + имя(v),
+    genre:   v => имя(v),
+    release: v => String(годИмя(v)),
+    country: v => имя(v),
+    origin:  v => имя(v).toLowerCase(),
+    kind:    v => имя(v),
+    tag:     v => '#' + имя(v),
+    has:     v => HAS_NAME[v] || v
   };
-  const HAS_NAME = { fav: 'избранное', mine: 'мной оценённые', nocover: 'без обложки' };
 
-  if (F.q) add('поиск', '«' + F.q + '»' + (FQ.мягко ? ' · по части слова' : ''),
-               () => { F.q = ''; $('q').value = ''; });
-  if (F.tier.size)    add('оценка композера', свод(F.tier), () => F.tier.clear());
-  if (F.myTier.size)  add('моя оценка', свод(F.myTier), () => F.myTier.clear());
-  /* У жанра есть третье состояние, и в сводке его надо назвать своими
-     словами: «метал» и «только метал» отбирают совсем разное. */
-  if (F.genre.size) add('жанр', (() => {
-    const п = [...F.genre].filter(([, v]) => v > 0)
-      .map(([k, v]) => (v === 2 ? 'только ' : '') + имя(k));
-    const н = минус(F.genre).map(имя);
-    return (п.length ? п.join(' + ') : 'любые') +
-           (н.length ? ' · исключено: ' + н.join(', ') : '');
-  })(), () => F.genre.clear());
-  if (F.release.size) add('год выпуска', свод(F.release, годИмя), () => F.release.clear());
-  if (F.country.size) add('страна', свод(F.country), () => F.country.clear());
-  if (F.origin.size)  add('происхождение', свод(F.origin, v => имя(v).toLowerCase()),
-                          () => F.origin.clear());
-  if (F.kind.size)    add('тип', свод(F.kind), () => F.kind.clear());
-  if (F.tag.size)     add('тэги', свод(F.tag), () => F.tag.clear());
-  if (F.has.size)     add('отметки', свод(F.has, k => HAS_NAME[k]), () => F.has.clear());
+  if (F.q) add('«' + F.q + '»' + (FQ.мягко ? ' · по части слова' : ''),
+               () => { F.q = ''; $('q').value = ''; }, { подпись: 'поиск' });
+  ['tier', 'myTier', 'genre', 'release', 'country', 'origin', 'kind', 'tag', 'has'].forEach(поле => {
+    F[поле].forEach((v, ключ) => {
+      // «Только этот жанр» отбирает совсем другое, чем просто «метал».
+      const текст = (v === 2 ? 'только ' : '') + ПОКАЗ[поле](ключ);
+      add(текст, () => F[поле].delete(ключ), {
+        цвет: поле === 'tier' || поле === 'myTier' ? тир(ключ) : '',
+        прочь: v < 0
+      });
+    });
+  });
 
   const ft = $('fToggle');
   if (ft) ft.innerHTML = 'Фильтры<b>' + (box.children.length || '') + '</b>';
@@ -11297,6 +11365,7 @@ function card(r) {
           '<button class="mod" data-d="-1" aria-label="Понизить свою оценку">−</button>' +
           '<button class="mod" data-d="1" aria-label="Повысить свою оценку">+</button>' +
         '</div>' +
+        '<div class="goto-w"><a class="goto" href="' + trackHref(r) + '">перейти к треку →</a></div>' +
       '</div>' +
       '<button class="badge fav" aria-pressed="' + fav + '" aria-label="В избранное">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.6-7-9.3A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.7C19 15.4 12 20 12 20z"/></svg>' +
@@ -11416,6 +11485,8 @@ function card(r) {
       mods.querySelector('[data-d="-1"]').disabled = i < 0 || i >= t.mods.length - 1;
       mv.textContent = shortRate({ tier: t.key, mod: v.m });
       rtu.style.setProperty('--tc', TCOLOR[t.key]);
+      el.classList.add('my');
+      el.style.setProperty('--mc', TCOLOR[t.key]);
     } else {
       segs.forEach(s => { s.querySelector('i').style.width = '0%'; });
       rt.textContent = 'оцени этот трек!';
@@ -11424,6 +11495,7 @@ function card(r) {
       mods.hidden = true;
       mv.textContent = '–';
       rtu.style.removeProperty('--tc');
+      el.classList.remove('my');
     }
   }
 
@@ -11788,6 +11860,7 @@ function showTrack(r) {
 
 function showCatalog() {
   уходИзИгры();
+  фон('');
   const был = T.r;
   if (был) уходСТрека();
   T.r = null;
@@ -11929,7 +12002,6 @@ function drawHero() {
   const разносы = разы(T.r);
   const заг = имяСПрипиской(r.title || r.full);
   box.innerHTML =
-    (bg ? '<div class="hero-bg" style="background-image:url(' + esc(bg) + ')"></div>' : '') +
     '<div class="hero-in">' +
       '<button type="button" class="hero-cov' + (bg ? '' : ' empty') + '" id="tCov" data-tip="' +
         (bg ? 'Открыть обложку' : 'Обложки нет — предложить свою') + '">' + covHtml(r) + '</button>' +
@@ -11979,15 +12051,13 @@ function drawHero() {
       '</div>' +
     '</div>';
   covWire(box);
+  фон(bg);
 
   // У Spotify адрес картинки приезжает отдельным запросом: когда она
-  // доедет, ею же заливаем размытый фон шапки.
+  // доедет, ею же заливаем фон страницы.
   const поздняя = bg ? null : box.querySelector('.hero-cov img[data-sp]');
   if (поздняя) поздняя.addEventListener('load', () => {
-    const f = document.createElement('div');
-    f.className = 'hero-bg';
-    f.style.backgroundImage = 'url(' + поздняя.src + ')';
-    box.prepend(f);
+    if (T.r && T.r.key === r.key) фон(поздняя.src);
     const к = $('tCov');
     к.classList.remove('empty');
     к.dataset.tip = 'Открыть обложку';
@@ -12041,6 +12111,15 @@ function drawHero() {
     if (navigator.share) navigator.share(данные).catch(() => {});
     else копия(адрес);
   });
+}
+
+/* Фон страницы трека из его обложки. Пустой адрес — фона нет, и шапка
+   сайта возвращается к обычной. */
+function фон(url) {
+  const a = $('atmo');
+  a.hidden = !url;
+  a.firstChild.style.backgroundImage = url ? 'url("' + url.replace(/"/g, '%22') + '")' : '';
+  document.body.classList.toggle('atmo-on', !!url);
 }
 
 /* ---------- обложка во весь экран ----------
@@ -12557,6 +12636,8 @@ function панельОригинала(r, duo) {
   const рисовать = (k, играть) => {
     забыть();
     сейчас = k;
+    vid.classList.toggle('sp', k === 'sp');
+    if (pan._мерка) { pan._мерка.disconnect(); pan._мерка = null; }
     ссылка.hidden = false;
     pan.querySelectorAll('.plat button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.k === k)));
     const кадр = (url, имя) => '<iframe src="' + esc(url) + '" title="' + esc(имя) + '" loading="lazy"' +
@@ -12600,9 +12681,22 @@ function панельОригинала(r, duo) {
          пульт. Скрипт не загрузился — обычная рамка, просто без пульта. */
       vid.innerHTML = '<div class="sp-host"></div>';
       const место = vid.firstChild;
+      const подогнать = () => {
+        const h = vid.clientHeight;
+        if (!h) return;                       // вкладка спрятана — посчитаем, когда покажут
+        const родная = h > 232 ? 352 : h > 152 ? 232 : 152;
+        vid.style.setProperty('--k', (h / родная).toFixed(4));
+      };
+      pan._мерка = new ResizeObserver(подогнать);
+      pan._мерка.observe(vid);
+      подогнать();
       спотифайАпи().then(API => {
         if (!место.isConnected) return;
-        if (!API) { vid.innerHTML = кадр('https://open.spotify.com/embed/' + есть.sp, 'Оригинал в Spotify'); return; }
+        if (!API) {
+          vid.innerHTML = кадр('https://open.spotify.com/embed/' + есть.sp, 'Оригинал в Spotify')
+            .replace(/ style="[^"]*"/, '');
+          return;
+        }
         API.createController(место, { uri: 'spotify:' + есть.sp.replace('/', ':'), width: '100%', height: '100%' }, c => {
           const з = звук('оригинал', 'Spotify', { play: () => c.resume(), pause: () => c.pause(), destroy: () => c.destroy() }, duo, r);
           pan._звук = з;
@@ -13344,6 +13438,7 @@ function разобратьЗаявки(текст) {
 
 function showAdmin() {
   уходИзИгры();
+  фон('');
   if (T.r) уходСТрека();
   T.r = null;
   $('page').hidden = true;
@@ -13654,6 +13749,7 @@ function уходИзИгры() {
 }
 
 function showFun() {
+  фон('');
   if (T.r) уходСТрека();
   T.r = null;
   $('page').hidden = true;
