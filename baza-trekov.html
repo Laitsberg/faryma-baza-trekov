@@ -75,7 +75,7 @@ input,select{font:inherit;color:inherit}
 .tb-search input::placeholder{color:var(--faint)}
 /* Трек, который разносили не один раз: метка вместо номера эфира —
    номер тут один не назовёшь, их несколько. */
-.badge.strm.many{background:rgba(242,102,15,.86);color:#140c05;font-weight:700}
+.badge.strm.many{width:auto;padding:0 8px;background:rgba(242,102,15,.86);color:#140c05;font-weight:700}
 
 /* Выбор эфира над плеером — для треков, которые разносили не раз. */
 /* Эфир с датой над плеером, прижат вправо. */
@@ -254,7 +254,7 @@ select option{background:var(--card-2);color:var(--ink)}
    ловит мышь, из-за чего сердечко под ним не нажималось. */
 /* Сердечко и облачко — на полупрозрачной тёмной плашке: на белой
    обложке голый значок пропадал. */
-.badge{position:absolute;z-index:4;bottom:8px;min-width:32px;height:32px;padding:0 7px;
+.badge{position:absolute;z-index:4;bottom:8px;width:32px;height:32px;padding:0;
   display:flex;align-items:center;justify-content:center;gap:5px;border-radius:8px;
   background:rgba(14,14,16,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   font-family:var(--m);font-size:12.5px;color:#fff}
@@ -11368,8 +11368,8 @@ function card(r) {
         '<div class="goto-w"><a class="goto" href="' + trackHref(r) + '">перейти к треку →</a></div>' +
       '</div>' +
       '<button class="badge fav" aria-pressed="' + fav + '" aria-label="В избранное">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.6-7-9.3A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.7C19 15.4 12 20 12 20z"/></svg>' +
-        '<span></span></button>' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.6-4.7-9.6-9.3C.9 8.3 3 4.5 6.9 4.5c2.2 0 3.7 1.2 5.1 3 1.4-1.8 2.9-3 5.1-3 3.9 0 6 3.8 4.5 7.2C19.6 16.3 12 21 12 21z"/></svg>' +
+        '</button>' +
       /* Значок разноса. Раньше тут стоял номер эфира и значок плеера —
          номер съедал полкарточки, а плеер обещал запись, которой у
          части эфиров нет. Облачко честнее: разнос — это то, что
@@ -11384,7 +11384,7 @@ function card(r) {
         : r.streamNum != null
         ? '<span class="badge strm" data-tip="' + esc('разнос в эфире №' + r.streamNum) + '">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3v4l5-4h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>' + '</span>'
-        : (r.mine ? '<span class="badge strm">твой</span>' : '')) +
+        : (r.mine ? '<span class="badge strm many">твой</span>' : '')) +
     '</div>' +
     /* Карточка нарочно скупая: имя песни, исполнитель, две оценки. Всё
        остальное — приписка в скобках, год, номер эфира — переехало на
@@ -11510,13 +11510,10 @@ function card(r) {
   });
 
   const favBtn = el.querySelector('.fav');
-  const favNum = favBtn.querySelector('span');
-  favNum.textContent = fav ? '1' : '';
   favBtn.addEventListener('click', () => {
     const on = !FAV.has(r.key);
     on ? FAV.add(r.key) : FAV.delete(r.key);
     favBtn.setAttribute('aria-pressed', String(on));
-    favNum.textContent = on ? '1' : '';
     save();
     if (F.has.has('fav')) { rail(); render(true); }
     else if (GOPEN['отметки'] !== false) rail();
@@ -12022,7 +12019,7 @@ function drawHero() {
           '<span class="act-sep"></span>' +
           '<button class="act ic" id="tFav" aria-pressed="false">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
-            '<path d="M12 20s-7-4.6-7-9.3A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.7C19 15.4 12 20 12 20z"/></svg></button>' +
+            '<path d="M12 21s-7.6-4.7-9.6-9.3C.9 8.3 3 4.5 6.9 4.5c2.2 0 3.7 1.2 5.1 3 1.4-1.8 2.9-3 5.1-3 3.9 0 6 3.8 4.5 7.2C19.6 16.3 12 21 12 21z"/></svg></button>' +
           /* Кнопка «копировать ссылку» была, но делала то же, что
              «поделиться»: на компьютере тот и так кладёт ссылку в
              буфер. Две кнопки с одним действием сбивали с толку. */
