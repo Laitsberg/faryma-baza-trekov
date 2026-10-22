@@ -270,7 +270,7 @@ select option{background:var(--card-2);color:var(--ink)}
 
 /* ---------- слой оценки ---------- */
 .rater{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;
-  align-items:center;padding:15px 10px 0;gap:10px;
+  align-items:center;padding:12px 10px 0;gap:8px;
   opacity:0;pointer-events:none;transition:opacity .16s}
 .card:hover .rater,.card:focus-within .rater{opacity:1;pointer-events:auto}
 .rt{font-weight:600;font-size:13px;color:#fff;text-align:center;
@@ -282,16 +282,26 @@ select option{background:var(--card-2);color:var(--ink)}
 .seg:hover{border-color:#fff}
 .seg i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--sc,#fff);
   transition:width .2s}
-.mods{display:flex;justify-content:space-between;width:100%;max-width:150px}
-.mods[hidden]{display:none}
-/* «Перейти к треку» — в свободной середине обложки, под шкалой и над
-   значками. Щелчок по любому пустому месту ведёт туда же; надпись
-   говорит об этом прямо. */
-.goto-w{flex:1;display:grid;place-items:center;padding-bottom:42px;min-height:0}
-.goto{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;
-  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);
-  color:#fff;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap}
-.goto:hover{background:var(--brand);border-color:var(--brand);color:#151517}
+/* «−» и «+» стоят по бокам от названия оценки, в одной строке с ним,
+   а не отдельным рядом под шкалой: тот ряд появлялся только у
+   оценённых треков и сдвигал всё, что ниже. Без оценки кнопки просто
+   невидимы, но место держат. */
+.mods{display:flex;align-items:center;justify-content:space-between;gap:4px;
+  width:100%;max-width:150px}
+.mods .rt{flex:1;min-width:0;white-space:nowrap}
+/* Без оценки кнопок нет вовсе — «оцени этот трек!» получает всю
+   строку. Высота строки при этом та же, так что ниже ничего не едет. */
+.mods.off .mod{visibility:hidden;width:0;overflow:hidden}
+/* «Перейти к треку» — ровно в центре обложки, и по высоте, и по
+   ширине, у любого трека: оценён он или нет. Щелчок по любому пустому
+   месту ведёт туда же; надпись говорит об этом прямо. */
+.goto-w{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.goto{pointer-events:auto;display:inline-flex;align-items:center;gap:7px;padding:7px 13px;
+  border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);
+  color:#fff;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;
+  transition:background .15s,border-color .15s}
+/* Подсветка мягкая: яркий оранжевый посреди обложки кричал. */
+.goto:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.5)}
 /* Шкала на компьютере шире и выше: квадратики по 22 пикселя были
    мельче пальца и мыши. На телефоне они в самый раз — не трогаем. */
 @media(min-width:761px){
@@ -501,10 +511,18 @@ select option{background:var(--card-2);color:var(--ink)}
 .atmo[hidden]{display:none}
 .atmo i{position:absolute;inset:-120px;background-size:cover;background-position:center 30%;
   filter:blur(70px) saturate(1.35);opacity:.5}
-/* Шапка над таким фоном — тёмным стеклом: окрашена тем же фоном, но
-   темнее страницы, а не светлее, и не торчит серой полосой. */
-.atmo-on .tb{background:rgba(14,14,16,.62);backdrop-filter:blur(18px) saturate(1.2);
-  -webkit-backdrop-filter:blur(18px) saturate(1.2);box-shadow:0 1px 0 rgba(255,255,255,.04)}
+/* Шапка над таким фоном окрашена той же обложкой, но темнее страницы,
+   а не светлее, и не торчит серой полосой. Стеклом, на просвет, она
+   была пятнистой: сквозь неё виднелся ровно тот кусок обложки, что
+   под ней, и у тёмного угла обложки поиск слева оставался серым. Свой
+   слой — вся обложка, сжатая в полосу и размытая, — даёт ровный тон
+   на всю ширину. */
+/* Поле поиска и плашка «что играет» — тоже стеклом: глухие серые, они
+   торчали заплатками на окрашенной шапке. */
+.atmo-on .tb-search input,.atmo-on .np{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12)}
+.atmo-on .tb{background:#121214;overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.04)}
+.atmo-on .tb::before{content:'';position:absolute;inset:-60px;z-index:-1;pointer-events:none;
+  background:var(--atmo) center/100% 100% no-repeat;filter:blur(40px) saturate(1.4);opacity:.42}
 .hero-in{position:relative;display:flex;gap:18px;padding:18px}
 .hero-cov{position:relative;width:196px;height:196px;flex:none;border-radius:var(--r);
   overflow:hidden;background:#1F1F22;padding:0;cursor:zoom-in}
@@ -898,6 +916,10 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 
 @media(max-width:760px){
   .np{order:4;flex-basis:100%}
+  .goto{padding:5px 10px;font-size:12px}
+  /* Обложка на телефоне мелкая: без этого «перейти к треку» по центру
+     задевала шкалу на пару пикселей. */
+  .rater{padding-top:7px;gap:5px}
   .g-tiers{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
@@ -11360,11 +11382,12 @@ function card(r) {
       '<div class="art-fb" style="--tc:' + tColor(r.rate) + '">' + esc(initials(r)) + '</div>' +
       imgHtml(r, 'art pending') +
       '<div class="rater">' +
-        '<div class="rt"></div><div class="scale"></div>' +
-        '<div class="mods" hidden>' +
+        '<div class="mods off">' +
           '<button class="mod" data-d="-1" aria-label="Понизить свою оценку">−</button>' +
+          '<div class="rt"></div>' +
           '<button class="mod" data-d="1" aria-label="Повысить свою оценку">+</button>' +
         '</div>' +
+        '<div class="scale"></div>' +
         '<div class="goto-w"><a class="goto" href="' + trackHref(r) + '">перейти к треку →</a></div>' +
       '</div>' +
       '<button class="badge fav" aria-pressed="' + fav + '" aria-label="В избранное">' +
@@ -11468,7 +11491,7 @@ function card(r) {
     rt.textContent = up[i].key;
     rt.className = 'rt named';
     rt.style.color = '#fff';
-    mods.hidden = true;
+    mods.classList.add('off');
   }
   function paint() {
     const v = MY[r.key];
@@ -11478,7 +11501,7 @@ function card(r) {
       rt.textContent = t.key + modLabel(v.m);
       rt.className = 'rt named';
       rt.style.color = TCOLOR[t.key];
-      mods.hidden = false;
+      mods.classList.remove('off');
       // Крайние ступени односторонние: кнопка гаснет там, где двигать некуда.
       const i = t.mods.indexOf(v.m);
       mods.querySelector('[data-d="1"]').disabled = i <= 0;
@@ -11492,7 +11515,7 @@ function card(r) {
       rt.textContent = 'оцени этот трек!';
       rt.className = 'rt';
       rt.style.color = '';
-      mods.hidden = true;
+      mods.classList.add('off');
       mv.textContent = '–';
       rtu.style.removeProperty('--tc');
       el.classList.remove('my');
@@ -12115,7 +12138,10 @@ function drawHero() {
 function фон(url) {
   const a = $('atmo');
   a.hidden = !url;
-  a.firstChild.style.backgroundImage = url ? 'url("' + url.replace(/"/g, '%22') + '")' : '';
+  const css = url ? 'url("' + url.replace(/"/g, '%22') + '")' : '';
+  a.firstChild.style.backgroundImage = css;
+  // тот же адрес — шапке сайта, она красится им же
+  document.body.style.setProperty('--atmo', css || 'none');
   document.body.classList.toggle('atmo-on', !!url);
 }
 
@@ -13004,8 +13030,12 @@ function drawMine() {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'seg';
     b.innerHTML = '<i></i>';
-    b.dataset.tip = t.key;
     b.setAttribute('aria-label', 'Поставить «' + t.key + '»');
+    /* Отклик тот же, что на карточке в каталоге: наведённая ступень и
+       всё ниже неё заливаются белым, а строкой ниже — её название.
+       Подсказка с тем же названием поэтому не нужна. */
+    b.addEventListener('mouseenter', () => примерить(t));
+    b.addEventListener('focus', () => примерить(t));
     b.addEventListener('click', () => {
       const cur = MY[r.key];
       const держим = cur && cur.t === t.key && t.mods.includes(cur.m);
@@ -13015,6 +13045,14 @@ function drawMine() {
     scale.append(b);
     return b;
   });
+  scale.addEventListener('mouseleave', () => paint());
+  scale.addEventListener('focusout', () => paint());
+
+  function примерить(t) {
+    draw(t.key, '', '#fff');
+    val.textContent = t.key;
+    val.style.setProperty('--tc', '#fff');
+  }
 
   function draw(tier, mod, color) {
     const n = up.findIndex(t => t.key === tier);
