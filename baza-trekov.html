@@ -1028,11 +1028,27 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   box-shadow:0 22px 40px -14px rgba(0,0,0,.85),0 0 0 6px #121214,0 0 0 7px rgba(255,255,255,.08);
   animation:stSpin 18s linear infinite;transition:opacity .2s}
 @keyframes stSpin{to{transform:rotate(360deg)}}
-.st-art::after{content:'';position:absolute;left:50%;top:50%;width:13%;height:13%;margin:-6.5% 0 0 -6.5%;
+.st-art::after{content:'';position:absolute;left:50%;top:50%;z-index:1;width:13%;height:13%;margin:-6.5% 0 0 -6.5%;
   border-radius:50%;background:radial-gradient(circle,#121214 0 22%,var(--brand) 24% 100%);
-  box-shadow:0 0 0 3px #121214;pointer-events:none}
+  box-shadow:0 0 0 3px #121214;pointer-events:none;transition:all .25s}
 .st-art:hover .st-cov,.st-art.done .st-cov{animation-play-state:paused}
-.st-cov.lift{opacity:.16}
+/* Под пластинкой — диск проигрывателя. Пластинку взяли — её на месте
+   нет совсем, а диск крутится дальше пустым, и от центра остаётся
+   только шпиндель. Полупрозрачная пластинка на месте читалась как
+   «ещё здесь». */
+.st-art::before{content:'';position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 20deg,transparent 0 18%,rgba(255,255,255,.06) 24%,transparent 32% 68%,rgba(255,255,255,.04) 74%,transparent 82%),
+    repeating-radial-gradient(circle,#18181b 0 2px,#1d1d21 3px 5px);
+  box-shadow:inset 0 0 0 7px #121214,inset 0 0 0 8px rgba(255,255,255,.06),0 22px 40px -14px rgba(0,0,0,.85);
+  animation:stSpin 4s linear infinite}
+.st-cov.lift{opacity:0}
+.st-art.empty::after{width:3.5%;height:3.5%;margin:-1.75% 0 0 -1.75%;
+  background:radial-gradient(circle at 35% 35%,#e8e8ec,#8a8a92);box-shadow:0 0 0 2px #121214}
+/* Тонарм: лежит на пластинке, а без неё отходит в сторону. */
+.st-arm{position:absolute;left:84%;top:-4%;z-index:2;width:22%;height:72%;pointer-events:none;
+  transform-origin:66% 9%;transform:rotate(14deg);transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.st-art.empty .st-arm,.st-art.done .st-arm{transform:rotate(-6deg)}
+.st-arm svg{width:100%;height:100%;display:block;overflow:visible}
 .st-cov.in{animation:stIn .45s cubic-bezier(.2,.8,.2,1.1),stSpin 18s linear .45s infinite}
 @keyframes stIn{from{opacity:0;transform:translateX(-30px) rotate(-60deg) scale(.85)}}
 /* Штамп вердикта: ложится с ударом поверх пластинки, сцена вздрагивает. */
@@ -1145,9 +1161,9 @@ a.st-chip:hover{color:var(--ink);border-color:var(--faint)}
 .st-rec.lift{opacity:.2}
 .st-rec.land{animation:stLand .55s cubic-bezier(.2,1.5,.4,1)}
 @keyframes stLand{0%{transform:scale(.7)}45%{transform:scale(1.18)}100%{transform:none}}
-.st-step .cnt{position:absolute;top:4px;left:0;right:0;text-align:center;font:600 11px var(--m);color:rgba(var(--tr),.9)}
 .st-labels{flex:none;display:grid;grid-template-columns:repeat(26,minmax(0,1fr));gap:4px}
-.st-labels span{text-align:center;font:700 13px var(--m);color:var(--tc);padding:5px 0 4px;border-top:3px solid var(--tc)}
+/* Плюсы и минусы — бледно: ступень и так видна по месту и цвету. */
+.st-labels span{text-align:center;font:700 13px var(--m);color:rgba(var(--tr),.38);padding:5px 0 4px;border-top:3px solid var(--tc)}
 .st-tiers{flex:none;display:grid;grid-template-columns:3fr 5fr 5fr 5fr 5fr 3fr;gap:4px}
 .st-tiers b{display:flex;justify-content:center;align-items:baseline;gap:7px;font:800 clamp(13px,1.15vw,20px) var(--d);
   color:var(--tc);padding-top:2px;white-space:nowrap;overflow:hidden}
@@ -1155,16 +1171,12 @@ a.st-chip:hover{color:var(--ink);border-color:var(--faint)}
 .st-tiers kbd{font:600 10px var(--m);color:var(--faint);border:1px solid var(--line);border-radius:4px;
   padding:1px 5px;opacity:0;transition:opacity .14s}
 .st-scale:hover .st-tiers kbd{opacity:1}
-.st-needle{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;left:var(--x);z-index:4;pointer-events:none;
-  background:var(--brand);box-shadow:0 0 12px var(--brand);transition:left .6s cubic-bezier(.2,.8,.2,1)}
-.st-needle[hidden]{display:none}
-.st-needle span{position:absolute;top:-2px;left:50%;transform:translate(-50%,-100%);white-space:nowrap;
-  background:var(--brand);color:#151517;font:700 11.5px var(--b);padding:2px 8px;border-radius:4px}
 
 /* Обложка в руке. Сдвиг и масштаб — на самой плашке, поворот — на
    внутреннем слое: так подпись с оценкой под ней не крутится. */
 .st-ghost{position:fixed;left:0;top:0;z-index:95;pointer-events:none;will-change:transform}
-.st-ghost .gi{width:100%;height:100%;border-radius:10px;will-change:transform}
+/* В студии всё — пластинки, поэтому и в руке круг. */
+.st-ghost .gi{width:100%;height:100%;border-radius:50%;will-change:transform}
 .st-ghost .st-img{width:100%;height:100%;border-radius:inherit;--fs:40px;
   box-shadow:0 28px 54px -14px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.22)}
 .st-pill{position:absolute;left:50%;top:calc(100% + 12px);transform:translateX(-50%) translateY(-4px);
@@ -1221,7 +1233,7 @@ body.st-air #stAir:hover{opacity:1}
 }
 @media(prefers-reduced-motion:reduce){
   .st-vinyl i{animation:none}
-  .st-cov,.st-cov.in,.st-meta.in,.st-rec.land,.st-stamp,.st-stamp.still,.st-stage.shake{animation:none}
+  .st-cov,.st-cov.in,.st-meta.in,.st-rec.land,.st-stamp,.st-stamp.still,.st-stage.shake,.st-art::before{animation:none}
 }
 </style>
 <meta name="theme-color" content="#1B1B1D">
@@ -1390,7 +1402,7 @@ body.st-air #stAir:hover{opacity:1}
   </div>
  </div>
  <div class="st-scale">
-  <div class="st-steps" id="stBoard"><div class="st-needle" id="stNeedle" hidden><span></span></div></div>
+  <div class="st-steps" id="stBoard"></div>
   <div class="st-labels" id="stLabels"></div>
   <div class="st-tiers" id="stTierNames"></div>
  </div>
@@ -14432,7 +14444,7 @@ function стСловарь() {
    шести столбцов — вся шкала архива одной полосой: двадцать шесть
    точных оценок, от «гениально» до «кринж-контента». Пластинку кладут
    сразу на нужную ступень, с плюсом или минусом, и к концу эфира
-   полоса становится гистограммой — над ней ходит стрелка среднего.
+   полоса становится гистограммой.
 
    Оценку объявляет штамп: он с ударом ложится на пластинку на сцене,
    и полторы секунды трек ещё там — можно докрутить плюс или минус.
@@ -14444,6 +14456,10 @@ const СТ_ДЕРЖАТЬ = 1800;
 let СТ_ВКЛАДКА = 'pass';
 const стНаСцене = () => стТрек(СТ_ШТАМП.id) || стТрек(СТ.cur);
 const стБалл = t => стТир(t.tier).base + (MODS.find(m => m[0] === t.mod) || [0, 0])[1];
+const СТ_ТОНАРМ = '<div class="st-arm" aria-hidden="true"><svg viewBox="0 0 60 200">' +
+  '<circle cx="40" cy="18" r="13" fill="#2a2a2e" stroke="#4a4a52" stroke-width="2"/><circle cx="40" cy="18" r="4" fill="#9a9aa2"/>' +
+  '<path d="M40 18 L36 150 L24 178" fill="none" stroke="#b9b9c0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' +
+  '<rect x="12" y="172" width="20" height="14" rx="3" transform="rotate(-28 22 179)" fill="#3a3a41" stroke="#6e6e78" stroke-width="1.5"/></svg></div>';
 const стПластинкаЭл = id => document.querySelector('.st-rec[data-id="' + CSS.escape(id) + '"]');
 
 /* ---------- рисование ---------- */
@@ -14507,7 +14523,7 @@ function стСцена(новый) {
   }
   box.innerHTML =
     '<div class="st-art' + (t.tier ? ' done' : '') + '">' +
-      стКартинка(t, 'st-cov' + (новый ? ' in' : '')) +
+      стКартинка(t, 'st-cov' + (новый ? ' in' : '')) + СТ_ТОНАРМ +
       (штамп ? '<div class="st-stamp' + (СТ_ШТАМП.тихо ? ' still' : '') + '" id="stStamp" style="' + стЦвет(t.tier) + '">' + esc(стМетка(t)) + '</div>' : '') +
     '</div>' +
     '<div class="st-meta' + (новый ? ' in' : '') + '">' +
@@ -14547,22 +14563,19 @@ function стБок() {
 }
 
 /* Итог считается только по оценкам этого эфира — тем, что стоят на
-   шкале. «В среднем» — ближайшая к среднему баллу ступень шкалы. */
+   шкале. Среднего балла нет ни здесь, ни на шкале: заказчик попросил
+   убрать. */
 function стИтог() {
   const box = $('stPass');
   const list = СТ.tracks.filter(t => t.tier);
   if (!list.length) {
-    box.innerHTML = '<p class="st-empty">Здесь появится итог эфира: сколько оценено, средний балл и распределение по ступеням.</p>';
+    box.innerHTML = '<p class="st-empty">Здесь появится итог эфира: сколько оценено, кто выше всех и распределение по ступеням.</p>';
     return;
   }
-  const ср = list.reduce((s, t) => s + стБалл(t), 0) / list.length;
-  const близко = стБлижайшая(ср);
   const лучший = list.slice().sort((a, b) => стБалл(b) - стБалл(a) || a.at - b.at)[0];
   const макс = Math.max(...TIERS.map(т => list.filter(t => t.tier === т.key).length));
   box.innerHTML = '<div class="st-sum">' +
-    '<div class="st-stat"><small>оценено</small><b>' + list.length + '</b><span>из ' + СТ.tracks.length + ' в очереди</span></div>' +
-    '<div class="st-stat" style="' + стЦвет(близко.tier) + '"><small>в среднем</small><b>' + esc(стМетка(близко)) + '</b>' +
-      '<span>' + ср.toFixed(1).replace('.', ',') + ' из 10</span></div>' +
+    '<div class="st-stat wide"><small>оценено</small><b>' + list.length + '</b><span>из ' + СТ.tracks.length + ' в очереди</span></div>' +
     '<div class="st-stat wide" style="' + стЦвет(лучший.tier) + '"><small>выше всех сегодня</small>' +
       '<b class="nm">' + esc(лучший.title || 'без названия') + '</b><span>' + esc((лучший.artist ? лучший.artist + ' · ' : '') + стМетка(лучший)) + '</span></div>' +
     '<div class="st-dist">' + TIERS.map(т => {
@@ -14570,12 +14583,6 @@ function стИтог() {
       return '<div class="st-dr" style="' + стЦвет(т.key) + '"><span>' + esc(т.key) + '</span><i style="--w:' + (n / макс * 100) + '%"></i><b>' + n + '</b></div>';
     }).join('') + '</div></div>';
 }
-function стБлижайшая(балл) {
-  let лучше = СТ_СТУПЕНИ[0], d = 99;
-  СТ_СТУПЕНИ.forEach(s => { const x = Math.abs(стБалл(s) - балл); if (x < d) { d = x; лучше = s; } });
-  return лучше;
-}
-
 function стПаспорт() {
   const box = $('stPass');
   const t = стНаСцене();
@@ -14608,7 +14615,7 @@ function стПаспорт() {
 /* Шкала: ступень за ступенью, на каждой пластинки в том порядке, в
    каком их ставили, — снизу вверх, столбиком. */
 function стШкала() {
-  const steps = $('stBoard'), стрелка = $('stNeedle');
+  const steps = $('stBoard');
   steps.querySelectorAll('.st-step').forEach(e => e.remove());
   СТ_СТУПЕНИ.forEach((s, i) => {
     const el = document.createElement('div');
@@ -14616,26 +14623,13 @@ function стШкала() {
     el.dataset.i = i;
     el.setAttribute('style', стЦвет(s.tier));
     const тут = СТ.tracks.filter(t => t.tier === s.tier && t.mod === s.mod).sort((a, b) => a.at - b.at);
-    el.innerHTML = тут.map(стПластинка).join('') + (тут.length ? '<span class="cnt">' + тут.length + '</span>' : '');
-    steps.insertBefore(el, стрелка);
+    el.innerHTML = тут.map(стПластинка).join('');
+    steps.append(el);
   });
   $('stLabels').innerHTML = СТ_СТУПЕНИ.map(s => '<span style="' + стЦвет(s.tier) + '">' + (modLabel(s.mod) || '•') + '</span>').join('');
   $('stTierNames').innerHTML = TIERS.map((т, i) => '<b style="' + стЦвет(т.key) + ';--n:' + т.mods.length + '">' + esc(т.key) + '<kbd>' + (i + 1) + '</kbd></b>').join('');
   стДовести(steps);
   стСтопки();
-  // Стрелка среднего: между двумя ступенями, по баллу
-  const list = СТ.tracks.filter(t => t.tier);
-  стрелка.hidden = !list.length;
-  if (!list.length) return;
-  const ср = list.reduce((s, t) => s + стБалл(t), 0) / list.length;
-  let место = СТ_СТУПЕНИ.length - 1;
-  for (let i = 0; i < СТ_СТУПЕНИ.length - 1; i++) {
-    const a = стБалл(СТ_СТУПЕНИ[i]), b = стБалл(СТ_СТУПЕНИ[i + 1]);
-    if (ср >= a) { место = i; break; }
-    if (ср > b) { место = i + (a - ср) / (a - b); break; }
-  }
-  стрелка.style.setProperty('--x', ((место + .5) / СТ_СТУПЕНИ.length * 100) + '%');
-  стрелка.firstChild.textContent = 'среднее · ' + стМетка(стБлижайшая(ср));
 }
 const стПластинка = t =>
   '<button type="button" class="st-rec' + (t.id === СТ_ВЫБОР ? ' sel' : '') + '" data-id="' + esc(t.id) + '" ' +
@@ -14649,7 +14643,7 @@ function стСтопки() {
     const recs = st.querySelectorAll('.st-rec');
     st.style.removeProperty('--ov');
     if (recs.length < 2) return;
-    const h = st.clientHeight - 26, sz = recs[0].offsetWidth, нужно = recs.length * (sz + 4);
+    const h = st.clientHeight - 10, sz = recs[0].offsetWidth, нужно = recs.length * (sz + 4);
     if (нужно > h) st.style.setProperty('--ov', Math.min(sz * .85, (нужно - h) / (recs.length - 1) + 4) + 'px');
   });
 }
@@ -15041,6 +15035,7 @@ function стНачать(d) {
   document.body.append(g);
   d.g = g;
   d.el.classList.add('lift');
+  d.el.closest('.st-art')?.classList.add('empty');
   document.body.classList.add('st-drag');
   const кадр = () => {
     if (СТ_ТАЩИМ !== d || !d.идёт) return;
@@ -15109,7 +15104,7 @@ function стОтпустить() {
   };
   const назад = () => {
     if (!d.el.isConnected) { g.remove(); return; }
-    сесть(d.el.getBoundingClientRect(), () => d.el.classList.remove('lift'), 220);
+    сесть(d.el.getBoundingClientRect(), () => { d.el.classList.remove('lift'); d.el.closest('.st-art')?.classList.remove('empty'); }, 220);
   };
   const призрак = {
     лететь: (к, сели) => сесть(к.getBoundingClientRect(), сели),
@@ -15117,7 +15112,7 @@ function стОтпустить() {
     убрать: () => g.remove()
   };
   const ц = d.цель;
-  if (ц && ц.назад) { g.remove(); d.el.classList.remove('lift'); стВернуть(d.id); }
+  if (ц && ц.назад) { g.remove(); d.el.classList.remove('lift'); d.el.closest('.st-art')?.classList.remove('empty'); стВернуть(d.id); }
   else if (ц) стОценить(d.id, ц.tier, ц.mod, призрак);
   else назад();
 }
