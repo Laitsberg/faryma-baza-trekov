@@ -1060,7 +1060,7 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 a.st-chip:hover{color:var(--ink);border-color:var(--faint)}
 .st-chip i{width:8px;height:8px;border-radius:50%;background:var(--tc);flex:none}
 .st-chip b{color:var(--tc);font-weight:600}
-.st-verdict{margin-top:14px;display:flex;align-items:baseline;gap:10px;color:var(--dim);font-size:13px}
+.st-verdict{margin-top:14px;display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;color:var(--dim);font-size:13px}
 .st-verdict b{font:800 clamp(20px,1.8vw,32px) var(--d);color:var(--tc);letter-spacing:-.01em}
 .st-howto{margin-top:14px;color:var(--faint);font-size:12.5px;line-height:1.5}
 .st-howto kbd{font:600 11px var(--m);color:var(--dim);border:1px solid var(--line);
@@ -1190,7 +1190,8 @@ body.st-drag,body.st-drag *{cursor:grabbing!important;user-select:none}
 body.st-air .tb,body.st-air .foot-note{display:none}
 body.st-air .spage{height:100dvh;max-width:none;padding:18px 26px}
 body.st-air .st-q,body.st-air .st-pass,body.st-air .st-hint,
-body.st-air .st-act button:not(#stAir),body.st-air .st-nav,body.st-air .st-howto{display:none}
+body.st-air .st-act button:not(#stAir),body.st-air .st-nav,body.st-air .st-howto,
+body.st-air .st-verdict .st-chip{display:none}
 body.st-air .st-band{grid-template-columns:minmax(0,1fr);height:clamp(240px,36vh,440px)}
 body.st-air .st-stage{justify-content:center}
 body.st-air .st-meta{flex:0 1 auto;max-width:52%}
@@ -1244,7 +1245,7 @@ body.st-air #stAir:hover{opacity:1}
 
   <nav class="nav">
    <a href="#">главная</a>
-   <a href="#studio" id="navStudio">стрим-space</a>
+   <a href="#">стрим-space</a>
    <a href="#" id="navBase" aria-current="page">база треков</a>
    <a href="#fun" id="navFun">прикольчики</a>
    <a href="#">помощь</a>
@@ -1374,7 +1375,7 @@ body.st-air #stAir:hover{opacity:1}
    <button type="button" id="stUndo" data-tip="Ctrl+Z">↶ отменить</button>
    <button type="button" id="stCopy" data-tip="Оценённые треки строками таблицы разносов, в том порядке, в каком их оценивали: что, где, оценка, откуда, тэги, жанр, фича. Вставь в первую пустую строку листа — столбцы встанут сами.">скопировать для таблицы</button>
    <button type="button" id="stAir" data-tip="Только трек и столбцы — чистая картинка для OBS. Выйти — Escape.">эфир</button>
-   <button type="button" id="stNew" data-tip="Очистить очередь и столбцы. Передумаешь — «отменить» вернёт всё как было.">новый эфир</button>
+   <button type="button" id="stNew" data-tip="Очистить очередь и столбцы. Оценённое остаётся в каталоге; передумаешь — «отменить» вернёт всё как было.">новый эфир</button>
   </div>
  </div>
  <div class="st-board" id="stBoard"></div>
@@ -10826,6 +10827,8 @@ function build(raw, снова) {
 
   // Добавленное посетителем кладём наверх — как самое свежее.
   MINE.slice().reverse().forEach(a => CAT.unshift(mineRow(a)));
+  // Оценённое в студии, чего ещё нет в таблице, — выше всех.
+  студияВКаталог(false);
 
   applyCountries();
   applyYears();
@@ -11736,6 +11739,7 @@ function card(r) {
         : r.streamNum != null
         ? '<span class="badge strm" data-tip="' + esc('разнос в эфире №' + r.streamNum) + '">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3v4l5-4h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>' + '</span>'
+        : r.студия ? '<span class="badge strm many" data-tip="Оценено в студии. В таблице разносов этой строки пока нет — трек виден только в этом браузере.">новый</span>'
         : (r.mine ? '<span class="badge strm many">твой</span>' : '')) +
     '</div>' +
     /* Карточка нарочно скупая: имя песни, исполнитель, две оценки. Всё
@@ -12182,8 +12186,9 @@ function route() {
 /* Какой пункт шапки подсвечен: прикольчики — свой, всё остальное
    живёт внутри базы треков. */
 function навигация() {
-  const где = location.hash === '#fun' ? 'navFun' : location.hash === '#studio' ? 'navStudio' : 'navBase';
-  ['navBase', 'navFun', 'navStudio'].forEach(id => {
+  // Студия — часть базы треков: из неё оценённое попадает в каталог.
+  const где = location.hash === '#fun' ? 'navFun' : 'navBase';
+  ['navBase', 'navFun'].forEach(id => {
     if (id === где) $(id).setAttribute('aria-current', 'page');
     else $(id).removeAttribute('aria-current');
   });
@@ -12340,6 +12345,7 @@ function drawHero() {
   r.genres.forEach(g => tgs.push(идти('genre', g, g)));
   if (r.origin) tgs.push(идти('origin', r.origin, r.origin.toLowerCase()));
   if (r.mine) tgs.push('<span class="tg brand">предложено тобой</span>');
+  if (r.студия) tgs.push('<span class="tg brand">оценено в студии · в таблицу ещё не внесено</span>');
   if (MYCOV[r.key]) tgs.push('<span class="tg brand">твоя обложка · ждёт проверки</span>');
   /* Тэги не красятся и не стоят в одном ряду с жанром: рядом с
      «фолком» горели «баллада» и «эмбиент», и почему — не угадать.
@@ -12913,6 +12919,7 @@ function панельРазноса(r, duo) {
     vid.innerHTML = '<div class="stub">' + esc(r.moment
       ? 'Запись есть, но встроить её не вышло — открой её по ссылке «VK Видео» ниже.'
       : r.mine ? 'Это твой трек: его ещё не разносили.'
+      : r.студия ? 'Трек только что оценён в студии — записи эфира у него пока нет.'
       : 'Записи этого эфира пока нет — в таблице на её месте стоит «СКОРО».') + '</div>';
   }
   pan.append(vid);
@@ -13253,6 +13260,8 @@ function tabInfo(box) {
   p.style.marginTop = '14px';
   p.textContent = r.mine
     ? 'Это твоя заявка: она живёт в этом браузере и в таблицу разносов не уходит.'
+    : r.студия
+    ? 'Оценка поставлена в студии. Пока строки нет в таблице разносов, трек виден только в этом браузере.'
     : 'Всё, кроме страны, взято из таблицы разносов как есть. Страну ищет справочник по имени исполнителя — у редких имён его там может не быть.';
   box.append(p);
 }
@@ -13297,7 +13306,7 @@ function сходство(r, x) {
 function similar(r, n) {
   /* Сортировка устойчивая: при равных очках остаётся порядок каталога,
      то есть сначала разнесённые недавно. */
-  return CAT.filter(x => x.key !== r.key && !x.mine)
+  return CAT.filter(x => x.key !== r.key && !x.mine && !x.студия)
     .map(x => ({ x, с: сходство(r, x) }))
     .filter(({ с }) => с)
     .sort((a, b) => b.с.очки - a.с.очки)
@@ -14134,7 +14143,7 @@ function showFun() {
   window.scrollTo(0, 0);
 }
 
-const играПул = () => CAT.filter(r => r.rate && r.artist &&
+const играПул = () => CAT.filter(r => r.rate && r.artist && !r.студия &&
   ИГРА_ПЛ.some(п => ИГРА.площадки.includes(п.k) && п.есть(r)));
 
 function играПлощадки() {
@@ -14279,6 +14288,7 @@ const СТ_RGB = {};
 
 const стСохранить = () => {
   try { localStorage.setItem(СТ_LS, JSON.stringify({ tracks: СТ.tracks, cur: СТ.cur })); } catch {}
+  стСверить();
 };
 const стТрек = id => СТ.tracks.find(t => t.id === id) || null;
 const стТир = key => TIERS.find(t => t.key === key);
@@ -14472,7 +14482,9 @@ function стСцена(новый) {
       '<div class="st-artist">' + esc(t.artist || '—') + '</div>' +
       (chips ? '<div class="st-chips">' + chips + '</div>' : '') +
       (t.tier
-        ? '<div class="st-verdict" style="' + стЦвет(t.tier) + '">оценка <b>' + esc(стМетка(t)) + '</b></div>'
+        ? '<div class="st-verdict" style="' + стЦвет(t.tier) + '">оценка <b>' + esc(стМетка(t)) + '</b>' +
+          '<a class="st-chip" href="#t=' + encodeURIComponent('st|' + t.id) + '" target="_blank" rel="noopener" ' +
+          'data-tip="Трек уже в каталоге — наверху, с пометкой «новый». Откроется в новой вкладке.">в каталоге ↗</a></div>'
         : '<div class="st-howto">Неси обложку в столбец или нажми <kbd>1</kbd>–<kbd>6</kbd>, потом <kbd>+</kbd> или <kbd>−</kbd>.</div>') +
     '</div>' +
     '<div class="st-nav">' +
@@ -15208,12 +15220,80 @@ function showStudio() {
   window.scrollTo(0, 0);
 }
 
-// Уходя со студии — убрать её классы со страницы: эфир прячет шапку.
+/* ---------- оценённое — в каталог ----------
+   Оценил трек в студии — он сразу встаёт в каталог, наверх, как самый
+   свежий разнос. Записи живут отдельно от очереди: «новый эфир»
+   чистит очередь и столбцы, а каталог не трогает.
+
+   Общей базы пока нет, поэтому такой трек виден только в браузере
+   композитора и помечен «новый»: строки в таблице разносов у него ещё
+   нет. Когда она там появится — тот же ролик, тот же трек Spotify или
+   то же имя в эфире не раньше дня оценки, — запись убирается сама,
+   и остаётся строка таблицы. Появится бэкенд — отправлять оценку надо
+   из стСверить(): там ровно то, что ушло бы в базу. */
+const СТ_ГОТОВО_LS = 'faryma-studio-done';
+let СТ_ГОТОВО = (() => { try { return JSON.parse(localStorage.getItem(СТ_ГОТОВО_LS)) || {}; } catch { return {}; } })();
+const стГотовоСохранить = () => { try { localStorage.setItem(СТ_ГОТОВО_LS, JSON.stringify(СТ_ГОТОВО)); } catch {} };
+
+// Оценка снята (отменой или «в очередь») — запись из каталога уходит;
+// треки прошлых эфиров, которых в очереди уже нет, остаются как были.
+function стСверить() {
+  СТ.tracks.forEach(t => {
+    if (t.tier) СТ_ГОТОВО[t.id] = {
+      id: t.id, artist: t.artist, title: t.title, full: t.full, link: t.link,
+      genres: t.genres, tags: t.tags, origin: t.origin, feat: t.feat,
+      tier: t.tier, mod: t.mod, at: t.at
+    };
+    else delete СТ_ГОТОВО[t.id];
+  });
+  стГотовоСохранить();
+}
+
+function студияСтрока(z) {
+  const r = mineRow({ id: z.id, artist: z.artist || '', title: z.title || 'без названия', link: z.link || '' });
+  const день = new Date(z.at);
+  return Object.assign(r, {
+    mine: false, студия: true, key: 'st|' + z.id,
+    rate: parseRate(z.tier + modLabel(z.mod)),
+    full: z.full || ((z.artist ? z.artist + ' — ' : '') + (z.title || '')),
+    artistKey: z.artist ? nameKey(z.artist) : '',
+    parts: z.artist ? [nameKey(z.artist)] : [],
+    genres: z.genres || [], tags: z.tags || [], origin: z.origin || '', feat: z.feat || '',
+    date: new Date(Date.UTC(день.getFullYear(), день.getMonth(), день.getDate()))
+  });
+}
+
+// Строка таблицы, в которую превратилась запись студии.
+function стВТаблице(z, row) {
+  const день = Date.UTC(new Date(z.at).getFullYear(), new Date(z.at).getMonth(), new Date(z.at).getDate());
+  return CAT.some(r => !r.mine && !r.студия && разы(r).some(x => x.date && x.date.getTime() >= день && (
+    (row.ytId && x.ytId === row.ytId) || (row.spId && x.spId === row.spId) ||
+    (row.artistKey && x.artistKey === row.artistKey && nameKey(x.title) === nameKey(row.title)))));
+}
+
+/* Пересобрать строки студии в каталоге. Из build() — без досчёта стран
+   и годов (он идёт следом), со студии — с ним. */
+function студияВКаталог(досчитать) {
+  CAT = CAT.filter(r => !r.студия);
+  let ушли = false;
+  Object.values(СТ_ГОТОВО).sort((a, b) => a.at - b.at).forEach(z => {
+    if (!z.tier || !parseRate(z.tier + modLabel(z.mod))) return;
+    const row = студияСтрока(z);
+    if (стВТаблице(z, row)) { delete СТ_ГОТОВО[z.id]; ушли = true; return; }
+    CAT.unshift(row);
+  });
+  if (ушли) стГотовоСохранить();
+  if (досчитать) { applyCountries(); applyYears(); }
+}
+
+// Уходя со студии — убрать её классы со страницы (эфир прячет шапку)
+// и показать в каталоге то, что в ней оценили.
 function уходИзСтудии() {
   if ($('spage').hidden) return;
   $('spage').hidden = true;
   $('stMods').hidden = true;
   document.body.classList.remove('st-on', 'st-air', 'st-drag');
+  if (CAT.length) { студияВКаталог(true); T.fresh = true; }
 }
 
 window.addEventListener('hashchange', route);
