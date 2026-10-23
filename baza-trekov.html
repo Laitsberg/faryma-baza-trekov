@@ -227,10 +227,17 @@ select option{background:var(--card-2);color:var(--ink)}
   grid-template-columns:repeat(auto-fill,
     minmax(max(196px, calc((100% - (var(--n) - 1) * 18px) / var(--n))), 1fr))}
 
-/* Трек, который ты уже оценил, отмечен полоской цвета твоей оценки по
-   левому краю: видно и издалека, и не мешает обложке. */
-.card.my::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;z-index:6;
-  background:var(--mc);pointer-events:none}
+/* Трек, который ты уже оценил, отмечен полупрозрачной галочкой в левом
+   верхнем углу обложки. Раньше была цветная полоса по левому краю — её
+   было видно издалека, но сетка от неё пестрела. Цвет оценки и так
+   стоит в подвале карточки. На наведении галочка уступает место шкале. */
+.mine-ck{position:absolute;left:8px;top:8px;z-index:2;width:24px;height:24px;border-radius:50%;
+  display:none;place-items:center;background:rgba(14,14,16,.32);color:rgba(255,255,255,.82);
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);pointer-events:none;
+  transition:opacity .16s}
+.mine-ck svg{width:13px;height:13px}
+.card.my .mine-ck{display:grid}
+.card:hover .mine-ck,.card:focus-within .mine-ck{opacity:0}
 .card{position:relative;background:var(--card);border-radius:var(--r);overflow:hidden;cursor:pointer;
   display:flex;flex-direction:column;transition:transform .16s}
 .card:hover{transform:translateY(-2px)}
@@ -253,10 +260,11 @@ select option{background:var(--card-2);color:var(--ink)}
 /* z-index выше слоя оценки: тот растянут на всю обложку и на наведении
    ловит мышь, из-за чего сердечко под ним не нажималось. */
 /* Сердечко и облачко — на полупрозрачной тёмной плашке: на белой
-   обложке голый значок пропадал. */
+   обложке голый значок пропадал. Плашка нарочно еле заметная — ровно
+   настолько, чтобы значок читался, а обложку не перекрывал квадрат. */
 .badge{position:absolute;z-index:4;bottom:8px;width:32px;height:32px;padding:0;
   display:flex;align-items:center;justify-content:center;gap:5px;border-radius:8px;
-  background:rgba(14,14,16,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  background:rgba(14,14,16,.3);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
   font-family:var(--m);font-size:12.5px;color:#fff}
 .badge svg{width:19px;height:19px}
 .badge:empty{display:none}
@@ -403,19 +411,6 @@ select option{background:var(--card-2);color:var(--ink)}
   text-transform:uppercase}
 .mhd h2{font:700 19px/1.25 var(--d);margin:7px 0 3px}
 .mhd p{margin:0;color:var(--dim);font-size:13.5px}
-.choices{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.choice{display:flex;flex-direction:column;align-items:center;gap:13px;padding:20px 10px;
-  text-align:center;text-decoration:none;background:var(--card-2);border-radius:10px;
-  color:var(--dim);font-size:13.5px;transition:transform .14s,color .14s}
-.choice:hover{color:var(--ink);transform:translateY(-2px)}
-.choice .ic{width:52px;height:52px;color:var(--ch,var(--dim));transition:color .14s}
-.choice:hover .ic{color:var(--ch,var(--brand))}
-.choice .ic svg{width:100%;height:100%}
-.choice small{font-family:var(--m);font-size:9.5px;color:var(--faint)}
-.choice.off{opacity:.35;cursor:not-allowed}
-.choice.off:hover{transform:none;color:var(--dim)}
-.choice.off:hover .ic{color:var(--dim)}
-
 .field{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}
 .field label{font-size:12.5px;color:var(--dim)}
 .field input{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:9px 11px}
@@ -453,9 +448,6 @@ select option{background:var(--card-2);color:var(--ink)}
   .sortbtn,.sortbtn select{font-size:14px}
   .grid{grid-template-columns:repeat(auto-fill,minmax(144px,1fr));gap:12px}
   .art-fb{font-size:40px}
-  .choices{grid-template-columns:1fr}
-  .choice{flex-direction:row;text-align:left;gap:14px;padding:13px 15px}
-  .choice .ic{width:30px;height:30px;flex:none}
 }
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{transition-duration:.001ms!important}
@@ -496,9 +488,28 @@ select option{background:var(--card-2);color:var(--ink)}
 
 /* ---------- шапка трека ---------- */
 .hero{position:relative;background:var(--card);border-radius:var(--r);overflow:hidden}
-/* Когда под страницей есть фон из обложки, шапка трека полупрозрачная:
-   глухая, она лежала бы на нём серой заплаткой. */
-.atmo-on .hero{background:rgba(30,30,34,.55);border:1px solid rgba(255,255,255,.06)}
+/* Когда под страницей есть фон из обложки, все плашки страницы трека
+   полупрозрачные и подкрашены той же обложкой: глухие серые, они лежали
+   на цветном фоне заплатками. Подкраска — размытая обложка под самой
+   плашкой (::before), а не стекло на просвет: фон из обложки к середине
+   экрана тает, и нижние плашки на просвет оставались бы серыми.
+   backdrop-filter и transform на плашках не ставить: под ними живут
+   плееры, а плавающий плеер (position:fixed) от такого предка начал
+   бы отсчитываться от плашки, а не от окна. */
+#tpage .pan,#tpage .talk{position:relative;overflow:hidden}
+.atmo-on #tpage .pan,.atmo-on #tpage .talk{background:rgba(24,24,28,.5);
+  border:1px solid rgba(255,255,255,.07)}
+.atmo-on #tpage .pan::before,.atmo-on #tpage .talk::before{content:'';position:absolute;
+  inset:-80px;z-index:-1;pointer-events:none;background:var(--atmo) center/cover no-repeat;
+  filter:blur(60px) saturate(1.3);opacity:.3}
+/* Шапка трека — как в прежних версиях: своя размытая обложка внутри и
+   затемнение по диагонали, только прозрачнее, чем было, — цвет обложки
+   в ней самый густой на странице. */
+.atmo-on .hero{background:rgba(24,24,28,.35);border:1px solid rgba(255,255,255,.08)}
+.hero-bg{position:absolute;inset:-40px;background-size:cover;background-position:center;
+  filter:blur(34px) saturate(1.3);opacity:.75}
+.hero-bg::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(155deg,rgba(22,22,25,.35),rgba(22,22,25,.8))}
 
 /* ---------- фон страницы трека ----------
    Обложка, размытая во весь верх страницы и тающая книзу до нашего
@@ -511,18 +522,24 @@ select option{background:var(--card-2);color:var(--ink)}
 .atmo[hidden]{display:none}
 .atmo i{position:absolute;inset:-120px;background-size:cover;background-position:center 30%;
   filter:blur(70px) saturate(1.35);opacity:.5}
-/* Шапка над таким фоном окрашена той же обложкой, но темнее страницы,
-   а не светлее, и не торчит серой полосой. Стеклом, на просвет, она
-   была пятнистой: сквозь неё виднелся ровно тот кусок обложки, что
-   под ней, и у тёмного угла обложки поиск слева оставался серым. Свой
-   слой — вся обложка, сжатая в полосу и размытая, — даёт ровный тон
-   на всю ширину. */
+/* Шапка над таким фоном окрашена верхом того же фона, но всегда темнее
+   его. Прежде в неё ложилась вся обложка, сжатая в полосу, и у обложек
+   со светлым низом шапка выходила светлее страницы под ней, а цветом
+   не совпадала с ней вовсе: фон наверху страницы — это верх обложки.
+   Теперь у шапки слой той же величины, на том же месте и с тем же
+   размытием, что у фона (.atmo i), — то есть ровно те же цвета, — а
+   поверх него затемнение. Каждая точка шапки поэтому темнее той же
+   точки фона, какой бы ни была обложка. Шапка липкая, и при прокрутке
+   в ней остаются верхние цвета — те, с которых страница начиналась. */
 /* Поле поиска и плашка «что играет» — тоже стеклом: глухие серые, они
    торчали заплатками на окрашенной шапке. */
 .atmo-on .tb-search input,.atmo-on .np{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12)}
-.atmo-on .tb{background:#121214;overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.04)}
-.atmo-on .tb::before{content:'';position:absolute;inset:-60px;z-index:-1;pointer-events:none;
-  background:var(--atmo) center/100% 100% no-repeat;filter:blur(40px) saturate(1.4);opacity:.42}
+.atmo-on .tb{background:var(--bg);overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.04)}
+.atmo-on .tb::before{content:'';position:absolute;left:-120px;right:-120px;top:-120px;height:1340px;
+  z-index:-2;pointer-events:none;background:var(--atmo) center 30%/cover no-repeat;
+  filter:blur(70px) saturate(1.35);opacity:.5}
+.atmo-on .tb::after{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:rgba(0,0,0,.4)}
 .hero-in{position:relative;display:flex;gap:18px;padding:18px}
 .hero-cov{position:relative;width:196px;height:196px;flex:none;border-radius:var(--r);
   overflow:hidden;background:#1F1F22;padding:0;cursor:zoom-in}
@@ -583,8 +600,15 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   background:var(--card-2);color:var(--ink);font-size:13px;font-weight:600;
   text-decoration:none;min-height:38px}
 .act:hover{background:#44444C}
-.act.main{background:var(--brand);color:#151517}
-.act.main:hover{background:var(--brand-hi)}
+/* Площадки — прозрачными плашками со своим значком, без оранжевой
+   «слушать в …»: слушать можно прямо здесь, в «Оригинале трека», а
+   эти ссылки — для тех, кто хочет открыть песню у себя в приложении. */
+.act.pl{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
+.act.pl:hover{background:rgba(255,255,255,.12)}
+.act.pl svg{width:18px;height:18px}
+.atmo-on .act{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
+.atmo-on .act:hover{background:rgba(255,255,255,.12)}
+.atmo-on .sc{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
 /* Пункт без данных гасим, а не прячем: иначе ряд кнопок у каждого
    трека разной длины и глазу не за что зацепиться. */
 .act.off{opacity:.35;pointer-events:none}
@@ -606,8 +630,11 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 /* Вкладки — словами, без плашек: четыре серых прямоугольника подряд
    рябили. Выбранная — белая и жирная, с оранжевой чертой снизу; под
    всем рядом тонкая линия. */
-.tabs{display:flex;gap:4px 26px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:0 4px}
-.tab{position:relative;padding:10px 0 12px;font-size:15px;font-weight:600;color:var(--dim);
+/* Промежуток между словами широкий, как в макете заказчика: при 26px
+   четыре вкладки сливались в одну строку текста. */
+.tabs{display:flex;gap:4px 42px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:0 4px}
+.atmo-on .tabs{border-bottom-color:rgba(255,255,255,.1)}
+.tab{position:relative;padding:10px 0 12px;font-size:16px;font-weight:600;color:var(--dim);
   min-height:38px}
 .tab:hover{color:var(--ink)}
 .tab[aria-selected="true"]{color:#fff;font-weight:700}
@@ -704,6 +731,24 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   display:grid;place-items:center;font-size:20px;line-height:1}
 .rate-mods button:hover:not(:disabled){background:#44444C}
 .rate-mods button:disabled{opacity:.3;cursor:default}
+/* Комментарий под своей оценкой и ссылка ко всем комментариям */
+.mine-talk{display:flex;gap:8px;align-items:stretch;margin-top:16px}
+.mine-talk textarea{flex:1;min-width:0;min-height:44px;padding:9px 12px;border-radius:8px;
+  border:1px solid var(--line);background:rgba(0,0,0,.22);resize:vertical;
+  font:13.5px/1.4 var(--b);color:var(--ink)}
+.mine-talk textarea::placeholder{color:var(--faint)}
+.mine-talk textarea:focus{outline:none;border-color:var(--brand)}
+.mine-talk .send{width:44px;flex:none;border-radius:8px;background:var(--brand);color:#151517;
+  display:grid;place-items:center}
+.mine-talk .send:hover{background:var(--brand-hi)}
+.mine-talk .send svg{width:18px;height:18px}
+.mine-all{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;padding:10px 12px;
+  border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  font-size:14px;font-weight:600;color:var(--ink);text-align:left}
+.mine-all:hover{background:rgba(255,255,255,.1)}
+.mine-all svg{width:18px;height:18px;flex:none;color:var(--dim)}
+.mine-all b{font-weight:500;color:var(--dim)}
+.mine-all .car{margin-left:auto;font-size:18px;line-height:1;color:var(--dim)}
 
 /* ---------- заявка на обложку ---------- */
 .cov-prev{position:relative;margin:0 0 14px;max-width:210px;aspect-ratio:1;
@@ -861,6 +906,44 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 .np .nx{width:24px;height:24px;flex:none;border-radius:50%;color:var(--dim);
   display:grid;place-items:center;font-size:12px}
 .np .nx:hover{background:#44444C;color:#fff}
+.np .nx svg{width:14px;height:14px}
+
+/* ---------- плавающее окно ----------
+   Запись ВК или ютуб, чей плеер ушёл из виду, и всё, что включено с
+   карточки. Это тот же блок плеера, что на странице (см. плашкаЭфира):
+   ему лишь меняют position. Предки, спрятанные атрибутом hidden, на
+   это время получают .held — сами невидимы и места не занимают, но
+   потомка рисуют. */
+[hidden].held{display:block!important;visibility:hidden;position:absolute;left:0;top:0;
+  width:0;height:0;overflow:hidden;pointer-events:none}
+.vid.float{position:fixed;right:18px;bottom:18px;z-index:65;margin:0;
+  width:min(420px,calc(100vw - 24px));aspect-ratio:auto;height:auto;
+  visibility:visible;pointer-events:auto;border-radius:12px;background:#111113;
+  border:1px solid rgba(255,255,255,.1);box-shadow:0 22px 60px rgba(0,0,0,.6)}
+.vid.float iframe{position:relative;inset:auto;display:block;width:100%;height:auto;
+  aspect-ratio:16/9;transform:none}
+/* Spotify и Яндекс с карточки — без картинки, окно ниже */
+.vid.float.au iframe{aspect-ratio:auto;height:152px!important}
+.dock[hidden]{display:none}
+.dock.mini .vid{visibility:hidden;pointer-events:none}
+.fl-bar{display:flex;align-items:center;gap:4px;height:40px;padding:0 6px 0 12px;
+  background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.07)}
+.fl-t{min-width:0;flex:1;padding:0;text-align:left;font-size:12.5px;line-height:1.2;
+  color:var(--ink);display:flex;flex-direction:column}
+.fl-t small{font-size:10.5px;font-weight:600;color:var(--brand-hi)}
+.fl-t span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.fl-t:hover span{color:var(--brand-hi)}
+.fl-b{width:30px;height:30px;flex:none;border-radius:7px;display:grid;place-items:center;
+  color:var(--dim);font-size:13px}
+.fl-b:hover{background:rgba(255,255,255,.1);color:#fff}
+.fl-b svg{width:16px;height:16px}
+.fl-sw{flex:none;padding:4px 9px;border-radius:6px;font-size:11.5px;font-weight:600;
+  color:var(--dim);border:1px solid rgba(255,255,255,.14)}
+.fl-sw::before{content:'▶ ';font-size:8px;vertical-align:1px}
+.fl-sw:hover{color:#fff;border-color:rgba(255,255,255,.3)}
+@media(max-width:760px){
+  .vid.float{right:12px;bottom:12px}
+}
 
 /* ---------- прикольчики ---------- */
 .fun-h{margin:4px 0 6px;font:800 26px var(--d)}
@@ -1056,30 +1139,6 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 
 <p class="foot-note" id="footNote"></p>
 
-<!-- Окно по кнопке на карточке. Пункт гаснет, когда данных под него нет:
-     запись эфира есть не у каждого стрима, ссылка на трек — не у каждого трека. -->
-<div class="modal" id="mPlay" hidden>
- <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="mTitle">
-  <button class="mx" data-close aria-label="Закрыть">✕</button>
-  <div class="mhd">
-   <div class="k" id="mRate"></div>
-   <h2 id="mTitle">—</h2>
-   <p id="mArtist">—</p>
-  </div>
-  <div class="choices">
-   <a class="choice" id="mRoast" target="_blank" rel="noopener noreferrer" style="--ch:var(--brand)">
-    <span class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 39L30 12"/><path d="M34 6l8 6-6 8-8-6z"/><path d="M8 8l10 10"/><path d="M18 8L8 18"/></svg></span>
-    <span>посмотреть разнос<small id="mRoastNote"></small></span>
-   </a>
-   <a class="choice" id="mListen" target="_blank" rel="noopener noreferrer">
-    <span class="ic" id="mListenIc"></span>
-    <span id="mListenT">послушать</span>
-    <small id="mListenNote"></small>
-   </a>
-  </div>
- </div>
-</div>
-
 <div class="modal" id="mAdd" hidden>
  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="addTitle">
   <button class="mx" data-close aria-label="Закрыть">✕</button>
@@ -1174,6 +1233,10 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   <p id="lbxCap"></p>
  </figure>
 </div>
+
+<!-- Плеер, включённый кнопкой ▶ на карточке: плавающее окно вне
+     страниц, переходы по сайту его не трогают. Рисует JS. -->
+<div class="dock" id="dock" hidden></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -11381,6 +11444,7 @@ function card(r) {
     '<div class="cover">' +
       '<div class="art-fb" style="--tc:' + tColor(r.rate) + '">' + esc(initials(r)) + '</div>' +
       imgHtml(r, 'art pending') +
+      '<span class="mine-ck" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>' +
       '<div class="rater">' +
         '<div class="mods off">' +
           '<button class="mod" data-d="-1" aria-label="Понизить свою оценку">−</button>' +
@@ -11426,7 +11490,7 @@ function card(r) {
       '<span class="rt-u" data-tip="твоя оценка">' +
         '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>' +
         '<span class="mv">–</span></span>' +
-      '<button class="play" aria-label="Что можно сделать с треком «' + esc(r.title) + '»">' +
+      '<button class="play" aria-label="Слушать «' + esc(r.title) + '»" data-tip="Слушать здесь">' +
         '<svg viewBox="0 0 12 12" fill="currentColor"><path d="M2 1l9 5-9 5z"/></svg></button>' +
     '</div>';
 
@@ -11509,7 +11573,6 @@ function card(r) {
       mv.textContent = shortRate({ tier: t.key, mod: v.m });
       rtu.style.setProperty('--tc', TCOLOR[t.key]);
       el.classList.add('my');
-      el.style.setProperty('--mc', TCOLOR[t.key]);
     } else {
       segs.forEach(s => { s.querySelector('i').style.width = '0%'; });
       rt.textContent = 'оцени этот трек!';
@@ -11542,7 +11605,7 @@ function card(r) {
     else if (GOPEN['отметки'] !== false) rail();
   });
 
-  el.querySelector('.play').addEventListener('click', () => открыть(r));
+  el.querySelector('.play').addEventListener('click', () => играйСКарточки(r));
 
   // Щелчок по самой карточке уводит на страницу трека. Кнопки поверх
   // обложки — шкала, сердечко, «что можно сделать» — остаются собой:
@@ -11647,47 +11710,6 @@ function наСтраницу(page) {
   window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
 }
 
-/* ---------- окно карточки ---------- */
-let CUR = null;
-
-const PLAT_IC = {
-  YouTube: '<svg viewBox="0 0 48 48" fill="currentColor"><rect x="3" y="10" width="42" height="28" rx="7"/><path d="M20 18l12 6-12 6z" fill="#2A2A2E"/></svg>',
-  Spotify: '<svg viewBox="0 0 48 48" fill="currentColor"><circle cx="24" cy="24" r="21"/><g stroke="#2A2A2E" stroke-width="3.4" stroke-linecap="round" fill="none"><path d="M14 19c7-2 15-1.4 21 2"/><path d="M15.5 25.5c6-1.6 12.6-1 17.5 1.8"/><path d="M17 31.5c5-1.2 10.2-.7 14 1.5"/></g></svg>'
-};
-const PLAT_COLOR = { YouTube: '#FF3D3D', Spotify: '#1ED760' };
-const NOTE_IC = '<svg viewBox="0 0 48 48" fill="currentColor"><path d="M18 34V10l20-4v24"/><circle cx="13" cy="34" r="6"/><circle cx="33" cy="30" r="6"/></svg>';
-
-function открыть(r) {
-  CUR = r;
-  $('mTitle').textContent = r.title || '—';
-  $('mArtist').textContent = [r.artist, r.source].filter(Boolean).join(' · ') || '—';
-  const rate = $('mRate');
-  rate.textContent = r.rate ? r.rate.label : 'ещё не разобран';
-  rate.style.color = tColor(r.rate);
-
-  // Запись разноса ведёт на минуту разбора в записи эфира; у свежих
-  // стримов записи ещё нет — в таблице там стоит «СКОРО».
-  const roast = $('mRoast');
-  roast.href = r.moment || '#';
-  roast.classList.toggle('off', !r.moment);
-  $('mRoastNote').textContent = r.moment
-    ? (r.streamNum != null ? 'стрим №' + r.streamNum : '') : 'записи эфира пока нет';
-
-  // Платформу берём ту, что стоит в таблице: подставлять поиск по
-  // названию нельзя, он приведёт не туда.
-  const listen = $('mListen');
-  const plat = r.link ? r.link.platform : '';
-  listen.href = r.link ? r.link.url : '#';
-  listen.classList.toggle('off', !r.link);
-  listen.style.setProperty('--ch', PLAT_COLOR[plat] || 'var(--brand)');
-  $('mListenIc').innerHTML = PLAT_IC[plat] || NOTE_IC;
-  $('mListenT').textContent = r.link ? 'послушать в ' + plat : 'послушать';
-  $('mListenNote').textContent = r.link ? '' : 'ссылки в таблице нет';
-
-  $('mPlay').hidden = false;
-  $('mPlay').querySelector('.mx').focus();
-}
-
 function toast(msg) {
   const t = $('toast');
   t.textContent = msg; t.classList.add('on');
@@ -11773,10 +11795,6 @@ function controls() {
     if (e.key !== 'Escape') return;
     document.querySelectorAll('.modal:not([hidden])').forEach(m => { m.hidden = true; });
   });
-  // Пункт без данных не уводит в никуда: клик гасим, а не прячем сам
-  // пункт — иначе окно каждый раз разной высоты.
-  document.querySelectorAll('.choice').forEach(a =>
-    a.addEventListener('click', e => { if (a.classList.contains('off')) e.preventDefault(); }));
 }
 
 /* ============================================================
@@ -11990,6 +12008,35 @@ function reset_soft() {
   ПОЛЯ.forEach(k => F[k].clear());
 }
 
+/* Ссылки на площадки в шапке трека — прозрачными плашками со значком.
+   Раньше тут стояла одна оранжевая «слушать в Spotify»: кричала громче
+   самого трека и уводила с сайта, хотя слушать можно и здесь. Теперь
+   ссылок столько, сколько площадок у трека нашлось, — те же, что в
+   выборе над плеером оригинала. Нет ни одной — плашка гаснет. */
+const ПЛ_ЗНАЧОК = {
+  yt: '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4" fill="#FF0033"/><path d="M10 9l5 3-5 3z" fill="#fff"/></svg>',
+  sp: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#1ED760"/><g stroke="#121212" stroke-width="1.8" stroke-linecap="round" fill="none"><path d="M7 9.6c3.4-1 7.2-.7 10 1"/><path d="M7.7 12.7c2.9-.8 6-.5 8.4.9"/><path d="M8.4 15.6c2.4-.6 4.9-.3 6.7.7"/></g></svg>',
+  ya: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#FFCC00"/><path d="M13.2 6.5h-1.6c-2 0-3.4 1.2-3.4 3.2 0 1.6.8 2.5 2.2 3.3L8 17.5h2l2.3-4.2h.9v4.2h1.8v-11zm0 5.4h-.8c-1.2 0-2-.6-2-2.1 0-1.4.8-2 2-2h.8z" fill="#121212"/></svg>',
+  ссылка: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>'
+};
+function площадкиСсылки(r) {
+  const есть = оригиналы(r);
+  const из = r.link ? ({ YouTube: 'yt', Spotify: 'sp', 'Яндекс.Музыка': 'ya' })[r.link.platform] : '';
+  const адрес = {
+    yt: есть.yt && (из === 'yt' ? r.link.url : 'https://youtu.be/' + есть.yt),
+    sp: есть.sp && (из === 'sp' ? r.link.url : 'https://open.spotify.com/' + есть.sp),
+    ya: есть.ya && r.link && r.link.url
+  };
+  const плашка = (url, значок, имя) =>
+    '<a class="act pl" target="_blank" rel="noopener noreferrer" href="' + esc(url) + '"' +
+    ' data-tip="' + esc('Открыть в ' + имя) + '">' + значок + esc(имя) + '</a>';
+  const ссылки = ПЛОЩАДКИ.filter(([k]) => адрес[k]).map(([k, имя]) => плашка(адрес[k], ПЛ_ЗНАЧОК[k], имя));
+  // Площадка без плеера (SoundCloud, ВК-аудио…) — просто ссылкой.
+  if (r.link && !из) ссылки.push(плашка(r.link.url, ПЛ_ЗНАЧОК.ссылка, r.link.platform));
+  return ссылки.length ? ссылки.join('')
+    : '<span class="act pl off">' + ПЛ_ЗНАЧОК.ссылка + 'ссылки в таблице нет</span>';
+}
+
 function drawHero() {
   const r = показ();
   const box = $('tHero');
@@ -12022,6 +12069,7 @@ function drawHero() {
   const разносы = разы(T.r);
   const заг = имяСПрипиской(r.title || r.full);
   box.innerHTML =
+    (bg ? '<div class="hero-bg" style="background-image:url(&quot;' + esc(bg) + '&quot;)"></div>' : '') +
     '<div class="hero-in">' +
       '<button type="button" class="hero-cov' + (bg ? '' : ' empty') + '" id="tCov" data-tip="' +
         (bg ? 'Открыть обложку' : 'Обложки нет — предложить свою') + '">' + covHtml(r) + '</button>' +
@@ -12035,10 +12083,7 @@ function drawHero() {
         (tgs.length ? '<div class="tgs">' + tgs.join('') + '</div>' : '') +
         (тэги.length ? '<div class="tags">' + тэги.join('') + '</div>' : '') +
         '<div class="hero-act">' +
-          '<a class="act main' + (r.link ? '' : ' off') + '" id="tListen" target="_blank" rel="noopener noreferrer" href="' +
-            esc(r.link ? r.link.url : '#') + '">' +
-            '<svg viewBox="0 0 12 12" fill="currentColor"><path d="M2 1l9 5-9 5z"/></svg>' +
-            (r.link ? 'слушать в ' + esc(r.link.platform) : 'ссылки в таблице нет') + '</a>' +
+          площадкиСсылки(r) +
           '<span class="act-sep"></span>' +
           '<button class="act ic" id="tFav" aria-pressed="false">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
@@ -12078,6 +12123,12 @@ function drawHero() {
   const поздняя = bg ? null : box.querySelector('.hero-cov img[data-sp]');
   if (поздняя) поздняя.addEventListener('load', () => {
     if (T.r && T.r.key === r.key) фон(поздняя.src);
+    if (!box.querySelector('.hero-bg')) {
+      const f = document.createElement('div');
+      f.className = 'hero-bg';
+      f.style.backgroundImage = 'url("' + поздняя.src.replace(/"/g, '%22') + '")';
+      box.prepend(f);
+    }
     const к = $('tCov');
     к.classList.remove('empty');
     к.dataset.tip = 'Открыть обложку';
@@ -12338,7 +12389,7 @@ function отпустить(панели) {
 }
 
 function убрать(el) {
-  [...el.querySelectorAll('iframe'), ...el.querySelectorAll('.pan.orig')].forEach(x => {
+  [el, ...el.querySelectorAll('iframe'), ...el.querySelectorAll('.pan.orig')].forEach(x => {
     const з = x._звук;
     if (!з) return;
     try { з.игрок.destroy(); } catch {}
@@ -12423,7 +12474,7 @@ function vkEmbed(vod, sec) {
    Играть может только что-то одно: новый звук ставит на паузу прежний,
    где бы тот ни был. Тот, что играет, — в ЗВУК.сейчас; панель, которая
    доигрывает за пределами открытого трека, — в ЗВУК.фон. */
-const ЗВУК = { сейчас: null, фон: null };
+const ЗВУК = { сейчас: null, фон: null, мини: false };
 const ПУЛЬТЫ = {};
 
 function скрипт(src, ошибка) {
@@ -12464,11 +12515,17 @@ function спотифайАпи() {
 }
 
 /* Один звук. игрок — то, что умеет play, pause и destroy; у каждого
-   плеера они называются по-своему, поэтому сводим их к одному виду. */
-function звук(вид, площадка, игрок, панель, r) {
-  const з = { вид, площадка, игрок, панель, r, трек: T.r.key, раз: T.раз, играет: false };
+   плеера они называются по-своему, поэтому сводим их к одному виду.
+   окно — блок с картинкой (.vid) у тех, где есть что смотреть: запись
+   ВК и ютуб. Только такое окно и всплывает, когда плеер уходит из
+   виду; у Spotify смотреть не на что, ему хватает плашки в шапке. */
+function звук(вид, площадка, игрок, панель, r, окно) {
+  const з = { вид, площадка, игрок, панель, r, окно: окно || null, трек: r.key,
+              раз: T.r && T.r.key === r.key ? T.раз : 0, играет: false };
   з.идёт = () => {
     if (з.играет && ЗВУК.сейчас === з) return;   // Spotify сообщает о ходе каждую секунду
+    // Новый звук — снова окном: свернул прежний, а не этот.
+    if (ЗВУК.сейчас !== з) ЗВУК.мини = false;
     if (ЗВУК.сейчас && ЗВУК.сейчас !== з) ЗВУК.сейчас.игрок.pause();
     if (ЗВУК.фон && ЗВУК.фон !== панель) убрать(ЗВУК.фон);
     // Плееры без пульта поставить на паузу нельзя — их замолкаем
@@ -12493,7 +12550,7 @@ function подключитьВК(f, панель, r) {
     if (!VP || !f.isConnected || f._звук) return;
     let игрок;
     try { игрок = VP(f); } catch { return; }
-    const з = звук('разнос', 'VK', игрок, панель, r);
+    const з = звук('разнос', 'VK', игрок, панель, r, f.parentElement);
     f._звук = з;
     игрок.on('started', з.идёт);
     игрок.on('resumed', з.идёт);
@@ -12503,27 +12560,66 @@ function подключитьВК(f, панель, r) {
   }), { once: true });
 }
 
-/* Плашка в шапке: что играет, пауза и выключить. Видна, только когда
-   самого плеера не видно — на витрине, на другом треке или на соседней
-   вкладке. Рядом с плеером она бы его просто повторяла. */
+/* ---------- где виден звук ----------
+   Три места, по порядку:
+   1. Сам плеер на странице трека — если его видно, больше ничего нет.
+   2. Плавающее окно в правом нижнем углу — у записи ВК и у ютуба, когда
+      их плеер ушёл из виду: открыли другую вкладку («Инфо», «Похожие»),
+      другой трек, каталог или прикольчики. Смотреть разнос можно дальше.
+   3. Плашка в шапке — у Spotify (смотреть там не на что) и у окна,
+      которое свернули кнопкой «в шапку». Из неё окно разворачивается.
+
+   Окно — тот же самый блок плеера, а не копия: рамку нельзя перенести
+   по DOM, она перезагрузится и начнёт сначала. Поэтому блок просто
+   получает position:fixed прямо на своём месте. Мешает одно: панель
+   с ним спрятана атрибутом hidden (display:none), а у такого предка
+   не рисуется ничего, даже fixed. Таким предкам на время даётся
+   класс .held — они остаются невидимыми и без места на странице
+   (visibility:hidden, размер ноль), но рисуют потомка, которому
+   visibility возвращена. Атрибут hidden при этом остаётся, и вся
+   прочая логика «видно ли панель» работает как раньше. */
 const ИК_ПАУЗА = '<svg viewBox="0 0 12 12" fill="currentColor"><path d="M2.5 1.5h2.6v9H2.5zM6.9 1.5h2.6v9H6.9z"/></svg>';
 const ИК_ИГРАТЬ = '<svg viewBox="0 0 12 12" fill="currentColor"><path d="M2.5 1l8.5 5-8.5 5z"/></svg>';
+const ИК_В_ШАПКУ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M7 8h7"/></svg>';
+const ИК_ОКНОМ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><rect x="11" y="11" width="7" height="6" rx="1" fill="currentColor"/></svg>';
+
+const чтоИграет = з => з.вид === 'разнос'
+  ? 'разнос' + (з.r.streamNum != null ? ' №' + з.r.streamNum : '')
+  : 'оригинал · ' + з.площадка;
 
 function плашкаЭфира() {
   const бар = $('np');
-  const з = ЗВУК.сейчас;
-  const видно = з && з.панель.isConnected && з.панель.offsetParent !== null;
-  if (!з || видно || !з.панель.isConnected) { бар.hidden = true; return; }
+  const док = $('dock');
+  const з = ЗВУК.сейчас && ЗВУК.сейчас.панель.isConnected ? ЗВУК.сейчас : null;
+  const сКарточки = !!з && з.панель.parentElement === док;
+  const наМесте = !!з && !сКарточки && !з.панель.closest('[hidden]');
+  const окно = з && з.окно && з.окно.isConnected ? з.окно : null;
+  const плыть = окно && !наМесте && !ЗВУК.мини ? окно : null;
+
+  // Всё, что всплывало прежде, — на место; ниже решаем заново.
+  document.querySelectorAll('#tpage .vid.float').forEach(v => { if (v !== плыть) наМесто(v); });
+  document.querySelectorAll('.held').forEach(el => el.classList.remove('held'));
+  if (плыть && !сКарточки) {
+    плыть.classList.add('float');
+    for (let el = плыть.parentElement; el && el !== document.body; el = el.parentElement)
+      if (el.hidden) el.classList.add('held');
+  }
+  // Плеер с карточки живёт только окном; свёрнут — окно невидимо, но играет.
+  [...док.children].forEach(п => шапкаОкна(п.querySelector('.vid'), п,
+    з && з.панель === п ? з : п._звук || (п.querySelector('iframe') || {})._звук || null));
+  if (плыть && !сКарточки) шапкаОкна(плыть, з.панель, з);
+  док.hidden = !док.children.length;
+  док.classList.toggle('mini', ЗВУК.мини && сКарточки);
+
+  if (!з || наМесте || плыть) { бар.hidden = true; return; }
   бар.hidden = false;
-  const что = з.вид === 'разнос'
-    ? 'разнос' + (з.r.streamNum != null ? ' №' + з.r.streamNum : '')
-    : 'оригинал · ' + з.площадка;
   бар.innerHTML =
     '<button type="button" class="pp" aria-label="' + (з.играет ? 'Пауза' : 'Продолжить') + '">' +
       (з.играет ? ИК_ПАУЗА : ИК_ИГРАТЬ) + '</button>' +
-    '<button type="button" class="nt" data-tip="Открыть трек"><small>' + esc(что) + '</small>' +
+    '<button type="button" class="nt" data-tip="Открыть трек"><small>' + esc(чтоИграет(з)) + '</small>' +
       esc((з.r.title || '—') + ' — ' + (з.r.artist || '—')) + '</button>' +
-    '<button type="button" class="nx" aria-label="Выключить" data-tip="Выключить">✕</button>';
+    (окно ? '<button type="button" class="nx" data-act="up" aria-label="Развернуть окном" data-tip="Развернуть окном">' + ИК_ОКНОМ + '</button>' : '') +
+    '<button type="button" class="nx" data-act="x" aria-label="Выключить" data-tip="Выключить">✕</button>';
   бар.querySelector('.pp').addEventListener('click', () => {
     з.играет ? з.игрок.pause() : з.игрок.play();
   });
@@ -12531,12 +12627,159 @@ function плашкаЭфира() {
     const r = CAT.find(x => x.key === з.трек);
     if (r) openTrack(r);
   });
-  бар.querySelector('.nx').addEventListener('click', () => {
-    з.игрок.pause();
-    if (ЗВУК.фон === з.панель) убрать(ЗВУК.фон);
-    if (ЗВУК.сейчас === з) ЗВУК.сейчас = null;
+  бар.querySelector('[data-act="x"]').addEventListener('click', () => выключить(з, з.панель));
+  const вверх = бар.querySelector('[data-act="up"]');
+  if (вверх) вверх.addEventListener('click', () => { ЗВУК.мини = false; плашкаЭфира(); });
+}
+
+/* Выключить совсем: плеер на паузу, а панель, которая доигрывала за
+   пределами открытого трека, — прочь. Свою панель трека не трогаем:
+   она на странице, просто сейчас на другой вкладке. */
+function выключить(з, панель) {
+  if (з) { try { з.игрок.pause(); } catch {} }
+  if (ЗВУК.фон === панель) убрать(панель);
+  if (з && ЗВУК.сейчас === з) ЗВУК.сейчас = null;
+  плашкаЭфира();
+}
+
+function наМесто(v) {
+  v.classList.remove('float');
+  const ш = v.querySelector('.fl-bar');
+  if (ш) ш.remove();
+}
+
+/* Полоска над плавающим окном: что играет (щелчок — к треку), свернуть
+   в шапку, выключить. Свернуть можно только то, чем умеем управлять
+   из шапки, — у Яндекса и у плеера без пульта кнопки нет. */
+function шапкаОкна(v, панель, з) {
+  if (!v) return;
+  const r = з ? з.r : панель._r;
+  const что = з ? чтоИграет(з) : панель._что === 'roast' ? 'разнос' : 'оригинал';
+  let ш = v.querySelector('.fl-bar');
+  if (!ш) {
+    ш = document.createElement('div');
+    ш.className = 'fl-bar';
+    v.prepend(ш);
+  }
+  const другое = панель._другое;   // только у плеера с карточки: разнос ⇄ оригинал
+  ш.innerHTML =
+    '<button type="button" class="fl-t" data-tip="Открыть трек"><small>' + esc(что) + '</small>' +
+      '<span>' + esc((r.title || '—') + ' — ' + (r.artist || '—')) + '</span></button>' +
+    (другое ? '<button type="button" class="fl-sw" data-act="sw">' + (другое === 'roast' ? 'разнос' : 'оригинал') + '</button>' : '') +
+    (з ? '<button type="button" class="fl-b" data-act="mini" aria-label="Свернуть в шапку" data-tip="Свернуть в шапку">' + ИК_В_ШАПКУ + '</button>' : '') +
+    '<button type="button" class="fl-b" data-act="x" aria-label="Выключить" data-tip="Выключить">✕</button>';
+  // К треку — сразу на «Разнос»: там окно и встанет обратно на место.
+  ш.querySelector('.fl-t').addEventListener('click', () => {
+    const x = CAT.find(y => y.key === r.key);
+    if (!x) return;
+    T.tab = 'roast';
+    if (T.r && T.r.key === x.key) { drawTabs(); drawTab(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    else openTrack(x);
+  });
+  const мини = ш.querySelector('[data-act="mini"]');
+  if (мини) мини.addEventListener('click', () => {
+    ПОДСКАЗКА.спрятать();
+    // Ещё не заиграл, а его уже свернули — шапке всё равно нужно знать, чей он.
+    if (!ЗВУК.сейчас) ЗВУК.сейчас = з;
+    ЗВУК.мини = true;
     плашкаЭфира();
   });
+  const sw = ш.querySelector('[data-act="sw"]');
+  if (sw) sw.addEventListener('click', () => играйСКарточки(панель._r, другое));
+  ш.querySelector('[data-act="x"]').addEventListener('click', () => {
+    ПОДСКАЗКА.спрятать();
+    if (панель.parentElement === $('dock')) { if (з) try { з.игрок.pause(); } catch {}
+      if (ЗВУК.сейчас === з) ЗВУК.сейчас = null; убрать(панель); плашкаЭфира(); }
+    else выключить(з, панель);
+  });
+}
+
+/* ---------- плеер с карточки ----------
+   Кнопка ▶ на карточке включает трек прямо здесь, в плавающем окне, а
+   не уводит на Spotify или в ВК новой вкладкой. Играет оригинал — на
+   той площадке, что выбрана в «Оригинале трека» (или первой, что есть),
+   а если встроить песню нечем — запись разноса. Между ними можно
+   переключиться в самом окне. Окно живёт в #dock, вне страниц, поэтому
+   переходы по сайту его не трогают: оно доигрывает, пока не выключат
+   или пока не заиграет что-то другое. Встроить нечего вовсе —
+   открывается страница трека. */
+function играйСКарточки(r, что) {
+  const есть = оригиналы(r);
+  const из = r.link ? ({ YouTube: 'yt', Spotify: 'sp', 'Яндекс.Музыка': 'ya' })[r.link.platform] : '';
+  let любимая = '';
+  try { любимая = localStorage.getItem(ПЛ_LS) || ''; } catch {}
+  const пл = [любимая, из, 'yt', 'sp', 'ya'].find(k => k && есть[k]) || '';
+  const вк = vkEmbed(r.vod, r.sec);
+  if (!пл && !вк) { toast('Встроить этот трек не во что — вот его страница'); openTrack(r); return; }
+  if (что !== 'roast' || !вк) что = пл ? 'orig' : 'roast';
+
+  // Прежнее замолкает: и звук с пультом, и окно, и панель, что доигрывала в фоне.
+  if (ЗВУК.сейчас && ЗВУК.сейчас.играет) { try { ЗВУК.сейчас.игрок.pause(); } catch {} }
+  [...$('dock').children].forEach(убрать);
+  if (ЗВУК.фон) убрать(ЗВУК.фон);
+  if (T.r) Object.values(T.панели).forEach(стопОригинал);
+
+  const панель = document.createElement('div');
+  панель.className = 'dock-p';
+  панель._r = r;
+  панель._что = что;
+  панель._другое = что === 'orig' ? (вк ? 'roast' : '') : (пл ? 'orig' : '');
+  const v = document.createElement('div');
+  v.className = 'vid float' + (что === 'orig' && пл !== 'yt' ? ' au' : '');
+  панель.append(v);
+  $('dock').append(панель);
+  ЗВУК.фон = панель;
+  ЗВУК.мини = false;
+
+  const кадр = (url, имя) => {
+    const f = document.createElement('iframe');
+    f.src = url; f.title = имя;
+    f.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
+    f.allowFullscreen = true;
+    f.referrerPolicy = 'strict-origin-when-cross-origin';
+    v.append(f);
+    return f;
+  };
+
+  if (что === 'roast') {
+    const f = кадр(вк + '&autoplay=1', 'Запись разноса');
+    f.className = 'vk';
+    подключитьВК(f, панель, r);
+  } else if (пл === 'yt') {
+    const f = кадр('https://www.youtube.com/embed/' + есть.yt + '?autoplay=1&enablejsapi=1' +
+      (r.ytStart ? '&start=' + r.ytStart : ''), 'Оригинал на YouTube');
+    ютубАпи().then(YT => {
+      if (!YT || !f.isConnected) return;
+      const з = звук('оригинал', 'YouTube', null, панель, r, v);
+      const п = new YT.Player(f, { events: {
+        // Пульт мог подключиться, когда песня уже пошла, — тогда о начале
+        // он не сообщит, и спрашиваем сами.
+        onReady: () => { try { if (п.getPlayerState() === 1) з.идёт(); } catch {} },
+        onStateChange: e => {
+          if (e.data === 1) з.идёт();
+          else if (e.data === 0 || e.data === 2) з.стоит();
+        } } });
+      з.игрок = { play: () => п.playVideo(), pause: () => п.pauseVideo(), destroy: () => п.destroy() };
+      панель._звук = з;
+    });
+  } else if (пл === 'sp') {
+    const место = document.createElement('div');
+    v.append(место);
+    спотифайАпи().then(API => {
+      if (!место.isConnected) return;
+      if (!API) { место.remove(); кадр('https://open.spotify.com/embed/' + есть.sp, 'Оригинал в Spotify'); return; }
+      API.createController(место, { uri: 'spotify:' + есть.sp.replace('/', ':'), width: '100%', height: 152 }, c => {
+        const з = звук('оригинал', 'Spotify', { play: () => c.resume(), pause: () => c.pause(), destroy: () => c.destroy() }, панель, r, v);
+        панель._звук = з;
+        c.addListener('playback_update', e => { e.data.isPaused ? з.стоит() : з.идёт(); });
+        c.addListener('ready', () => { try { c.play(); } catch {} });
+      });
+    });
+  } else {
+    // У Яндекса пульта нет: окно с плеером, а запустить — в нём самом.
+    кадр('https://music.yandex.ru/iframe/' + есть.ya, 'Оригинал в Яндекс.Музыке');
+  }
+  плашкаЭфира();
 }
 
 function tabRoast(box) {
@@ -12689,7 +12932,7 @@ function панельОригинала(r, duo) {
       const f = vid.querySelector('iframe');
       if (f) ютубАпи().then(YT => {
         if (!YT || !f.isConnected) return;
-        const з = звук('оригинал', 'YouTube', null, duo, r);
+        const з = звук('оригинал', 'YouTube', null, duo, r, vid);
         const п = new YT.Player(f, { events: { onStateChange: e => {
           if (e.data === 1) з.идёт();
           else if (e.data === 0 || e.data === 2) з.стоит();
@@ -12817,6 +13060,7 @@ function drawTalk() {
   const рисовать = () => {
     const список = TALK[r.key] || [];
     счёт.textContent = список.length;
+    счётКомментариев();
     лента.textContent = '';
     if (!список.length) {
       лента.innerHTML = '<p class="talk-empty">Пока нет комментариев. Начни обсуждение!</p>';
@@ -12841,6 +13085,7 @@ function drawTalk() {
     });
   };
 
+  box._рисовать = рисовать;
   порядок.addEventListener('change', () => { ПОРЯДОК = порядок.value; рисовать(); });
   форма.addEventListener('submit', e => {
     e.preventDefault();
@@ -13018,7 +13263,15 @@ function drawMine() {
       '<span class="rate-mods">' +
         '<button type="button" data-d="-1" aria-label="Понизить оценку">−</button>' +
         '<button type="button" data-d="1" aria-label="Повысить оценку">+</button>' +
-      '</span></div>';
+      '</span></div>' +
+    '<form class="mine-talk">' +
+      '<textarea rows="2" maxlength="1500" placeholder="Пара слов о треке…" aria-label="Комментарий"></textarea>' +
+      '<button type="submit" class="send" aria-label="Отправить комментарий" data-tip="Отправить (Ctrl+Enter)">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button>' +
+    '</form>' +
+    '<button type="button" class="mine-all">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3v4l5-4h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>' +
+      'Все комментарии <b></b><span class="car">›</span></button>';
 
   const scale = box.querySelector('.big-scale');
   const val = box.querySelector('.val');
@@ -13040,7 +13293,7 @@ function drawMine() {
       const cur = MY[r.key];
       const держим = cur && cur.t === t.key && t.mods.includes(cur.m);
       MY[r.key] = { t: t.key, m: держим ? cur.m : '' };
-      save(); paint();
+      save(); paint(); drawDist();
     });
     scale.append(b);
     return b;
@@ -13094,6 +13347,37 @@ function drawMine() {
     v.m = t.mods[next]; save(); paint();
   });
   paint();
+
+  /* Комментарий — тут же, под оценкой: поставил и сразу сказал почему.
+     Ложится в тот же список, что и форма внизу, а кнопка ниже ведёт к
+     нему — к комментариям под вкладками. */
+  const форма = box.querySelector('.mine-talk');
+  форма.addEventListener('submit', e => {
+    e.preventDefault();
+    const поле = форма.querySelector('textarea');
+    const text = поле.value.trim();
+    if (!text) return;
+    (TALK[r.key] = TALK[r.key] || []).push({ who: ктоЯ() || 'Я', text, when: Date.now() });
+    saveTalk();
+    поле.value = '';
+    const лента = $('tTalk');
+    if (лента._рисовать) лента._рисовать();
+    toast('Комментарий добавлен');
+  });
+  форма.querySelector('textarea').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) форма.requestSubmit();
+  });
+  box.querySelector('.mine-all').addEventListener('click', () => {
+    $('tTalk').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  счётКомментариев();
+}
+
+function счётКомментариев() {
+  if (!T.r) return;
+  const n = (TALK[T.r.key] || []).length;
+  const b = document.querySelector('#tMine .mine-all b');
+  if (b) b.textContent = n ? '(' + n + ')' : '';
 }
 
 /* ---------- интересные факты ----------
@@ -13226,47 +13510,37 @@ function drawFacts() {
     кн.dataset.tip = 'Про этот трек уже собрано три факта';
   } else кн.addEventListener('click', () => openFact(r));
 }
-/* ---------- распределение оценок ---------- */
-/* Зрительских оценок в архиве нет — считать по ним нечего. Зато есть
-   все прошлые разносы этого исполнителя: по ним и видно, как
-   композитор к нему относится. Если трек у исполнителя один —
-   берём жанр. */
+/* ---------- как голосовали зрители ----------
+   Раньше здесь были оценки композитора всем трекам исполнителя (или
+   жанра), а заказчик хочет видеть, как этот самый трек оценили люди.
+   Общей базы голосов у сайта пока нет: всё, что зритель ставит, лежит
+   в его браузере. Поэтому честно — голос здесь один, твой, и так и
+   подписано. Чужих голосов не выдумываем. Когда база появится, менять
+   надо только голосаЗа(): разметка уже считает любое их число. */
+const голосаЗа = r => MY[r.key] ? [MY[r.key]] : [];
+
 function drawDist() {
   const r = T.r;
   const box = $('tDist');
-  box.textContent = '';
-
-  let list = r.artistKey ? CAT.filter(x => x.artistKey === r.artistKey) : [];
-  let по = 'исполнителя';
-  let имя = r.artist || '';
-  if (list.length < 2 && r.genres.length) {
-    имя = r.genres[0];
-    по = 'жанра';
-    list = CAT.filter(x => x.genres.includes(имя));
-  }
-  if (list.length < 2) { box.hidden = true; return; }
-  box.hidden = false;
-
-  const n = TIERS.map(t => list.filter(x => x.rate && x.rate.tier === t.key).length);
+  const голоса = голосаЗа(r);
+  const n = TIERS.map(t => голоса.filter(v => v.t === t.key).length);
   const max = Math.max(...n, 1);
 
+  box.hidden = false;
   box.innerHTML =
-    '<h2>Оценки ' + по + '<small>' + esc(имя) + ' · ' + число(list.length) + ' ' +
-      plural(list.length, 'трек', 'трека', 'треков') + '</small></h2>' +
+    '<h2>Оценки зрителей<small>' + (голоса.length
+      ? число(голоса.length) + ' ' + plural(голоса.length, 'голос', 'голоса', 'голосов')
+      : 'голосов нет') + '</small></h2>' +
     '<div class="dist">' + TIERS.map((t, i) =>
       '<span class="nm">' + TSHORT[t.key] + '</span>' +
       '<span class="ba" style="--tc:' + TCOLOR[t.key] + '"><i style="width:' +
         (n[i] / max * 100).toFixed(1) + '%"></i></span>' +
       '<span class="vl">' + n[i] + '</span>').join('') +
-    '</div>';
-
-  if (r.artist && по === 'исполнителя') {
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'lnk';
-    b.textContent = 'показать все треки исполнителя';
-    b.addEventListener('click', поИсполнителю);
-    box.append(b);
-  }
+    '</div>' +
+    '<p class="note" style="margin-top:12px">' + (голоса.length
+      ? 'Пока здесь только твой голос: общей базы оценок ещё нет, и голоса других зрителей сюда не доходят.'
+      : 'Общей базы оценок ещё нет, поэтому голосов других зрителей здесь не видно. Твой появится, как только поставишь оценку выше.') +
+    '</p>';
 }
 
 /* ============================================================
