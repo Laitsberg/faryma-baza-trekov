@@ -1020,29 +1020,33 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   display:flex;align-items:center;gap:clamp(18px,2.4vw,44px);
   padding:clamp(14px,2vh,26px) clamp(18px,2.6vw,48px)}
 .st-art{--cov:clamp(160px,calc(33vh - 64px),320px);position:relative;flex:none;
-  width:calc(var(--cov) * 1.2);height:var(--cov)}
-/* Пластинка выглядывает из-под обложки и крутится, пока трек ждёт
-   оценки: он «играет». Оценённый трек пластинку убирает. */
-.st-vinyl{position:absolute;top:5%;left:0;width:90%;height:90%;border-radius:50%;
-  background:radial-gradient(circle,var(--brand) 0 9%,#151517 9.5% 11%,transparent 11.5%),
-    repeating-radial-gradient(circle,#18181b 0 2px,#222226 3px,#141416 5px);
-  box-shadow:0 14px 34px -8px rgba(0,0,0,.8),inset 0 0 0 2px #2c2c31;
-  transform:translateX(22%);transition:transform .45s cubic-bezier(.2,.8,.2,1)}
-.st-vinyl i{position:absolute;inset:0;border-radius:50%;
-  background:conic-gradient(from 30deg,transparent 0 20%,rgba(255,255,255,.07) 25%,transparent 32% 70%,rgba(255,255,255,.05) 75%,transparent 82%);
-  animation:stSpin 6s linear infinite}
+  width:var(--cov);height:var(--cov)}
+/* Обложка на сцене — пластинка: круглая и крутится, пока трек ждёт
+   оценки, он «играет». Оценённый трек останавливается. */
+.st-cov{position:absolute;inset:0;border-radius:50%;cursor:grab;touch-action:none;
+  --fs:calc(var(--cov) / 3.4);
+  box-shadow:0 22px 40px -14px rgba(0,0,0,.85),0 0 0 6px #121214,0 0 0 7px rgba(255,255,255,.08);
+  animation:stSpin 18s linear infinite;transition:opacity .2s}
 @keyframes stSpin{to{transform:rotate(360deg)}}
-.st-art:hover .st-vinyl{transform:translateX(30%)}
-.st-art.done .st-vinyl{transform:translateX(0) scale(.94)}
-.st-art.done .st-vinyl i{animation:none}
-.st-cov{position:absolute;left:0;top:0;width:var(--cov);height:var(--cov);border-radius:10px;
-  box-shadow:0 22px 40px -14px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.08);
-  cursor:grab;touch-action:none;--fs:calc(var(--cov) / 3.4);
-  transition:transform .3s cubic-bezier(.2,.8,.2,1.3),opacity .2s}
-.st-art:hover .st-cov{transform:rotate(-2.5deg) translateY(-3px)}
-.st-cov.lift{opacity:.16;transform:none!important}
-.st-cov.in{animation:stIn .42s cubic-bezier(.2,.8,.2,1.1)}
-@keyframes stIn{from{opacity:0;transform:translateX(-28px) rotate(-7deg) scale(.9)}}
+.st-art::after{content:'';position:absolute;left:50%;top:50%;width:13%;height:13%;margin:-6.5% 0 0 -6.5%;
+  border-radius:50%;background:radial-gradient(circle,#121214 0 22%,var(--brand) 24% 100%);
+  box-shadow:0 0 0 3px #121214;pointer-events:none}
+.st-art:hover .st-cov,.st-art.done .st-cov{animation-play-state:paused}
+.st-cov.lift{opacity:.16}
+.st-cov.in{animation:stIn .45s cubic-bezier(.2,.8,.2,1.1),stSpin 18s linear .45s infinite}
+@keyframes stIn{from{opacity:0;transform:translateX(-30px) rotate(-60deg) scale(.85)}}
+/* Штамп вердикта: ложится с ударом поверх пластинки, сцена вздрагивает. */
+.st-stamp{position:absolute;left:50%;top:50%;z-index:2;transform:translate(-50%,-50%) rotate(-12deg);
+  pointer-events:none;white-space:nowrap;text-transform:uppercase;color:var(--tc);
+  font:900 calc(var(--cov) / 7.5)/1 var(--d);letter-spacing:.02em;
+  padding:.18em .4em;border:.09em solid var(--tc);border-radius:.18em;background:rgba(18,18,20,.74);
+  box-shadow:0 0 0 .05em rgba(18,18,20,.74),0 0 40px rgba(var(--tr),.5);text-shadow:0 0 18px rgba(var(--tr),.6);
+  animation:stSlam .42s cubic-bezier(.2,1.4,.35,1)}
+@keyframes stSlam{0%{opacity:0;transform:translate(-50%,-50%) rotate(-24deg) scale(2.6)}60%{opacity:1}}
+.st-stamp.still{animation:stNudge .3s cubic-bezier(.2,1.6,.4,1)}
+@keyframes stNudge{40%{transform:translate(-50%,-50%) rotate(-12deg) scale(1.08)}}
+.st-stage.shake{animation:stShake .38s cubic-bezier(.3,.7,.3,1)}
+@keyframes stShake{20%{transform:translate(-6px,3px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-3px,2px)}80%{transform:translate(2px,-1px)}}
 .st-meta{min-width:0;flex:1}
 .st-meta.in{animation:stUp .4s cubic-bezier(.2,.8,.2,1) .05s both}
 @keyframes stUp{from{opacity:0;transform:translateY(10px)}}
@@ -1074,9 +1078,26 @@ a.st-chip:hover{color:var(--ink);border-color:var(--faint)}
 .st-void b{display:block;font:800 22px var(--d);color:var(--ink);margin-bottom:6px}
 
 /* ---------- паспорт ---------- */
-.st-pass{display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding:14px;
+.st-side{display:flex;flex-direction:column;padding:14px;overflow:hidden}
+.st-tabs{display:flex;gap:16px;margin-bottom:12px;flex:none}
+.st-tabs button{font:700 15px var(--d);color:var(--faint);padding:0 0 4px;border-bottom:2px solid transparent}
+.st-tabs button:hover{color:var(--dim)}
+.st-tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--brand)}
+.st-pass{display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;min-height:0;
   scrollbar-width:thin;scrollbar-color:var(--card-2) transparent}
-.st-pass .st-h{margin:0}
+.st-sum{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.st-stat{background:rgba(255,255,255,.04);border-radius:7px;padding:10px 12px;min-width:0}
+.st-stat.wide{grid-column:1/-1}
+.st-stat small{display:block;font:500 11px var(--m);color:var(--faint);letter-spacing:.04em}
+.st-stat b{display:block;font:800 clamp(18px,1.5vw,26px)/1.15 var(--d);margin-top:4px;color:var(--tc,var(--ink));
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-stat b.nm{font-size:17px}
+.st-stat span{display:block;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-dist{grid-column:1/-1;display:flex;flex-direction:column;gap:5px;margin-top:2px}
+.st-dr{display:grid;grid-template-columns:110px 1fr 28px;align-items:center;gap:8px;font-size:12.5px;color:var(--dim)}
+.st-dr i{height:8px;border-radius:4px;background:var(--tc);width:var(--w);min-width:2px;
+  transition:width .4s cubic-bezier(.2,.8,.2,1)}
+.st-dr b{font:600 12px var(--m);text-align:right;color:var(--ink)}
 .st-names{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .st-names input,.st-feat textarea{width:100%;min-width:0;background:var(--bg);border:1px solid var(--line);
   border-radius:5px;padding:6px 9px;font-size:13px;color:var(--ink)}
@@ -1104,57 +1125,41 @@ a.st-chip:hover{color:var(--ink);border-color:var(--faint)}
 .st-act button:hover:not(:disabled){background:var(--card-2);color:var(--ink)}
 .st-act button:disabled{opacity:.35;cursor:default}
 
-/* ---------- столбцы ---------- */
-.st-board{flex:1;min-height:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
-.st-col{--tile:84px;position:relative;display:flex;flex-direction:column;min-height:0;cursor:pointer;
-  background:linear-gradient(180deg,rgba(var(--tr),.11),rgba(var(--tr),.035) 38%,rgba(255,255,255,.015));
-  border:1px solid rgba(var(--tr),.16);border-radius:10px;
-  transition:border-color .18s,box-shadow .18s,transform .18s}
-.st-col:hover{border-color:rgba(var(--tr),.42)}
-.st-ch{display:flex;align-items:center;gap:8px;height:50px;padding:4px 14px 0;text-align:left;position:relative}
-.st-ch::before{content:'';position:absolute;top:-1px;left:14px;right:14px;height:3px;
-  border-radius:0 0 3px 3px;background:var(--tc);box-shadow:0 0 16px rgba(var(--tr),.55)}
-.st-ch b{font:800 clamp(15px,1.3vw,23px)/1.1 var(--d);color:var(--tc);letter-spacing:-.01em}
-.st-ch .n{margin-left:auto;font:600 12.5px var(--m);color:var(--dim);font-variant-numeric:tabular-nums}
-.st-ch .n.bump{animation:stBump .45s cubic-bezier(.2,1.6,.4,1)}
-@keyframes stBump{40%{transform:scale(1.5);color:var(--tc)}}
-/* Цифра ступени — подсказка ведущему, зрителю она ни к чему: видна
-   только на наведении. */
-.st-ch kbd{font:600 10px var(--m);color:var(--faint);border:1px solid var(--line);border-radius:4px;
+/* ---------- шкала ---------- */
+.st-scale{flex:1;min-height:0;display:flex;flex-direction:column}
+.st-steps{flex:1;min-height:0;display:grid;grid-template-columns:repeat(26,minmax(0,1fr));gap:4px;position:relative}
+.st-step{position:relative;display:flex;flex-direction:column-reverse;align-items:center;padding:6px 0 4px;
+  cursor:pointer;border-radius:8px 8px 0 0;
+  background:linear-gradient(0deg,rgba(var(--tr),.13),rgba(var(--tr),.02) 70%,transparent);
+  transition:background .15s,box-shadow .15s}
+.st-step:hover,.st-step.drop{background:linear-gradient(0deg,rgba(var(--tr),.32),rgba(var(--tr),.06) 80%,transparent)}
+.st-step.drop{box-shadow:inset 0 -3px 0 var(--tc),0 0 34px -10px rgba(var(--tr),.7)}
+.st-rec{position:relative;flex:none;width:min(64px,calc(100% - 10px));aspect-ratio:1;padding:0;border-radius:50%;
+  margin-top:calc(var(--ov,-4px) * -1);touch-action:none;transition:transform .2s cubic-bezier(.2,.8,.2,1.3)}
+.st-rec .st-img{width:100%;height:100%;border-radius:50%;--fs:16px;
+  box-shadow:0 6px 14px -6px #000,0 0 0 2px #121214,0 0 0 3px rgba(var(--tr),.6)}
+.st-rec::after{content:'';position:absolute;left:50%;top:50%;width:14%;height:14%;margin:-7% 0 0 -7%;
+  border-radius:50%;background:#121214;pointer-events:none}
+.st-rec:hover{transform:scale(1.15);z-index:3}
+.st-rec.sel .st-img{box-shadow:0 0 0 3px var(--tc),0 0 0 6px rgba(var(--tr),.3)}
+.st-rec.lift{opacity:.2}
+.st-rec.land{animation:stLand .55s cubic-bezier(.2,1.5,.4,1)}
+@keyframes stLand{0%{transform:scale(.7)}45%{transform:scale(1.18)}100%{transform:none}}
+.st-step .cnt{position:absolute;top:4px;left:0;right:0;text-align:center;font:600 11px var(--m);color:rgba(var(--tr),.9)}
+.st-labels{flex:none;display:grid;grid-template-columns:repeat(26,minmax(0,1fr));gap:4px}
+.st-labels span{text-align:center;font:700 13px var(--m);color:var(--tc);padding:5px 0 4px;border-top:3px solid var(--tc)}
+.st-tiers{flex:none;display:grid;grid-template-columns:3fr 5fr 5fr 5fr 5fr 3fr;gap:4px}
+.st-tiers b{display:flex;justify-content:center;align-items:baseline;gap:7px;font:800 clamp(13px,1.15vw,20px) var(--d);
+  color:var(--tc);padding-top:2px;white-space:nowrap;overflow:hidden}
+/* Цифра ступени — подсказка ведущему, зрителю ни к чему: на наведении. */
+.st-tiers kbd{font:600 10px var(--m);color:var(--faint);border:1px solid var(--line);border-radius:4px;
   padding:1px 5px;opacity:0;transition:opacity .14s}
-.st-col:hover .st-ch kbd{opacity:1}
-.st-cb{position:relative;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
-  padding:6px 12px 12px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:calc(var(--tile) / 9 + 2px);
-  scrollbar-width:thin;scrollbar-color:rgba(var(--tr),.3) transparent}
-.st-tile{position:relative;flex:none;width:var(--tile);height:var(--tile);padding:0;border-radius:7px;
-  transition:transform .22s cubic-bezier(.2,.8,.2,1.3);touch-action:none}
-.st-tile .st-img{width:100%;height:100%;border-radius:7px;--fs:calc(var(--tile) / 3);
-  box-shadow:0 8px 16px -8px #000,0 0 0 1px rgba(255,255,255,.07)}
-.st-tile:hover{transform:translateY(-3px) scale(1.07);z-index:2}
-.st-tile.sel .st-img{box-shadow:0 0 0 2px var(--tc),0 0 0 5px rgba(var(--tr),.25)}
-.st-tile.lift{opacity:.2}
-.st-tile .m{position:absolute;right:-6px;bottom:-6px;min-width:22px;height:20px;padding:0 4px;
-  border-radius:5px;background:#151517;border:1px solid rgba(var(--tr),.7);color:var(--tc);
-  font:700 11px/18px var(--m);text-align:center;letter-spacing:-.04em}
-.st-tile.land{animation:stLand .55s cubic-bezier(.2,1.5,.4,1)}
-@keyframes stLand{0%{transform:scale(.82)}45%{transform:scale(1.13)}100%{transform:none}}
-.st-tile.land::after{content:'';position:absolute;inset:-3px;border-radius:9px;pointer-events:none;
-  border:2px solid var(--tc);animation:stRing .7s ease-out forwards}
-@keyframes stRing{from{opacity:1;transform:scale(.9)}to{opacity:0;transform:scale(1.5)}}
-.st-cb-empty{margin:4px 2px;color:rgba(var(--tr),.45);font-size:12px}
-
-/* Полосы модификатора. Видны только пока обложку несут — и только у
-   того столбца, над которым она сейчас: у остальных они прозрачные,
-   но мышь всё равно ловят, поэтому попадание считается ими. */
-.st-zones{position:absolute;inset:50px 0 0;z-index:3;display:none;flex-direction:column;gap:4px;padding:4px 6px 6px}
-body.st-drag .st-zones{display:flex}
-.st-z{flex:1;border-radius:6px;display:grid;place-items:center;border:1px dashed transparent;
-  font:700 clamp(12px,.95vw,15px) var(--d);color:transparent;transition:background .12s,color .12s,border-color .12s}
-.st-z.mid{flex:1.6}
-.st-col.drop{border-color:var(--tc);transform:translateY(-2px);
-  box-shadow:0 0 0 1px rgba(var(--tr),.45),0 0 44px -6px rgba(var(--tr),.5)}
-.st-col.drop .st-z{color:rgba(var(--tr),.75);background:rgba(17,17,19,.55);border-color:rgba(var(--tr),.32)}
-.st-col.drop .st-z.on{background:rgba(var(--tr),.26);color:#fff;border-style:solid;border-color:var(--tc)}
+.st-scale:hover .st-tiers kbd{opacity:1}
+.st-needle{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;left:var(--x);z-index:4;pointer-events:none;
+  background:var(--brand);box-shadow:0 0 12px var(--brand);transition:left .6s cubic-bezier(.2,.8,.2,1)}
+.st-needle[hidden]{display:none}
+.st-needle span{position:absolute;top:-2px;left:50%;transform:translate(-50%,-100%);white-space:nowrap;
+  background:var(--brand);color:#151517;font:700 11.5px var(--b);padding:2px 8px;border-radius:4px}
 
 /* Обложка в руке. Сдвиг и масштаб — на самой плашке, поворот — на
    внутреннем слое: так подпись с оценкой под ней не крутится. */
@@ -1189,10 +1194,10 @@ body.st-drag,body.st-drag *{cursor:grabbing!important;user-select:none}
    только трек и столбцы. Выйти — та же кнопка или Escape. */
 body.st-air .tb,body.st-air .foot-note{display:none}
 body.st-air .spage{height:100dvh;max-width:none;padding:18px 26px}
-body.st-air .st-q,body.st-air .st-pass,body.st-air .st-hint,
+body.st-air .st-q,body.st-air .st-tabs,body.st-air .st-hint,
 body.st-air .st-act button:not(#stAir),body.st-air .st-nav,body.st-air .st-howto,
 body.st-air .st-verdict .st-chip{display:none}
-body.st-air .st-band{grid-template-columns:minmax(0,1fr);height:clamp(240px,36vh,440px)}
+body.st-air .st-band{grid-template-columns:minmax(0,1fr) clamp(290px,22vw,430px);height:clamp(240px,36vh,440px)}
 body.st-air .st-stage{justify-content:center}
 body.st-air .st-meta{flex:0 1 auto;max-width:52%}
 body.st-air .st-art{--cov:clamp(180px,calc(36vh - 60px),360px)}
@@ -1207,8 +1212,8 @@ body.st-air #stAir:hover{opacity:1}
   .st-bar{flex-wrap:wrap;gap:10px}
   .st-hint{display:none}
   .st-act{margin-left:0;flex:1 1 100%;flex-wrap:wrap}
-  .st-board{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .st-col{min-height:190px}
+  .st-scale{flex:none;height:420px;overflow-x:auto}
+  .st-steps,.st-labels,.st-tiers{min-width:1100px}
 }
 @media(max-width:560px){
   .st-stage{flex-direction:column;align-items:flex-start}
@@ -1216,7 +1221,7 @@ body.st-air #stAir:hover{opacity:1}
 }
 @media(prefers-reduced-motion:reduce){
   .st-vinyl i{animation:none}
-  .st-cov.in,.st-meta.in,.st-tile.land,.st-tile.land::after{animation:none}
+  .st-cov,.st-cov.in,.st-meta.in,.st-rec.land,.st-stamp,.st-stamp.still,.st-stage.shake{animation:none}
 }
 </style>
 <meta name="theme-color" content="#1B1B1D">
@@ -1366,19 +1371,29 @@ body.st-air #stAir:hover{opacity:1}
    <ol class="st-list" id="stList"></ol>
   </section>
   <section class="st-stage" id="stStage" aria-live="polite"></section>
-  <section class="pan st-pass" id="stPass" aria-label="Паспорт трека"></section>
+  <section class="pan st-side" id="stSide">
+   <div class="st-tabs" role="tablist">
+    <button type="button" role="tab" data-tab="pass" aria-selected="true">паспорт</button>
+    <button type="button" role="tab" data-tab="sum" aria-selected="false">итог эфира</button>
+   </div>
+   <div class="st-pass" id="stPass"></div>
+  </section>
  </div>
  <div class="st-bar">
   <h1 class="h1">студия оценок<small id="stCount"></small></h1>
-  <span class="st-hint">перетащи обложку в столбец: выше — с плюсом, ниже — с минусом</span>
+  <span class="st-hint">клади пластинку прямо на ступень — точная оценка сразу, с плюсом или минусом · 1–6 и +/− с клавиатуры, Enter — следующий</span>
   <div class="st-act">
    <button type="button" id="stUndo" data-tip="Ctrl+Z">↶ отменить</button>
    <button type="button" id="stCopy" data-tip="Оценённые треки строками таблицы разносов, в том порядке, в каком их оценивали: что, где, оценка, откуда, тэги, жанр, фича. Вставь в первую пустую строку листа — столбцы встанут сами.">скопировать для таблицы</button>
-   <button type="button" id="stAir" data-tip="Только трек и столбцы — чистая картинка для OBS. Выйти — Escape.">эфир</button>
-   <button type="button" id="stNew" data-tip="Очистить очередь и столбцы. Оценённое остаётся в каталоге; передумаешь — «отменить» вернёт всё как было.">новый эфир</button>
+   <button type="button" id="stAir" data-tip="Только трек, итог эфира и шкала — чистая картинка для OBS. Выйти — Escape.">эфир</button>
+   <button type="button" id="stNew" data-tip="Очистить очередь и шкалу. Оценённое остаётся в каталоге; передумаешь — «отменить» вернёт всё как было.">новый эфир</button>
   </div>
  </div>
- <div class="st-board" id="stBoard"></div>
+ <div class="st-scale">
+  <div class="st-steps" id="stBoard"><div class="st-needle" id="stNeedle" hidden><span></span></div></div>
+  <div class="st-labels" id="stLabels"></div>
+  <div class="st-tiers" id="stTierNames"></div>
+ </div>
 </div>
 <div class="st-mods" id="stMods" hidden></div>
 
@@ -14412,12 +14427,31 @@ function стСловарь() {
   return СТ_СЛОВАРЬ;
 }
 
+/* ---------- шкала и вердикт ----------
+   Из концептов заказчик выбрал «шкалу» и штамп из «вердикта». Вместо
+   шести столбцов — вся шкала архива одной полосой: двадцать шесть
+   точных оценок, от «гениально» до «кринж-контента». Пластинку кладут
+   сразу на нужную ступень, с плюсом или минусом, и к концу эфира
+   полоса становится гистограммой — над ней ходит стрелка среднего.
+
+   Оценку объявляет штамп: он с ударом ложится на пластинку на сцене,
+   и полторы секунды трек ещё там — можно докрутить плюс или минус.
+   Потом на сцену выходит следующий. Enter — не ждать. */
+const СТ_СТУПЕНИ = [];
+TIERS.forEach(т => т.mods.forEach(m => СТ_СТУПЕНИ.push({ tier: т.key, mod: m })));
+const СТ_ШТАМП = { id: null, таймер: 0, плюс: 0, тихо: false };
+const СТ_ДЕРЖАТЬ = 1800;
+let СТ_ВКЛАДКА = 'pass';
+const стНаСцене = () => стТрек(СТ_ШТАМП.id) || стТрек(СТ.cur);
+const стБалл = t => стТир(t.tier).base + (MODS.find(m => m[0] === t.mod) || [0, 0])[1];
+const стПластинкаЭл = id => document.querySelector('.st-rec[data-id="' + CSS.escape(id) + '"]');
+
 /* ---------- рисование ---------- */
 function стРисовать(новый) {
   стОчередь();
   стСцена(новый);
-  стПаспорт();
-  стДоска();
+  стБок();
+  стШкала();
   стСчёт();
 }
 
@@ -14435,7 +14469,7 @@ function стОчередь() {
   const list = $('stList');
   list.innerHTML = ждут.length
     ? ждут.map(t =>
-        '<li class="st-it' + (t.id === СТ.cur ? ' cur' : '') + '" data-id="' + esc(t.id) + '">' +
+        '<li class="st-it' + (t.id === СТ.cur && !СТ_ШТАМП.id ? ' cur' : '') + '" data-id="' + esc(t.id) + '">' +
           стКартинка(t) +
           '<div class="st-tx"><b>' + esc(t.title || 'без названия') + '</b><span>' + esc(t.artist || '—') + '</span></div>' +
           '<button type="button" class="x" data-x aria-label="Убрать из очереди">✕</button>' +
@@ -14448,15 +14482,16 @@ function стОчередь() {
 
 function стСцена(новый) {
   const box = $('stStage');
-  const t = стТрек(СТ.cur);
+  const t = стНаСцене();
   if (!t) {
     фон('');
-    box.innerHTML = '<div class="st-void"><b>Студия оценок</b>Добавь треки в очередь слева — и неси обложку в столбец ступени. Выше в столбце — с плюсом, ниже — с минусом.</div>';
+    box.innerHTML = '<div class="st-void"><b>Студия оценок</b>Добавь послушанные треки в очередь слева — и клади пластинку на ступень шкалы. Оценённый трек сразу встаёт в каталог.</div>';
     return;
   }
   const c = стОбложка(t);
   фон(c && c.url ? c.url : '');
   const r = стАрхив(t);
+  const штамп = СТ_ШТАМП.id === t.id;
   const ждут = СТ.tracks.filter(x => !x.tier);
   const место = ждут.indexOf(t);
   const plat = t.link ? parseLink(t.link) : null;
@@ -14472,11 +14507,12 @@ function стСцена(новый) {
   }
   box.innerHTML =
     '<div class="st-art' + (t.tier ? ' done' : '') + '">' +
-      '<div class="st-vinyl"><i></i></div>' +
       стКартинка(t, 'st-cov' + (новый ? ' in' : '')) +
+      (штамп ? '<div class="st-stamp' + (СТ_ШТАМП.тихо ? ' still' : '') + '" id="stStamp" style="' + стЦвет(t.tier) + '">' + esc(стМетка(t)) + '</div>' : '') +
     '</div>' +
     '<div class="st-meta' + (новый ? ' in' : '') + '">' +
-      '<div class="st-k">' + (t.tier ? 'уже оценён' : 'сейчас слушаем' + (ждут.length > 1 ? ' · ' + (место + 1) + ' из ' + ждут.length : '')) + '</div>' +
+      '<div class="st-k">' + (штамп ? 'вердикт' : t.tier ? 'уже оценён'
+        : 'сейчас слушаем' + (ждут.length > 1 ? ' · ' + (место + 1) + ' из ' + ждут.length : '')) + '</div>' +
       '<div class="st-name">' + esc(имя.имя || 'без названия') +
         (имя.приписка ? ' <span class="pr">' + esc(имя.приписка) + '</span>' : '') + '</div>' +
       '<div class="st-artist">' + esc(t.artist || '—') + '</div>' +
@@ -14485,10 +14521,11 @@ function стСцена(новый) {
         ? '<div class="st-verdict" style="' + стЦвет(t.tier) + '">оценка <b>' + esc(стМетка(t)) + '</b>' +
           '<a class="st-chip" href="#t=' + encodeURIComponent('st|' + t.id) + '" target="_blank" rel="noopener" ' +
           'data-tip="Трек уже в каталоге — наверху, с пометкой «новый». Откроется в новой вкладке.">в каталоге ↗</a></div>'
-        : '<div class="st-howto">Неси обложку в столбец или нажми <kbd>1</kbd>–<kbd>6</kbd>, потом <kbd>+</kbd> или <kbd>−</kbd>.</div>') +
+        : '<div class="st-howto">Клади пластинку на ступень шкалы или нажми <kbd>1</kbd>–<kbd>6</kbd>, потом <kbd>+</kbd> или <kbd>−</kbd>.</div>') +
     '</div>' +
     '<div class="st-nav">' +
-      (t.tier
+      (штамп ? '<button type="button" data-go="dalshe" data-tip="Enter">дальше ▶</button>'
+        : t.tier
         ? (ждут.length ? '<button type="button" data-go="queue">↩ к очереди</button>' : '')
         : '<button type="button" data-go="-1"' + (ждут.length < 2 ? ' disabled' : '') + ' aria-label="Предыдущий в очереди">◀</button>' +
           '<button type="button" data-go="1"' + (ждут.length < 2 ? ' disabled' : '') + '>следующий ▶</button>') +
@@ -14496,16 +14533,54 @@ function стСцена(новый) {
   стДовести(box);
   box.querySelectorAll('.st-cov img').forEach(img => {
     // Spotify отдаёт адрес позже — фон подтягиваем, когда картинка встала.
-    img.addEventListener('load', () => { if (стТрек(СТ.cur) === t) фон(img.src); }, { once: true });
+    img.addEventListener('load', () => { if (стНаСцене() === t) фон(img.src); }, { once: true });
   });
+}
+
+/* Справа две вкладки: паспорт — ведущему, итог эфира — всем. В эфире
+   паспорт зрителю ни к чему, там всегда итог. */
+function стБок() {
+  const эфир = document.body.classList.contains('st-air');
+  const вкладка = эфир ? 'sum' : СТ_ВКЛАДКА;
+  document.querySelectorAll('#stSide [data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === вкладка)));
+  if (вкладка === 'sum') стИтог(); else стПаспорт();
+}
+
+/* Итог считается только по оценкам этого эфира — тем, что стоят на
+   шкале. «В среднем» — ближайшая к среднему баллу ступень шкалы. */
+function стИтог() {
+  const box = $('stPass');
+  const list = СТ.tracks.filter(t => t.tier);
+  if (!list.length) {
+    box.innerHTML = '<p class="st-empty">Здесь появится итог эфира: сколько оценено, средний балл и распределение по ступеням.</p>';
+    return;
+  }
+  const ср = list.reduce((s, t) => s + стБалл(t), 0) / list.length;
+  const близко = стБлижайшая(ср);
+  const лучший = list.slice().sort((a, b) => стБалл(b) - стБалл(a) || a.at - b.at)[0];
+  const макс = Math.max(...TIERS.map(т => list.filter(t => t.tier === т.key).length));
+  box.innerHTML = '<div class="st-sum">' +
+    '<div class="st-stat"><small>оценено</small><b>' + list.length + '</b><span>из ' + СТ.tracks.length + ' в очереди</span></div>' +
+    '<div class="st-stat" style="' + стЦвет(близко.tier) + '"><small>в среднем</small><b>' + esc(стМетка(близко)) + '</b>' +
+      '<span>' + ср.toFixed(1).replace('.', ',') + ' из 10</span></div>' +
+    '<div class="st-stat wide" style="' + стЦвет(лучший.tier) + '"><small>выше всех сегодня</small>' +
+      '<b class="nm">' + esc(лучший.title || 'без названия') + '</b><span>' + esc((лучший.artist ? лучший.artist + ' · ' : '') + стМетка(лучший)) + '</span></div>' +
+    '<div class="st-dist">' + TIERS.map(т => {
+      const n = list.filter(t => t.tier === т.key).length;
+      return '<div class="st-dr" style="' + стЦвет(т.key) + '"><span>' + esc(т.key) + '</span><i style="--w:' + (n / макс * 100) + '%"></i><b>' + n + '</b></div>';
+    }).join('') + '</div></div>';
+}
+function стБлижайшая(балл) {
+  let лучше = СТ_СТУПЕНИ[0], d = 99;
+  СТ_СТУПЕНИ.forEach(s => { const x = Math.abs(стБалл(s) - балл); if (x < d) { d = x; лучше = s; } });
+  return лучше;
 }
 
 function стПаспорт() {
   const box = $('stPass');
-  const t = стТрек(СТ.cur);
+  const t = стНаСцене();
   if (!t) {
-    box.innerHTML = '<div class="st-h"><h2>паспорт трека</h2></div>' +
-      '<p class="st-empty">Здесь жанры, тэги и фича того трека, что на сцене. У трека из базы они подставятся по прошлому разносу.</p>';
+    box.innerHTML = '<p class="st-empty">Здесь жанры, тэги и фича того трека, что на сцене. У трека из базы они подставятся по прошлому разносу.</p>';
     return;
   }
   const сл = стСловарь();
@@ -14518,7 +14593,6 @@ function стПаспорт() {
       '</div></div>';
   };
   box.innerHTML =
-    '<div class="st-h"><h2>паспорт трека</h2></div>' +
     '<div class="st-names">' +
       '<input data-f="artist" value="' + esc(t.artist || '') + '" placeholder="исполнитель" aria-label="Исполнитель">' +
       '<input data-f="title" value="' + esc(t.title || '') + '" placeholder="название" aria-label="Название">' +
@@ -14531,42 +14605,52 @@ function стПаспорт() {
       '<textarea data-f="feat" maxlength="240" placeholder="мнение, шутка, примечание потомкам…">' + esc(t.feat || '') + '</textarea></div>';
 }
 
-/* Модификаторы внутри столбца идут сверху вниз: «++» выше «--». Внутри
-   одной точной оценки — в том порядке, в каком ставили. */
-function стДоска() {
-  const b = $('stBoard');
-  b.innerHTML = TIERS.map((тир, i) => {
-    const треки = СТ.tracks.filter(t => t.tier === тир.key)
-      .sort((a, c) => тир.mods.indexOf(a.mod) - тир.mods.indexOf(c.mod) || a.at - c.at);
-    return '<div class="st-col" data-tier="' + esc(тир.key) + '" style="' + стЦвет(тир.key) + '">' +
-      '<button type="button" class="st-ch" data-tip="Щелчок — поставить «' + esc(тир.key) + '» треку на сцене"><b>' + esc(тир.key) + '</b>' +
-        '<kbd>' + (i + 1) + '</kbd><span class="n">' + (треки.length || '') + '</span></button>' +
-      '<div class="st-cb">' + (треки.map(стПлитка).join('') || '<span class="st-cb-empty">пока пусто</span>') + '</div>' +
-      '<div class="st-zones">' + тир.mods.map(m =>
-        '<div class="st-z' + (m ? '' : ' mid') + '" data-mod="' + m + '">' + esc(тир.key + modLabel(m)) + '</div>').join('') +
-      '</div>' +
-    '</div>';
-  }).join('');
-  стДовести(b);
-  стПодогнать();
+/* Шкала: ступень за ступенью, на каждой пластинки в том порядке, в
+   каком их ставили, — снизу вверх, столбиком. */
+function стШкала() {
+  const steps = $('stBoard'), стрелка = $('stNeedle');
+  steps.querySelectorAll('.st-step').forEach(e => e.remove());
+  СТ_СТУПЕНИ.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'st-step';
+    el.dataset.i = i;
+    el.setAttribute('style', стЦвет(s.tier));
+    const тут = СТ.tracks.filter(t => t.tier === s.tier && t.mod === s.mod).sort((a, b) => a.at - b.at);
+    el.innerHTML = тут.map(стПластинка).join('') + (тут.length ? '<span class="cnt">' + тут.length + '</span>' : '');
+    steps.insertBefore(el, стрелка);
+  });
+  $('stLabels').innerHTML = СТ_СТУПЕНИ.map(s => '<span style="' + стЦвет(s.tier) + '">' + (modLabel(s.mod) || '•') + '</span>').join('');
+  $('stTierNames').innerHTML = TIERS.map((т, i) => '<b style="' + стЦвет(т.key) + ';--n:' + т.mods.length + '">' + esc(т.key) + '<kbd>' + (i + 1) + '</kbd></b>').join('');
+  стДовести(steps);
+  стСтопки();
+  // Стрелка среднего: между двумя ступенями, по баллу
+  const list = СТ.tracks.filter(t => t.tier);
+  стрелка.hidden = !list.length;
+  if (!list.length) return;
+  const ср = list.reduce((s, t) => s + стБалл(t), 0) / list.length;
+  let место = СТ_СТУПЕНИ.length - 1;
+  for (let i = 0; i < СТ_СТУПЕНИ.length - 1; i++) {
+    const a = стБалл(СТ_СТУПЕНИ[i]), b = стБалл(СТ_СТУПЕНИ[i + 1]);
+    if (ср >= a) { место = i; break; }
+    if (ср > b) { место = i + (a - ср) / (a - b); break; }
+  }
+  стрелка.style.setProperty('--x', ((место + .5) / СТ_СТУПЕНИ.length * 100) + '%');
+  стрелка.firstChild.textContent = 'среднее · ' + стМетка(стБлижайшая(ср));
 }
-const стПлитка = t =>
-  '<button type="button" class="st-tile' + (t.id === СТ_ВЫБОР ? ' sel' : '') + '" data-id="' + esc(t.id) + '" ' +
+const стПластинка = t =>
+  '<button type="button" class="st-rec' + (t.id === СТ_ВЫБОР ? ' sel' : '') + '" data-id="' + esc(t.id) + '" ' +
   'data-tip="' + esc((t.artist ? t.artist + ' — ' : '') + (t.title || '') + ' · ' + стМетка(t)) + '">' +
-  стКартинка(t) + (t.mod ? '<i class="m">' + modLabel(t.mod) + '</i>' : '') + '</button>';
+  стКартинка(t) + '</button>';
 
-/* Столбец без прокрутки, пока можно: плитки мельчают, когда перестают
-   влезать. Прокрутка остаётся на самый крайний случай — зритель её
-   не увидит, а трек в ней пропадёт с экрана. */
-function стПодогнать() {
-  const размеры = [84, 74, 64, 56, 48, 42, 36, 32];
-  document.querySelectorAll('.st-col').forEach(col => {
-    const cb = col.querySelector('.st-cb');
-    let i = 0;
-    col.style.setProperty('--tile', размеры[0] + 'px');
-    while (i < размеры.length - 1 && cb.scrollHeight > cb.clientHeight + 1) {
-      col.style.setProperty('--tile', размеры[++i] + 'px');
-    }
+/* Столбик выше ступени — пластинки заходят друг на друга, а не
+   уезжают за край: в OBS прокрутки быть не должно. */
+function стСтопки() {
+  document.querySelectorAll('.st-step').forEach(st => {
+    const recs = st.querySelectorAll('.st-rec');
+    st.style.removeProperty('--ov');
+    if (recs.length < 2) return;
+    const h = st.clientHeight - 26, sz = recs[0].offsetWidth, нужно = recs.length * (sz + 4);
+    if (нужно > h) st.style.setProperty('--ov', Math.min(sz * .85, (нужно - h) / (recs.length - 1) + 4) + 'px');
   });
 }
 const стЗамер = () => document.body.style.setProperty('--tbh', document.querySelector('.tb').offsetHeight + 'px');
@@ -14579,6 +14663,7 @@ function стСнимок() {
 function стОтменить() {
   const s = СТ_ИСТОРИЯ.pop();
   if (!s) { toast('Отменять нечего'); return; }
+  стСнятьШтамп();
   const p = JSON.parse(s);
   СТ.tracks = p.tracks; СТ.cur = p.cur;
   СТ_ВЫБОР = null; $('stMods').hidden = true;
@@ -14600,17 +14685,44 @@ function стСледующий(после, шаг = 1) {
   return ждут[0].id;
 }
 function стНаСцену(id) {
-  if (!id || id === СТ.cur) return;
+  стСнятьШтамп();
+  if (!id || id === СТ.cur) { стРисовать(false); return; }
   СТ.cur = id;
   стСохранить();
-  стОчередь(); стСцена(true); стПаспорт();
+  стОчередь(); стСцена(true); стБок();
 }
 
-/* Откуда летит обложка, когда оценку ставят щелчком или цифрой: со
-   сцены, если трек на ней, иначе с его плитки. */
+// Штамп снят молча — без перерисовки; её сделает тот, кто снимал.
+function стСнятьШтамп() {
+  clearTimeout(СТ_ШТАМП.таймер);
+  clearTimeout(СТ_ШТАМП.плюс);
+  if (СТ_ШТАМП.id && $('stMods').dataset.id === СТ_ШТАМП.id) $('stMods').hidden = true;
+  СТ_ШТАМП.id = null;
+}
+// Вердикт объявлен — на сцену выходит следующий.
+function стДальше() {
+  if (!СТ_ШТАМП.id) return;
+  стСнятьШтамп();
+  стОчередь(); стСцена(true); стБок();
+}
+function стДержать(id) {
+  clearTimeout(СТ_ШТАМП.таймер);
+  clearTimeout(СТ_ШТАМП.плюс);
+  СТ_ШТАМП.таймер = setTimeout(стДальше, СТ_ДЕРЖАТЬ);
+  // Выбор плюса — над пластинкой, когда штамп лёг. Не над самим штампом:
+  // в полёте он втрое больше себя, и выбор уезжал под сцену.
+  СТ_ШТАМП.плюс = setTimeout(() => {
+    const арт = document.querySelector('#stStage .st-art');
+    if (СТ_ШТАМП.id === id && арт) стМоды(арт, id);
+  }, 430);
+}
+
+/* Откуда летит пластинка, когда оценку ставят щелчком или цифрой: со
+   сцены, если трек на ней, иначе с её места на шкале. */
 function стОткуда(id) {
-  const el = id === СТ.cur ? document.querySelector('#stStage .st-cov')
-    : document.querySelector('.st-tile[data-id="' + CSS.escape(id) + '"] .st-img');
+  const на = стНаСцене();
+  const el = на && на.id === id ? document.querySelector('#stStage .st-cov')
+    : document.querySelector('.st-rec[data-id="' + CSS.escape(id) + '"] .st-img');
   if (!el) return null;
   const узел = el.cloneNode(true);
   узел.classList.remove('in', 'st-cov', 'lift');
@@ -14624,49 +14736,58 @@ function стОценить(id, tier, mod, призрак) {
   if (!тир.mods.includes(mod)) mod = '';
   if (t.tier === tier && t.mod === mod) {
     if (призрак) призрак.назад();
-    стВыбрать(id, true);
+    if (СТ_ШТАМП.id !== id) стВыбрать(id, true);
     return;
   }
+  // Другой трек ещё под штампом — его вердикт уже объявлен, отпускаем.
+  if (СТ_ШТАМП.id && СТ_ШТАМП.id !== id) стСнятьШтамп();
   стСнимок();
   const откуда = призрак ? null : стОткуда(id);
   const был = t.tier;
+  const наСцене = стНаСцене() === t;
   t.tier = tier; t.mod = mod;
   if (!был) t.at = Date.now();
-  // Оценили трек со сцены — на сцену выходит следующий из очереди.
-  const дальше = !был && СТ.cur === id;
-  if (дальше) СТ.cur = стСледующий(id) || id;
+  if (!был && СТ.cur === id) СТ.cur = стСледующий(id) || id;
+  // Штамп — тому, кто на сцене: только что послушанному или тому, кого
+  // переоценивают, пока штамп ещё лежит.
+  if (наСцене) СТ_ШТАМП.id = id;
   СТ_ВЫБОР = id;
   $('stMods').hidden = true;
   стСохранить();
-  стОчередь(); стДоска(); стСчёт();
-  стСцена(дальше);
-  if (дальше) стПаспорт();
-  const n = document.querySelector('.st-col[data-tier="' + CSS.escape(tier) + '"] .n');
-  if (n) { n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump'); }
-  const плитка = document.querySelector('.st-tile[data-id="' + CSS.escape(id) + '"]');
-  if (!плитка) { if (призрак) призрак.убрать(); return; }
-  плитка.scrollIntoView({ block: 'nearest' });
-  плитка.style.visibility = 'hidden';
+  стОчередь(); стШкала(); стСчёт(); стБок();
+  if (наСцене) {
+    стСцена(false);
+    const сц = $('stStage'); сц.classList.remove('shake'); void сц.offsetWidth; сц.classList.add('shake');
+    стДержать(id);
+  }
+  const пл = стПластинкаЭл(id);
+  if (!пл) { if (призрак) призрак.убрать(); return; }
+  пл.style.visibility = 'hidden';
   const сели = () => {
-    плитка.style.visibility = '';
-    плитка.classList.add('land');
-    if (СТ_ВЫБОР === id) стМоды(плитка);
+    пл.style.visibility = '';
+    пл.classList.add('land');
+    if (!наСцене && СТ_ВЫБОР === id) стМоды(пл, id);
   };
-  if (призрак) призрак.лететь(плитка, сели);
-  else if (откуда) стПолёт(откуда, плитка.querySelector('.st-img'), сели);
+  if (призрак) призрак.лететь(пл, сели);
+  else if (откуда) стПолёт(откуда, пл.querySelector('.st-img'), сели);
   else сели();
 }
 
+// Плюс и минус двигают пластинку на соседнюю ступень, а под штампом —
+// ещё и переписывают его.
 function стМод(id, mod) {
   const t = стТрек(id);
   if (!t || !t.tier || t.mod === mod || !стТир(t.tier).mods.includes(mod)) return;
   стСнимок();
   t.mod = mod;
   стСохранить();
-  стДоска(); стСчёт();
-  if (СТ.cur === id) стСцена(false);
-  const плитка = document.querySelector('.st-tile[data-id="' + CSS.escape(id) + '"]');
-  if (плитка) { плитка.classList.add('land'); стМоды(плитка); }
+  стШкала(); стСчёт(); стБок();
+  // Штамп переписывается без второго удара — только вздрагивает.
+  if (стНаСцене() === t) { СТ_ШТАМП.тихо = true; стСцена(false); СТ_ШТАМП.тихо = false; }
+  const пл = стПластинкаЭл(id);
+  if (пл) пл.classList.add('land');
+  if (СТ_ШТАМП.id === id) стДержать(id);
+  else if (пл) стМоды(пл, id);
 }
 function стШаг(d) {
   const t = стТрек(СТ_ВЫБОР);
@@ -14677,18 +14798,24 @@ function стШаг(d) {
   стМод(t.id, mods[i]);
 }
 
+// Щелчок по пластинке на шкале: трек выходит на сцену, рядом — плюс и минус.
 function стВыбрать(id, тихо) {
   const t = стТрек(id);
   if (!t) return;
   СТ_ВЫБОР = id;
-  document.querySelectorAll('.st-tile').forEach(el => el.classList.toggle('sel', el.dataset.id === id));
-  if (СТ.cur !== id && !тихо) { СТ.cur = id; стСохранить(); стОчередь(); стСцена(true); стПаспорт(); }
-  стМоды(document.querySelector('.st-tile[data-id="' + CSS.escape(id) + '"]'));
+  document.querySelectorAll('.st-rec').forEach(el => el.classList.toggle('sel', el.dataset.id === id));
+  if (!тихо && стНаСцене() !== t) {
+    стСнятьШтамп();
+    СТ.cur = id; стСохранить();
+    стОчередь(); стСцена(true); стБок();
+  }
+  стМоды(стПластинкаЭл(id), id);
 }
 
 function стВернуть(id) {
   const t = стТрек(id);
   if (!t || !t.tier) return;
+  if (СТ_ШТАМП.id === id) стСнятьШтамп();
   стСнимок();
   t.tier = null; t.mod = ''; t.at = 0;
   СТ.cur = id; СТ_ВЫБОР = null;
@@ -14705,12 +14832,12 @@ function стУбрать(id) {
   стРисовать(true);
 }
 
-/* Выбор плюса и минуса — над плиткой, которой его ставят. Кнопки,
+/* Выбор плюса и минуса — над штампом или над пластинкой. Кнопки,
    которых у ступени нет, видны, но погашены: так понятно, почему у
    «гениально» нет плюса, а не кажется, что его забыли. */
-function стМоды(плитка) {
+function стМоды(якорь, id) {
   const box = $('stMods');
-  const t = плитка && стТрек(плитка.dataset.id);
+  const t = якорь && стТрек(id);
   if (!t || !t.tier) { box.hidden = true; return; }
   const тир = стТир(t.tier);
   box.style.setProperty('--tc', TCOLOR[t.tier]);
@@ -14723,7 +14850,7 @@ function стМоды(плитка) {
     '<button type="button" data-close aria-label="Закрыть">✕</button>';
   box.dataset.id = t.id;
   box.hidden = false;
-  const к = плитка.getBoundingClientRect(), р = box.getBoundingClientRect();
+  const к = якорь.getBoundingClientRect(), р = box.getBoundingClientRect();
   let top = к.top - р.height - 10;
   if (top < 8) top = к.bottom + 10;
   box.style.top = Math.min(top, innerHeight - р.height - 8) + 'px';
@@ -14818,8 +14945,8 @@ async function стДополнить(t) {
   if (r) стИзАрхива(t, r);
   стСохранить();
   if ($('spage').hidden) return;
-  стОчередь(); стДоска();
-  if (СТ.cur === t.id) { стСцена(false); стПаспорт(); }
+  стОчередь(); стШкала();
+  if (стНаСцене() === t) { стСцена(false); стБок(); }
 }
 
 /* Подсказки из базы под полем — поиском по началу слова, как в
@@ -14856,11 +14983,10 @@ function стИзПодсказки(i) {
 
 /* ---------- полёт и перетаскивание ----------
    Концепт тянул обложку с запаздыванием и крутил её на 365° — заказчику
-   не понравилось. Здесь обложка идёт ровно за курсором, сразу
-   уменьшается, чтобы не закрывать столбцы, и только наклоняется по ходу
-   движения, как карточка, которую держат за верх. Под ней — точная
-   оценка, которая встанет, если отпустить. Отпустили — она садится на
-   своё место в столбце, а не летит кругами. */
+   не понравилось. Здесь пластинка идёт ровно за курсором, сразу
+   уменьшается, чтобы не закрывать шкалу, и только наклоняется по ходу
+   движения. Под ней — точная оценка, которая встанет, если отпустить.
+   Отпустили — она садится на свою ступень, а не летит кругами. */
 function стПолёт(от, к, сели, угол = 0, быстро = false) {
   const до = к.getBoundingClientRect();
   if (стМягко() || !до.width) { сели(); return; }
@@ -14901,7 +15027,7 @@ function стНачать(d) {
   $('stMods').hidden = true;
   ПОДСКАЗКА.спрятать();
   const r = d.el.getBoundingClientRect();
-  d.G = d.откуда === 'stage' ? Math.min(140, r.width) : Math.round(r.width * 1.3);
+  d.G = d.откуда === 'stage' ? Math.min(130, r.width) : Math.round(r.width * 1.4);
   d.s0 = r.width / d.G;
   d.sx = r.left + r.width / 2; d.sy = r.top + r.height / 2;
   d.t0 = performance.now(); d.a = 0; d.vx = 0; d.lx = d.px;
@@ -14935,13 +15061,11 @@ function стНачать(d) {
 
 function стНад(d) {
   const под = document.elementFromPoint(d.px, d.py);
-  const col = под && под.closest('.st-col');
-  const z = под && под.closest('.st-z');
+  const st = под && под.closest('.st-step');
   let цель = null;
-  if (col) цель = { tier: col.dataset.tier, mod: z ? z.dataset.mod : '' };
-  else if (d.откуда === 'tile' && под && под.closest('#stQ')) цель = { назад: true };
-  document.querySelectorAll('.st-col').forEach(c => c.classList.toggle('drop', c === col));
-  document.querySelectorAll('.st-z').forEach(x => x.classList.toggle('on', x === z));
+  if (st) цель = { ...СТ_СТУПЕНИ[+st.dataset.i] };
+  else if (d.откуда === 'rec' && под && под.closest('#stQ')) цель = { назад: true };
+  document.querySelectorAll('.st-step').forEach(c => c.classList.toggle('drop', c === st));
   $('stQ').classList.toggle('back', !!(цель && цель.назад));
   const pill = d.g.querySelector('.st-pill');
   if (цель && цель.tier) {
@@ -14964,7 +15088,7 @@ function стОтпустить() {
   СТ_ТАЩИЛИ = Date.now();
   cancelAnimationFrame(d.raf);
   document.body.classList.remove('st-drag');
-  document.querySelectorAll('.st-col.drop').forEach(c => c.classList.remove('drop'));
+  document.querySelectorAll('.st-step.drop').forEach(c => c.classList.remove('drop'));
   $('stQ').classList.remove('back');
   const g = d.g;
   // Садимся в прямоугольник: центр и масштаб, поворот выпрямляется.
@@ -14993,7 +15117,7 @@ function стОтпустить() {
     убрать: () => g.remove()
   };
   const ц = d.цель;
-  if (ц && ц.назад) { g.remove(); стВернуть(d.id); }
+  if (ц && ц.назад) { g.remove(); d.el.classList.remove('lift'); стВернуть(d.id); }
   else if (ц) стОценить(d.id, ц.tier, ц.mod, призрак);
   else назад();
 }
@@ -15020,7 +15144,8 @@ function стЭфир(вкл) {
   document.body.classList.toggle('st-air', вкл);
   $('stAir').textContent = вкл ? 'выйти из эфира' : 'эфир';
   $('stMods').hidden = true;
-  requestAnimationFrame(() => { стЗамер(); стПодогнать(); });
+  стБок();
+  requestAnimationFrame(() => { стЗамер(); стСтопки(); });
 }
 
 /* ---------- пульт ---------- */
@@ -15072,29 +15197,31 @@ function стПульт() {
 
   const сцена = $('stStage');
   сцена.addEventListener('pointerdown', e => {
-    const cov = e.target.closest('.st-cov');
-    if (cov && СТ.cur) стВзять(e, СТ.cur, cov, 'stage');
+    const cov = e.target.closest('.st-cov'), t = стНаСцене();
+    if (cov && t) стВзять(e, t.id, cov, 'stage');
   });
   сцена.addEventListener('click', e => {
     const b = e.target.closest('[data-go]');
     if (!b) return;
-    if (b.dataset.go === 'queue') стНаСцену(стСледующий(СТ.cur));
+    if (b.dataset.go === 'dalshe') стДальше();
+    else if (b.dataset.go === 'queue') стНаСцену(стСледующий(СТ.cur));
     else стНаСцену(стСледующий(СТ.cur, +b.dataset.go));
   });
 
   const доска = $('stBoard');
   доска.addEventListener('pointerdown', e => {
-    const плитка = e.target.closest('.st-tile');
-    if (плитка) стВзять(e, плитка.dataset.id, плитка.querySelector('.st-img'), 'tile');
+    const пл = e.target.closest('.st-rec');
+    if (пл) стВзять(e, пл.dataset.id, пл.querySelector('.st-img'), 'rec');
   });
   доска.addEventListener('click', e => {
     if (Date.now() - СТ_ТАЩИЛИ < 300) return;
-    const плитка = e.target.closest('.st-tile');
-    if (плитка) { стВыбрать(плитка.dataset.id); return; }
-    const col = e.target.closest('.st-col');
-    if (!col) return;
-    if (!СТ.cur) { toast('Сначала добавь трек в очередь'); return; }
-    стОценить(СТ.cur, col.dataset.tier, '');
+    const пл = e.target.closest('.st-rec');
+    if (пл) { стВыбрать(пл.dataset.id); return; }
+    const st = e.target.closest('.st-step'), t = стНаСцене();
+    if (!st) return;
+    if (!t) { toast('Сначала добавь трек в очередь'); return; }
+    const s = СТ_СТУПЕНИ[+st.dataset.i];
+    стОценить(t.id, s.tier, s.mod);
   });
 
   document.addEventListener('pointermove', e => {
@@ -15115,19 +15242,23 @@ function стПульт() {
     else if (b.hasAttribute('data-back')) стВернуть(id);
     else if (b.hasAttribute('data-close')) {
       $('stMods').hidden = true; СТ_ВЫБОР = null;
-      document.querySelectorAll('.st-tile.sel').forEach(el => el.classList.remove('sel'));
+      document.querySelectorAll('.st-rec.sel').forEach(el => el.classList.remove('sel'));
     }
   });
   // Щелчок мимо — выбор плюса и минуса закрывается.
   document.addEventListener('pointerdown', e => {
-    if ($('stMods').hidden || e.target.closest('#stMods,.st-tile')) return;
+    if ($('stMods').hidden || e.target.closest('#stMods,.st-rec')) return;
     $('stMods').hidden = true;
   });
 
+  $('stSide').querySelector('.st-tabs').addEventListener('click', e => {
+    const b = e.target.closest('[data-tab]');
+    if (b) { СТ_ВКЛАДКА = b.dataset.tab; стБок(); }
+  });
   const пасп = $('stPass');
   пасп.addEventListener('click', e => {
     const c = e.target.closest('.st-c');
-    const t = стТрек(СТ.cur);
+    const t = стНаСцене();
     if (!c || !t) return;
     const v = c.dataset.v, поле = c.dataset.p;
     if (поле === 'origin') t.origin = t.origin === v ? '' : v;
@@ -15137,7 +15268,7 @@ function стПульт() {
     стСохранить();
   });
   пасп.addEventListener('input', e => {
-    const t = стТрек(СТ.cur);
+    const t = стНаСцене();
     const f = e.target.dataset.f;
     if (!t || !f) return;
     t[f] = e.target.value;
@@ -15150,13 +15281,14 @@ function стПульт() {
     }
     стСохранить();
   });
-  пасп.addEventListener('change', e => { if (e.target.dataset.f && e.target.dataset.f !== 'feat') { стОчередь(); стДоска(); } });
+  пасп.addEventListener('change', e => { if (e.target.dataset.f && e.target.dataset.f !== 'feat') { стОчередь(); стШкала(); } });
 
   $('stUndo').addEventListener('click', стОтменить);
   $('stCopy').addEventListener('click', стДляТаблицы);
   $('stAir').addEventListener('click', () => стЭфир(!document.body.classList.contains('st-air')));
   $('stNew').addEventListener('click', () => {
-    if (!СТ.tracks.length || !confirm('Начать новый эфир? Очередь и столбцы очистятся.')) return;
+    if (!СТ.tracks.length || !confirm('Начать новый эфир? Очередь и шкала очистятся, каталог останется.')) return;
+    стСнятьШтамп();
     стСнимок();
     СТ.tracks = []; СТ.cur = null; СТ_ВЫБОР = null;
     $('stMods').hidden = true;
@@ -15175,10 +15307,12 @@ function стПульт() {
     if (e.target.closest('input,textarea,select,[contenteditable]')) return;
     if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ') { e.preventDefault(); стОтменить(); return; }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = стНаСцене();
     if (/^[1-6]$/.test(e.key)) {
       e.preventDefault();
-      if (СТ.cur) стОценить(СТ.cur, TIERS[+e.key - 1].key, '');
+      if (t) стОценить(t.id, TIERS[+e.key - 1].key, '');
     }
+    else if (e.key === 'Enter' && СТ_ШТАМП.id) { e.preventDefault(); стДальше(); }
     else if (e.key === '+' || e.key === '=') { e.preventDefault(); стШаг(1); }
     else if (e.key === '-' || e.key === '_') { e.preventDefault(); стШаг(-1); }
     else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
@@ -15192,7 +15326,7 @@ function стПульт() {
     cancelAnimationFrame(кадр);
     кадр = requestAnimationFrame(() => {
       if ($('spage').hidden) return;
-      стЗамер(); стПодогнать();
+      стЗамер(); стСтопки();
       $('stMods').hidden = true;
     });
   });
@@ -15290,6 +15424,7 @@ function студияВКаталог(досчитать) {
 // и показать в каталоге то, что в ней оценили.
 function уходИзСтудии() {
   if ($('spage').hidden) return;
+  стСнятьШтамп();
   $('spage').hidden = true;
   $('stMods').hidden = true;
   document.body.classList.remove('st-on', 'st-air', 'st-drag');
