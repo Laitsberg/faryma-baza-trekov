@@ -196,6 +196,7 @@ grant execute on function public.set_ban(uuid, boolean) to authenticated;
 -- Кому роль положена с самого начала. Логин — как в адресе канала
 -- twitch.tv/<логин>, строчными.
 insert into public.role_grants (twitch_login, role, note) values
+  ('farymacomposer', 'owner', 'композитор'),
   ('laitsberg', 'admin', 'разработка сайта')
 on conflict (twitch_login) do nothing;
 

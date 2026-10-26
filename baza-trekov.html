@@ -1497,6 +1497,22 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
 
 <p class="foot-note" id="footNote"></p>
 
+<!-- Оценку ставит только вошедший через Twitch — просьба заказчика. -->
+<div class="modal" id="mLogin" hidden>
+ <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+  <button class="mx" data-close aria-label="Закрыть">✕</button>
+  <div class="mhd">
+   <div class="k" style="color:#c9b3ff">оценка</div>
+   <h2 id="loginTitle">Пожалуйста, авторизуйтесь</h2>
+   <p>Оценки ставят те, кто вошёл через Twitch: так оценка остаётся за тобой на любом устройстве и попадает в твою статистику в личном кабинете.</p>
+  </div>
+  <div class="mact">
+   <button type="button" class="btn ghost" data-close>Позже</button>
+   <button type="button" class="tw-in" data-login></button>
+  </div>
+ </div>
+</div>
+
 <div class="modal" id="mAdd" hidden>
  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="addTitle">
   <button class="mx" data-close aria-label="Закрыть">✕</button>
@@ -11882,6 +11898,7 @@ function card(r) {
     b.addEventListener('mouseenter', () => preview(i));
     b.addEventListener('focus', () => preview(i));
     b.addEventListener('click', () => {
+      if (нужноВойти()) return;
       const cur = MY[r.key];
       // Модификатор сохраняем, только если ступень та же и он ей
       // разрешён: у «гениально» плюсов не бывает, у «кринж-контента»
@@ -11949,6 +11966,7 @@ function card(r) {
   // MODS_ALL идёт от «++» к «- -», поэтому «выше» — шаг к началу списка
   mods.addEventListener('click', e => {
     const b = e.target.closest('.mod'); if (!b) return;
+    if (нужноВойти()) return;
     const v = MY[r.key]; if (!v) return;
     const t = TIERS.find(x => x.key === v.t); if (!t) return;
     const next = t.mods.indexOf(v.m) - Number(b.dataset.d);
@@ -13731,6 +13749,7 @@ function drawMine() {
     b.addEventListener('mouseenter', () => примерить(t));
     b.addEventListener('focus', () => примерить(t));
     b.addEventListener('click', () => {
+      if (нужноВойти()) return;
       const cur = MY[r.key];
       const держим = cur && cur.t === t.key && t.mods.includes(cur.m);
       MY[r.key] = { t: t.key, m: держим ? cur.m : '', w: Date.now() };
@@ -13781,6 +13800,7 @@ function drawMine() {
 
   mods.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || b.disabled) return;
+    if (нужноВойти()) return;
     const v = MY[r.key]; if (!v) return;
     const t = TIERS.find(x => x.key === v.t); if (!t) return;
     const next = t.mods.indexOf(v.m) - Number(b.dataset.d);
@@ -14713,9 +14733,11 @@ const онлайн = () => {
       ник: x.name || x.login || 'зритель', цвет: x.color || цветПо(x.user_id), я: false })));
 };
 
-/* Первый заход или бывалый: тот, кто уже что-то здесь сделал —
-   оценил, лайкнул, назвался или вошёл через Twitch. */
-const бывалый = () => !!(Object.keys(MY).length || FAV.size || ПРОФ.ник || вошёл());
+/* Гость или вошедший. Вошедшему не объясняем, что это за сайт: у него
+   нет абзаца-приветствия и трёх карточек. Раньше «своим» считался и
+   гость, который что-то оценил, — заказчик попросил карточки именно
+   для тех, кто не вошёл. */
+const бывалый = () => вошёл();
 
 const буквы = s => {
   const v = String(s || '').trim().split(/\s+/).filter(Boolean);
@@ -15406,9 +15428,22 @@ async function выйти() {
 }
 
 document.addEventListener('click', e => {
-  if (e.target.closest('[data-login]')) { e.preventDefault(); войти(); }
+  if (e.target.closest('[data-login]')) { e.preventDefault(); $('mLogin').hidden = true; войти(); }
   else if (e.target.closest('[data-logout]')) { e.preventDefault(); выйти(); }
 });
+
+/* Оценка — только для вошедших. Гостю вместо неё — просьба войти.
+   Если входа нет вовсе (файл с диска, сервер не ответил), шкала
+   работает как раньше, в браузер: иначе без сети страница стала бы
+   бесполезной, а войти всё равно нельзя. */
+function нужноВойти() {
+  if (!ОБЛ || ОБЛ.состояние === 'вошёл' || ОБЛ.состояние === 'нет') return false;
+  const m = $('mLogin');
+  m.querySelector('.tw-in').innerHTML = ЗНАЧОК_TW + 'Войти через Twitch';
+  m.hidden = false;
+  m.querySelector('.tw-in').focus();
+  return true;
+}
 
 function облакоСбой(e) {
   const код = e && (e.code || '');
