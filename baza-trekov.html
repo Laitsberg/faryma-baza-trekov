@@ -1006,6 +1006,292 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   .g-tiers{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
+
+/* ---------- главная ----------
+   Приветствие над каталогом по макету заказчика: заголовок, поиск
+   крупно, над поиском — человечки, ниже — три карточки «что тут
+   делают». Для первого захода и для бывалого вид разный: тому, кто
+   уже оценивал, объяснять, что такое сайт, незачем — у него
+   остаются заголовок, поиск и человечки. */
+.home{grid-column:1/-1;width:100%;min-width:0;max-width:1190px;margin:0 auto;padding:16px 0 0;
+  text-align:center;position:relative}
+.home::before{content:'';position:absolute;left:50%;top:-22px;transform:translateX(-50%);
+  width:min(1100px,100%);height:520px;pointer-events:none;opacity:.3;
+  background:radial-gradient(ellipse at 50% 1%,rgba(242,102,15,.12),transparent 60%)}
+.home[hidden]{display:none}
+.home-h{position:relative;margin:0;font:800 clamp(34px,4.2vw,55px)/1.14 var(--d);letter-spacing:-.052em}
+.home-h span{color:var(--brand-hi)}
+.home-lead{position:relative;max-width:790px;margin:17px auto 11px;color:#B7B7BE;font-size:15px;line-height:1.6}
+.home-lead:empty{display:none}
+.home-note{position:relative;max-width:850px;margin:12px auto 9px;color:#A5A4AD;
+  font:500 11px/1.7 var(--m);letter-spacing:-.017em}
+.home-note::before{content:'//';color:var(--brand);margin-right:10px;font-weight:600}
+.home-member .home-lead,.home-member .feats{display:none}
+.home-member .home-note{margin-top:18px}
+
+.home-search{position:relative;max-width:756px;margin:0 auto;z-index:5}
+.runway{position:relative;height:72px}
+/* Человечек гуляет по кромке поиска. Ходит он свойством left, а не
+   transform: проценты у transform считаются от самого человечка, а
+   гулять надо по ширине поля. */
+.walker{position:absolute;bottom:-1px;left:var(--x,50%);display:flex;flex-direction:column;
+  align-items:center;min-width:44px;margin-left:-22px;color:inherit;text-decoration:none;
+  animation:stroll var(--t,46s) ease-in-out infinite alternate;animation-delay:var(--d0,0s)}
+.walker:hover,.walker:focus-visible{animation-play-state:paused;z-index:3}
+.walker .nick{font:600 10px/1.25 var(--b);white-space:nowrap;color:#ffcc9e;
+  text-shadow:0 1px 6px #111,0 0 3px #111;padding:2px 3px;margin-bottom:3px;letter-spacing:-.012em}
+.walker:hover .nick{color:#fff}
+.walker .spr{position:relative;width:25px;height:32px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.walker .spr i{position:absolute;background:var(--c)}
+.walker .hd0{top:0;left:5px;width:15px;height:15px;border-radius:6px 6px 5px 5px}
+.walker .hd0::after{content:'••';position:absolute;left:3px;top:0;color:#201b22;
+  letter-spacing:2px;font:8px/12px var(--b)}
+.walker .bd0{top:15px;left:4px;width:17px;height:13px;border-radius:5px 5px 3px 3px}
+.walker .lg{top:25px;width:5px;height:8px;border-radius:2px;transform-origin:top;
+  animation:step .42s linear infinite alternate}
+.walker .lg.l{left:6px}
+.walker .lg.r{right:6px;animation-direction:alternate-reverse}
+.walker .spr::after{content:'★';position:absolute;top:-10px;right:-5px;color:#ffd184;font-size:9px}
+.walker:hover .lg,.walker:focus-visible .lg{animation-play-state:paused}
+@keyframes stroll{0%{left:7%}30%{left:38%}55%{left:24%}100%{left:92%}}
+@keyframes step{to{transform:rotate(24deg)}}
+
+.bigsearch{position:relative;display:flex;align-items:center;gap:13px;padding:9px 9px 9px 19px;
+  min-height:67px;background:#2E2E33;border:1px solid #4D4D56;border-radius:10px;
+  box-shadow:0 10px 26px rgba(0,0,0,.16)}
+.bigsearch:focus-within{border-color:var(--brand);
+  box-shadow:0 0 0 3px rgba(242,102,15,.085),0 10px 26px rgba(0,0,0,.16)}
+.bs-ic{width:23px;height:23px;flex:none;color:var(--brand)}
+.bigsearch input{flex:1;min-width:0;background:none;border:0;outline:0;font-size:17px;color:var(--ink)}
+.bigsearch input::placeholder{color:#81818D}
+.bigsearch input::-webkit-search-cancel-button{filter:grayscale(1) brightness(1.6)}
+.bs-go{display:flex;align-items:center;gap:8px;min-height:45px;padding:11px 20px;border-radius:7px;
+  background:var(--brand);color:#211106;font-weight:800;white-space:nowrap}
+.bs-go:hover{background:var(--brand-hi)}
+.bs-go svg{width:16px;height:16px}
+.suggest{position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:6;max-height:380px;overflow:auto;
+  padding:9px;text-align:left;background:#2A2A30;border:1px solid #515159;border-radius:9px;
+  box-shadow:0 20px 40px rgba(0,0,0,.38)}
+.suggest[hidden]{display:none}
+.sg-t{padding:4px 9px 7px;color:#85858E;font:500 10px var(--m);text-transform:uppercase;letter-spacing:.07em}
+.sg{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;border-radius:6px;
+  color:inherit;text-decoration:none}
+.sg:hover,.sg.sel{background:#393940}
+.sg .th{position:relative;width:37px;height:37px;flex:none;border-radius:5px;overflow:hidden;background:#34343b}
+.sg .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sg .th .art-fb{font-size:15px}
+.sg .tx{min-width:0;flex:1}
+.sg b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sg small{display:block;font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sg .rt{flex:none;font:600 11px var(--m);color:var(--tc)}
+.sg-all{display:block;width:100%;margin-top:5px;padding:11px 9px 5px;border-top:1px solid var(--line);
+  color:var(--brand-hi);font-size:12px;font-weight:600;text-align:left}
+.quick{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;
+  margin-top:13px;color:var(--faint);font-size:12px}
+.quick button{padding:3px 9px;border:1px solid #3a3a42;border-radius:5px;color:#B9B9C2;font-size:12px}
+.quick button:hover{border-color:var(--brand);color:var(--brand-hi)}
+.online{margin-top:8px;color:#777780;font-size:11px}
+.online a{color:#B6B4BD;text-decoration:none}
+.online a:hover{color:var(--brand-hi)}
+
+.feats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:35px;text-align:left}
+.feat{display:flex;flex-direction:column;min-height:261px;padding:19px 19px 17px;border-radius:9px;
+  background:var(--card);border:1px solid #3a3a40;transition:background .15s,border-color .15s}
+.feat:hover{border-color:#5e5550;background:#2e2e33}
+.feat-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+.feat-i{font:600 10px var(--m);letter-spacing:.07em;color:var(--faint)}
+.feat-ic{width:30px;height:30px;display:grid;place-items:center;border-radius:7px;
+  border:1px solid #484048;background:#322b2a;color:var(--brand-hi)}
+.feat-ic.v{color:#B394F0;background:#322d37;border-color:#494050}
+.feat-ic.r{color:#FF8A89;background:#362b2d;border-color:#503c3e}
+.feat-ic svg{width:16px;height:16px}
+.feat h2{margin:0 0 5px;font:800 20px/1.2 var(--d);letter-spacing:-.035em}
+.feat p{margin:0;min-height:58px;color:#A7A7B0;font-size:12.5px;line-height:1.55}
+.feat-live{min-height:65px;margin:15px 0 12px;padding:10px 11px;border-radius:7px;
+  background:#222226;border:1px solid #33333A}
+.feat-go{margin-top:auto;display:inline-flex;align-items:center;gap:7px;width:max-content;
+  padding:3px 0;color:var(--brand-hi);font-weight:700;font-size:12.5px;text-decoration:none}
+.feat-go:hover{color:#ffc28b}
+.mini{display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none}
+.mini .th{position:relative;width:42px;height:42px;flex:none;border-radius:5px;overflow:hidden;background:#34343b}
+.mini .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.mini .th .art-fb{font-size:16px}
+.mini .tx{min-width:0;flex:1}
+.mini b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini small{display:block;font-size:10.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pips{display:flex;gap:4px;flex:none}
+.pips i{width:13px;height:18px;border-radius:3px;opacity:.8;background:var(--tc);border:1px solid rgba(255,255,255,.18)}
+.pips i.on{opacity:1;border-color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.22)}
+.cap{display:flex;justify-content:space-between;gap:6px;margin-bottom:8px;font-size:10.5px;color:#C7C7CF}
+.cap b{font:600 10.5px var(--m)}
+.gbars{display:flex;gap:5px;height:26px;margin-bottom:8px}
+.gbars i{flex:1;border-radius:3px;background:#4A484E}
+.gbars i.on{background:var(--brand)}
+.bar{height:5px;border-radius:9px;background:#434149;overflow:hidden}
+.bar span{display:block;height:100%;background:var(--brand)}
+.prev{display:flex;align-items:center;gap:11px}
+.prev-play{display:grid;place-items:center;flex:0 0 40px;height:40px;border-radius:7px;
+  border:1px solid #674635;background:#3B2C26;color:var(--brand-hi)}
+.prev-play svg{width:23px;height:23px}
+.prev-tx{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.prev-tx b{font-size:11px;line-height:1.25;color:#E8E5E6}
+.prev-tx small{font-size:9.5px;line-height:1.35;color:#A9A6AE}
+.prev-chat{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:0 0 30px}
+.prev-chat i{display:block;height:5px;width:80%;border-radius:4px;background:#8E6CBE;opacity:.65}
+.prev-chat i:nth-child(2){background:#DB6664;width:100%}
+.prev-chat i:nth-child(3){background:#B57547;width:60%}
+.nudge{display:flex;justify-content:center;align-items:center;gap:9px;padding:24px 0 18px;
+  color:#9797a1;font-size:12px;text-decoration:none;border-bottom:1px solid #33333A}
+.nudge:hover{color:var(--ink)}
+.nudge svg{width:16px;height:16px;color:var(--brand-hi)}
+
+/* Пока приветствие на экране, поиск в шапке прячем: второе поле
+   рядом с большим только путает. На телефоне не прячем — поле там
+   отдельной строкой, и шапка прыгала бы по высоте. */
+@media(min-width:761px){
+  .tb-search{transition:opacity .2s}
+  .tb.hero-on .tb-search{opacity:0;visibility:hidden}
+}
+a.ava{color:inherit;text-decoration:none}
+a.ava:hover,a.ava[aria-current]{border-color:var(--brand)}
+.ava.me{background:#34302d;border-color:rgba(236,135,76,.32);color:#f5b087;font:800 12px var(--b)}
+
+/* ---------- личный кабинет ---------- */
+.me-hero{display:flex;align-items:center;gap:25px;padding:26px 28px;margin-top:14px}
+.me-ava{position:relative;width:89px;height:89px;flex:none;display:grid;place-items:center;
+  border-radius:20px;border:2px solid #78604d;background:linear-gradient(145deg,#494039,#242527);
+  color:#e9c0a0;font:650 32px var(--d);letter-spacing:-.05em}
+.me-ava::after{content:'♫';position:absolute;right:-8px;bottom:-8px;width:28px;height:25px;
+  display:grid;place-items:center;border-radius:8px;border:2px solid var(--card);
+  background:#242628;color:var(--brand);font-size:12px}
+.me-id{flex:1;min-width:0}
+.me-k{font:700 10px var(--b);letter-spacing:.11em;text-transform:uppercase;color:var(--faint)}
+/* .pan h2 сильнее простого класса — ник ему не отдаём. И не .empty:
+   это имя уже занято заглушкой пустой сетки с отступом в 70px. */
+.me-hero .me-nm{display:block;margin:3px 0 5px;font:720 25px/1.25 var(--d);letter-spacing:-.025em;overflow-wrap:anywhere}
+.me-hero .me-nm.none{color:var(--dim)}
+.me-bio{color:var(--dim);font-size:13px}
+.me-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.me-pill{padding:4px 9px;border-radius:6px;border:1px solid var(--line);background:var(--card-2);
+  color:#c9cacc;font-size:11.5px;line-height:1.35}
+.me-pill.o{background:rgba(242,102,15,.11);border-color:rgba(242,102,15,.32);color:#e5a17b}
+.me-edit{width:35px;height:35px;flex:none;align-self:flex-start;display:grid;place-items:center;
+  border-radius:9px;border:1px solid var(--line);background:var(--card-2);color:var(--dim)}
+.me-edit:hover{color:#fff;border-color:#5d5e62}
+.me-edit svg{width:18px;height:18px}
+.me-tabs{margin:21px 0 22px}
+.me-cols{display:grid;grid-template-columns:minmax(0,1.64fr) minmax(300px,1fr);gap:18px;align-items:start}
+.me-main,.me-side{display:grid;gap:18px;min-width:0}
+.me-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.me-m{padding:18px 19px 16px;border-radius:var(--r);background:var(--card);min-height:110px}
+.me-m .l{font-size:12px;color:#a8aaad;margin-bottom:6px}
+.me-m .v{font:700 29px/1.2 var(--d);letter-spacing:-.04em;overflow-wrap:anywhere}
+.me-m .v small{font-size:.6em;color:var(--dim);margin-left:2px}
+.me-m .v.w{font-size:23px;padding-top:3px}
+.me-m .s{margin-top:5px;font-size:11px;color:var(--faint)}
+.me-pan{padding:20px 22px}
+.me-pan h2{justify-content:space-between}
+.me-taste{display:grid;grid-template-columns:minmax(0,1.26fr) minmax(0,1fr);gap:23px}
+.me-lab{margin-bottom:12px;font-size:11px;color:#9b9da0;text-transform:uppercase;letter-spacing:.075em}
+.rbar{display:grid;grid-template-columns:110px 1fr 34px;align-items:center;gap:9px;margin-bottom:10px;font-size:12px}
+.rbar .n{color:#d0d0d1}
+.rbar .tr{height:6px;border-radius:4px;background:#353638;overflow:hidden}
+.rbar .tr span{display:block;height:100%;border-radius:4px;background:var(--tc)}
+.rbar .c{text-align:right;color:var(--dim);font:500 11px var(--m)}
+.gchips{display:flex;flex-wrap:wrap;gap:7px}
+.gchip{display:inline-flex;align-items:center;gap:7px;padding:6px 9px;border-radius:7px;
+  background:var(--card-2);color:#d0d0d1;font-size:12px;text-decoration:none}
+.gchip b{color:#c5a086;font-weight:600}
+.gchip:hover{color:var(--brand-hi)}
+.me-note{display:flex;align-items:center;gap:11px;margin-top:20px;padding-top:15px;
+  border-top:1px solid var(--line);color:#a5a7aa;font-size:12.5px}
+.me-note b{color:var(--brand-hi);font-weight:600}
+.me-empty{padding:26px 6px;color:var(--dim);font-size:13.5px;text-align:center}
+.me-empty a{color:var(--brand-hi)}
+.trow{display:grid;grid-template-columns:43px minmax(0,1fr) auto auto;align-items:center;gap:13px;
+  padding:10px 0;border-top:1px solid rgba(255,255,255,.065);color:inherit;text-decoration:none}
+.trow:first-child{border-top:0;padding-top:2px}
+.trow:hover .tn{color:var(--brand-hi)}
+.trow .th{position:relative;width:43px;height:43px;border-radius:5px;overflow:hidden;background:#34343b}
+.trow .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.trow .th .art-fb{font-size:16px}
+.trow .ta{display:block;color:var(--dim);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trow .tn{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trow .gr{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font:600 11.5px var(--m);
+  white-space:nowrap;color:var(--tc)}
+.trow .gr small{font:400 10.5px var(--b);color:var(--faint)}
+.trow .gr small i{font-style:normal;color:var(--tc2)}
+.trow .dt{width:66px;text-align:right;color:var(--faint);font:500 11px var(--m)}
+.kv{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;
+  border-top:1px solid rgba(255,255,255,.065);font-size:13.5px}
+.kv:first-child{border-top:0;padding-top:2px}
+.kv b{font:500 12px var(--m)}
+.kv .lnk{margin:0}
+.me-more{margin-top:12px;color:var(--brand-hi);font-size:12.5px;font-weight:600}
+.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 11px}
+.bdg{text-align:center}
+.bdg .bv{width:58px;height:58px;margin:0 auto 9px;display:grid;place-items:center;border-radius:12px;
+  background:var(--card-2);border:1px solid rgba(255,255,255,.1);color:#c9b7a5}
+.bdg .bv svg{width:25px;height:25px}
+.bdg b{display:block;font-size:11.5px;font-weight:600;color:#cfd0d1;line-height:1.25}
+.bdg small{display:block;margin-top:2px;font-size:10.5px;color:var(--faint)}
+.bdg.off .bv{opacity:.35;color:var(--dim)}
+.bdg.off b{color:var(--dim)}
+.me-bar{height:3px;max-width:58px;margin:5px auto 0;border-radius:3px;background:#353638;overflow:hidden}
+.me-bar span{display:block;height:100%;background:#c9865e}
+.me-list{display:grid;grid-template-columns:minmax(0,1fr) 284px;gap:18px;align-items:start}
+.me-tools{display:flex;flex-wrap:wrap;gap:9px;margin:4px 0 14px}
+.me-tools input,.me-tools select{height:37px;padding:0 11px;border-radius:8px;border:1px solid var(--line);
+  background:#151719;color:var(--ink);font-size:13px}
+.me-tools input{flex:1;min-width:200px}
+.me-tools input:focus,.me-tools select:focus{outline:none;border-color:var(--brand)}
+.me-cnt{margin-top:12px;color:var(--faint);font-size:11.5px}
+.me-tip p{margin:10px 0 0;color:var(--dim);font-size:12.5px;line-height:1.6}
+.me-form{display:grid;gap:16px;max-width:560px}
+.me-form label{display:grid;gap:6px;font-size:12.5px;color:#c9c9c9}
+.me-form input{padding:11px 12px;border-radius:8px;border:1px solid #4a4a52;background:#141618;
+  color:var(--ink);font-size:14px}
+.me-form input:focus{outline:none;border-color:var(--brand)}
+.me-sw{display:flex;gap:8px;flex-wrap:wrap}
+.me-sw button{width:30px;height:30px;border-radius:8px;background:var(--c);border:2px solid transparent}
+.me-sw button[aria-pressed="true"]{border-color:#fff}
+.me-form .btn{justify-self:start}
+
+@media(max-width:1000px){
+  .feats{grid-template-columns:1fr;max-width:600px;margin:27px auto 0}
+  .feat{min-height:auto}
+  .feat p{min-height:0}
+  .me-cols,.me-list{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .home{padding-top:6px}
+  .home-h{font-size:clamp(30px,8.1vw,42px);line-height:1.18}
+  .home-lead{margin:14px auto 12px;font-size:13.5px}
+  .home-note{font-size:10px;line-height:1.6}
+  .runway{height:63px}
+  .bigsearch{min-height:58px;padding:7px 7px 7px 12px;gap:7px}
+  .bigsearch input{font-size:14px}
+  .bs-ic{width:20px;height:20px}
+  .bs-go{min-height:42px;padding:8px 12px;font-size:13px}
+  .bs-go svg{display:none}
+  .me-hero{flex-wrap:wrap;padding:20px;gap:17px;align-items:flex-start}
+  .me-ava{width:67px;height:67px;border-radius:15px;font-size:26px}
+  .me-hero .me-nm{font-size:21px}
+  .me-hero .me-edit{margin-left:auto}
+  .me-metrics{gap:7px}
+  .me-m{padding:13px 11px;min-height:96px}
+  .me-m .l{font-size:10.5px}
+  .me-m .v{font-size:23px}
+  .me-m .v.w{font-size:18px}
+  .me-pan{padding:18px 15px}
+  .me-taste{grid-template-columns:1fr;gap:21px}
+  .trow{grid-template-columns:41px minmax(0,1fr) auto;gap:9px}
+  .trow .dt{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .walker,.walker .lg{animation:none}
+  .walker{left:50%}
+}
 </style>
 <meta name="theme-color" content="#1B1B1D">
 </head>
@@ -1032,18 +1318,42 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   <div class="np" id="np" hidden></div>
 
   <nav class="nav">
-   <a href="#">главная</a>
-   <a href="#">стрим-space</a>
-   <a href="#" id="navBase" aria-current="page">база треков</a>
+   <a href="#" id="navHome" aria-current="page">главная</a>
+   <a href="https://farymastats.info/" target="_blank" rel="noopener noreferrer">стрим-space</a>
+   <a href="#base" id="navBase">база треков</a>
    <a href="#fun" id="navFun">прикольчики</a>
    <a href="#">помощь</a>
   </nav>
 
-  <div class="ava" data-tip="твой профиль">🦉</div>
+  <a class="ava" id="ava" href="#me" data-tip="личный кабинет" aria-label="Личный кабинет">🦉</a>
  </div>
 </header>
 
 <div class="page" id="page">
+ <!-- Главная: приветствие над каталогом. Лежит внутри витрины, а не
+      отдельной страницей — прячется и показывается вместе с ней, и
+      каталог начинается сразу под ним, без смены фона. -->
+ <section class="home" id="home" aria-label="Главная">
+  <h1 class="home-h">Здесь мы оцениваем музыку<br><span>Ведь слушать — это лишь начало</span></h1>
+  <p class="home-lead" id="homeLead"></p>
+  <p class="home-note">Каждый трек на сайте оценен композитором (и конечно же чатиком) на стриме. Все записи прямо здесь!</p>
+  <div class="home-search">
+   <!-- Полоса над поиском: человечки — кто сейчас на сайте. Рисует JS. -->
+   <div class="runway" id="runway"></div>
+   <form class="bigsearch" id="hForm" role="search" autocomplete="off">
+    <svg class="bs-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+    <label class="vh" for="hq">Найти трек или исполнителя</label>
+    <input id="hq" type="search" placeholder="Какой трек ищем?" autocomplete="off" aria-controls="hSuggest" aria-expanded="false">
+    <button class="bs-go" type="submit">Найти <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
+   </form>
+   <div class="suggest" id="hSuggest" hidden></div>
+   <div class="quick" id="hQuick"></div>
+   <div class="online" id="hOnline"></div>
+  </div>
+  <div class="feats" id="hFeats"></div>
+  <a class="nudge" href="#base">Листай вниз — там весь каталог
+   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m-6-6 6 6 6-6"/></svg></a>
+ </section>
  <button class="ftoggle" id="fToggle" type="button" aria-expanded="false" aria-controls="rail">Фильтры<b></b></button>
  <aside class="rail" id="rail" aria-label="Фильтры"></aside>
 
@@ -1135,6 +1445,20 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   <a class="fun-card" href="https://farymastats.info/" target="_blank" rel="noopener noreferrer">
    <b>Рекорды и статистика</b><span>Строже ли он стал, менял ли мнение, кого приносят чаще всего.</span><small>сайт статистики ↗</small></a>
  </div>
+</div>
+
+<!-- Личный кабинет (#me): своя статистика по своим оценкам. Всё
+     считается из того, что лежит в этом браузере, — общей базы нет. -->
+<div class="tpage" id="mpage" hidden>
+ <div class="tp-top">
+  <nav class="crumbs" aria-label="Где я">
+   <a href="#base">база треков</a><span class="sep">›</span><b>личный кабинет</b>
+  </nav>
+ </div>
+ <h1 class="fun-h">личный кабинет</h1>
+ <section class="pan me-hero" id="meHero"></section>
+ <div class="tabs me-tabs" id="meTabs" role="tablist"></div>
+ <div id="meTab" role="tabpanel"></div>
 </div>
 
 <p class="foot-note" id="footNote"></p>
@@ -10578,6 +10902,8 @@ function build(raw, снова) {
       const свежий = CAT.find(x => x.key === T.r.key);
       if (свежий) { T.r = свежий; drawTrack(); }
     }
+    if (!$('page').hidden) главная();
+    if (!$('mpage').hidden) drawMe();
     return;
   }
 
@@ -11526,8 +11852,8 @@ function card(r) {
       // разрешён: у «гениально» плюсов не бывает, у «кринж-контента»
       // минусов — это правило шкалы, а не украшение.
       const keep = cur && cur.t === t.key && t.mods.includes(cur.m);
-      MY[r.key] = { t: t.key, m: keep ? cur.m : '' };
-      save(); paint(); railAfterRate();
+      MY[r.key] = { t: t.key, m: keep ? cur.m : '', w: Date.now() };
+      save(); paint(); railAfterRate(); учёт('rate');
     });
     scale.append(b);
     return b;
@@ -11599,6 +11925,7 @@ function card(r) {
   favBtn.addEventListener('click', () => {
     const on = !FAV.has(r.key);
     on ? FAV.add(r.key) : FAV.delete(r.key);
+    if (on) учёт('fav');
     favBtn.setAttribute('aria-pressed', String(on));
     save();
     if (F.has.has('fav')) { rail(); render(true); }
@@ -11853,6 +12180,7 @@ function route() {
   навигация();
   if (location.hash === '#covers') return showAdmin();
   if (location.hash === '#fun') return showFun();
+  if (/^#me(\/|$)/.test(location.hash)) return showMe();
   const m = location.hash.match(/^#t=([\s\S]+)$/);
   let r = null;
   if (m) {
@@ -11867,14 +12195,19 @@ function route() {
   r ? showTrack(r) : showCatalog();
 }
 
-/* Какой пункт шапки подсвечен: прикольчики — свой, всё остальное
-   живёт внутри базы треков. */
+/* Какой пункт шапки подсвечен. Главная — корень, где над каталогом
+   стоит приветствие; база треков — сам каталог (#base) и страницы
+   треков; прикольчики и кабинет — свои. */
 function навигация() {
-  const весело = location.hash === '#fun';
-  $('navFun').toggleAttribute('aria-current', весело);
-  if (весело) $('navFun').setAttribute('aria-current', 'page');
-  $('navBase').toggleAttribute('aria-current', !весело);
-  if (!весело) $('navBase').setAttribute('aria-current', 'page');
+  const h = location.hash;
+  const где = h === '#fun' ? 'navFun' : /^#me(\/|$)/.test(h) ? '' :
+              h === '' || h === '#' ? 'navHome' : 'navBase';
+  ['navHome', 'navBase', 'navFun'].forEach(id => {
+    if (id === где) $(id).setAttribute('aria-current', 'page');
+    else $(id).removeAttribute('aria-current');
+  });
+  if (где === '') $('ava').setAttribute('aria-current', 'page');
+  else $('ava').removeAttribute('aria-current');
 }
 
 function showTrack(r) {
@@ -11890,6 +12223,7 @@ function showTrack(r) {
   $('footNote').hidden = true;
   $('apage').hidden = true;
   $('fpage').hidden = true;
+  $('mpage').hidden = true;
   $('tpage').hidden = false;
   document.title = (r.title || '—') + ' — база треков';
   drawTrack();
@@ -11905,6 +12239,7 @@ function showCatalog() {
   $('tpage').hidden = true;
   $('apage').hidden = true;
   $('fpage').hidden = true;
+  $('mpage').hidden = true;
   плашкаЭфира();
   $('page').hidden = false;
   $('footNote').hidden = false;
@@ -11912,9 +12247,13 @@ function showCatalog() {
   if (!CAT.length) return;            // ещё грузимся: витрину нарисует build()
   // Со страницы могли поставить свою оценку или сердечко — карточки
   // перерисовываем, но кусок и отбор оставляем те же.
-  if (T.fresh) { T.fresh = false; BACK_Y = 0; rail(); render(); }
+  if (T.fresh) { T.fresh = false; BACK_Y = кКаталогу(); rail(); render(); }
   else if (был) { rail(); render(true); }
+  // Пришли за каталогом (#base), а не назад со страницы трека, —
+  // приветствие пролистываем: каталог начинается под ним.
+  else if (location.hash === '#base') BACK_Y = кКаталогу();
   window.scrollTo(0, BACK_Y);
+  главная();
 }
 
 /* Уйти на витрину с готовым отбором — например, за всеми треками
@@ -12156,7 +12495,7 @@ function drawHero() {
   };
   paintFav();
   fav.addEventListener('click', () => {
-    FAV.has(r.key) ? FAV.delete(r.key) : FAV.add(r.key);
+    FAV.has(r.key) ? FAV.delete(r.key) : (FAV.add(r.key), учёт('fav'));
     save(); paintFav();
     toast(FAV.has(r.key) ? 'Добавлено в избранное' : 'Убрано из избранного');
   });
@@ -13093,7 +13432,7 @@ function drawTalk() {
     const text = поле.value.trim();
     if (!text) return;
     (TALK[r.key] = TALK[r.key] || []).push({ who: я, text, when: Date.now() });
-    saveTalk();
+    saveTalk(); учёт('talk');
     поле.value = '';
     рисовать();
   });
@@ -13292,8 +13631,8 @@ function drawMine() {
     b.addEventListener('click', () => {
       const cur = MY[r.key];
       const держим = cur && cur.t === t.key && t.mods.includes(cur.m);
-      MY[r.key] = { t: t.key, m: держим ? cur.m : '' };
-      save(); paint(); drawDist();
+      MY[r.key] = { t: t.key, m: держим ? cur.m : '', w: Date.now() };
+      save(); paint(); drawDist(); учёт('rate');
     });
     scale.append(b);
     return b;
@@ -13358,7 +13697,7 @@ function drawMine() {
     const text = поле.value.trim();
     if (!text) return;
     (TALK[r.key] = TALK[r.key] || []).push({ who: ктоЯ() || 'Я', text, when: Date.now() });
-    saveTalk();
+    saveTalk(); учёт('talk');
     поле.value = '';
     const лента = $('tTalk');
     if (лента._рисовать) лента._рисовать();
@@ -13754,6 +14093,7 @@ function showAdmin() {
   $('footNote').hidden = true;
   $('tpage').hidden = true;
   $('fpage').hidden = true;
+  $('mpage').hidden = true;
   $('apage').hidden = false;
   плашкаЭфира();
   document.title = 'Заявки на обложки — база треков';
@@ -14065,6 +14405,7 @@ function showFun() {
   $('footNote').hidden = true;
   $('tpage').hidden = true;
   $('apage').hidden = true;
+  $('mpage').hidden = true;
   $('fpage').hidden = false;
   document.title = 'Прикольчики — база треков';
   $('fBack').onclick = e => { e.preventDefault(); toCatalog(); };
@@ -14181,6 +14522,8 @@ function играОтвет(tier) {
   с.total++;
   if (верно) с.hits++;
   играСохранить(с);
+  учёт('guess');
+  if (верно) учёт('guessHit');
   играСчётРисовать();
   $('gNext').textContent = 'следующий';
 }
@@ -14191,6 +14534,571 @@ function играСчётРисовать() {
     ? 'угадано ' + с.hits + ' из ' + с.total + ' · ' + Math.round(с.hits / с.total * 100) + '%'
     : 'выбери ступень';
 }
+
+/* ============================================================
+   ГЛАВНАЯ И ЛИЧНЫЙ КАБИНЕТ
+   ------------------------------------------------------------
+   Главная — приветствие над каталогом по макету заказчика: крупный
+   поиск, над ним человечки, ниже три карточки «что тут делают».
+   Кабинет (#me) — своя статистика по своим оценкам.
+
+   Человечки — это те, кто сейчас на сайте. Общей базы у сайта нет,
+   и узнать про чужую вкладку нельзя, поэтому на полосе один
+   человечек — ты сам. Выдумывать прохожих нельзя: зрители заметят.
+   Появится общий онлайн — менять только онлайн().
+
+   Задания, ноты, уровни из макета кабинета пока не показываем —
+   заказчик сам просил: «механики подсчёта — это внутрянка, в начале
+   можно не показывать, но уже считать». Считаем: учёт() кладёт по
+   дням, сколько чего сделано, и с этим счётом потом можно выкатить
+   хоть задания дня, хоть ноты задним числом.
+   ============================================================ */
+
+const ПРОФ_LS = 'faryma-catalog-me';
+const УЧЁТ_LS = 'faryma-catalog-act';
+let ПРОФ = (() => { try { return JSON.parse(localStorage.getItem(ПРОФ_LS)) || {}; }
+                    catch { return {}; } })();
+const saveПроф = () => { try { localStorage.setItem(ПРОФ_LS, JSON.stringify(ПРОФ)); } catch {} };
+
+/* Цвета человечка — те же, что у команд в макете главной: фирменный
+   оранжевый, фиолетовый и красный, плюс три цвета шкалы. */
+const ЦВЕТА = ['#F2660F', '#A478EB', '#E95859', '#3ED9E8', '#4ADE80', '#C6DE4A'];
+
+const день = (t = Date.now()) => {
+  const d = new Date(t);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
+};
+/* Счёт по дням: { дни: { '2026-10-26': { visit, rate, fav, talk, guess, guessHit } } }.
+   Хранится только число — что именно оценено, и так лежит в MY. */
+function учёт(что) {
+  try {
+    const v = JSON.parse(localStorage.getItem(УЧЁТ_LS)) || {};
+    const дни = v.дни = v.дни || {};
+    const д = дни[день()] = дни[день()] || {};
+    д[что] = (д[что] || 0) + 1;
+    localStorage.setItem(УЧЁТ_LS, JSON.stringify(v));
+  } catch {}
+}
+
+/* С какого времени человек здесь. Раньше кабинета этого не помнили —
+   берём самое раннее из того, что у него уже есть: оценку со временем
+   или комментарий. Ни того ни другого — значит, с сегодня. */
+if (!ПРОФ.с) {
+  const было = [Date.now()];
+  Object.values(MY).forEach(v => { if (v.w) было.push(v.w); });
+  Object.values(TALK).forEach(л => (л || []).forEach(м => { if (м.when) было.push(м.when); }));
+  ПРОФ.с = Math.min(...было);
+  saveПроф();
+}
+учёт('visit');
+
+/* Кто сейчас на сайте. Пока — только ты: см. шапку раздела. */
+const онлайн = () => [{ ник: ПРОФ.ник || 'это ты', цвет: ПРОФ.цвет || ЦВЕТА[0], я: true }];
+
+/* Первый заход или бывалый. Входа на сайте нет, поэтому «бывалый» —
+   тот, кто уже что-то здесь сделал: оценил, лайкнул, назвался. */
+const бывалый = () => !!(Object.keys(MY).length || FAV.size || ПРОФ.ник);
+
+const буквы = s => {
+  const v = String(s || '').trim().split(/\s+/).filter(Boolean);
+  if (!v.length) return '';
+  return (v.length > 1 ? v[0][0] + v[1][0] : v[0].slice(0, 2)).toUpperCase();
+};
+const МЕСЯЦА = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля',
+                'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const датаКор = t => { const d = new Date(t);
+  return String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') +
+         '.' + String(d.getFullYear()).slice(2); };
+
+/* Каталог начинается под приветствием: сюда прокручиваем, когда
+   пришли за ним самим, а не за главной. */
+function кКаталогу() {
+  const h = $('home');
+  if (!h || h.hidden || $('page').hidden) return 0;
+  return Math.max(0, h.getBoundingClientRect().bottom + window.scrollY -
+                     document.querySelector('.tb').offsetHeight + 6);
+}
+
+/* Отбор с главной: если витрина уже на экране, адрес не меняется и
+   hashchange не придёт — перерисовываем сами. */
+function вКаталог(setup) {
+  if (!$('page').hidden && (location.hash === '' || location.hash === '#base')) {
+    setup(); rail(); render();
+    window.scrollTo({ top: кКаталогу(), behavior: 'smooth' });
+  } else toCatalog(setup);
+}
+
+const ГЛ = { пример: '', подсказки: [], выбор: -1 };
+
+/* Жанры, которых в архиве хватает на отбор: мелочь вроде одного
+   «шансона» в случайный жанр не годится. */
+function жанрыАрхива() {
+  const n = new Map();
+  CAT.forEach(r => { if (!r.mine) r.genres.forEach(g => n.set(g, (n.get(g) || 0) + 1)); });
+  return [...n].filter(([, c]) => c >= MIN_N.genre).sort((a, b) => b[1] - a[1]).map(([g]) => g);
+}
+
+function главная() {
+  const tb = document.querySelector('.tb');
+  document.body.classList.toggle('home-member', бывалый());
+  ава();
+  if (!CAT.length) return;
+  const архив = CAT.filter(r => !r.mine);
+  $('homeLead').textContent = число(архив.length) + ' ' +
+    plural(архив.length, 'трек', 'трека', 'треков') + ' с разносами в одном месте! ' +
+    'Оценивай любимое, открывай незнакомое и сравнивай свой вкус со вкусом композитора!';
+
+  const полоса = онлайн().map((ч, i) =>
+    '<a class="walker" href="#me" style="--c:' + esc(ч.цвет) + ';--d0:-' + (i * 7) + 's" ' +
+      'data-tip="' + (ч.я ? 'Это ты. Открыть личный кабинет' : esc(ч.ник)) + '">' +
+      '<span class="nick">' + esc(ч.ник) + '</span>' +
+      '<span class="spr"><i class="hd0"></i><i class="bd0"></i><i class="lg l"></i><i class="lg r"></i></span></a>').join('');
+  if ($('runway').innerHTML !== полоса) $('runway').innerHTML = полоса;
+  const n = онлайн().length;
+  $('hOnline').innerHTML = 'на сайте сейчас: <a href="#me" data-tip="Человечки над поиском — кто сейчас на сайте. ' +
+    'Общего онлайна у сайта пока нет, поэтому видно только тебя.">' +
+    (n === 1 ? 'ты' : число(n) + ' ' + plural(n, 'человек', 'человека', 'человек')) + '</a>';
+
+  const жанры = жанрыАрхива();
+  $('hQuick').innerHTML = '<span>Например:</span>' +
+    ['Ado', 'Linkin Park'].map(q => '<button type="button" data-q="' + esc(q) + '">' + esc(q) + '</button>').join('') +
+    (жанры.includes('метал') ? '<button type="button" data-g="метал">метал</button>' : '') +
+    '<button type="button" data-luck>случайный трек ↗</button>';
+
+  // Пример для первой карточки выбираем один раз: перерисовка, когда
+  // доехала свежая таблица, не должна подменять трек под глазами.
+  let пример = CAT.find(r => r.key === ГЛ.пример);
+  if (!пример) {
+    const пул = архив.filter(r => r.rate && r.artist && coverOf(r));
+    пример = пул[Math.floor(Math.random() * пул.length)] || архив[0];
+    ГЛ.пример = пример ? пример.key : '';
+  }
+  const мои = new Set(мойСписок().flatMap(x => x.r.genres));
+  const пробовал = жанры.filter(g => мои.has(g)).length;
+  const доля = жанры.length ? Math.round(пробовал / жанры.length * 100) : 0;
+  const ступени = TIERS.map(t => '<i style="--tc:' + TCOLOR[t.key] + '"' +
+    (пример && пример.rate && пример.rate.tier === t.key ? ' class="on"' : '') + '></i>').join('');
+  $('hFeats').innerHTML =
+    '<article class="feat"><div class="feat-top"><span class="feat-i">01 / СВОЙ ВКУС</span>' +
+      '<span class="feat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3 15 9l6 .9-4.4 4.3 1 6.2L12 17.4 6.4 20.4l1-6.2L3 9.9 9 9Z"/></svg></span></div>' +
+      '<h2>Ставь свои оценки</h2><p>Шесть ступеней — от «гениально» до «кринж-контента». У каждого трека есть вердикт композитора и место для твоего.</p>' +
+      (пример ? '<div class="feat-live"><a class="mini" href="' + trackHref(пример) + '"><span class="th">' + covHtml(пример) + '</span>' +
+        '<span class="tx"><b>' + esc(пример.title) + '</b><small>' + esc(пример.artist) + '</small></span>' +
+        '<span class="pips" data-tip="Белым обведено, что поставил композитор">' + ступени + '</span></a></div>' +
+        '<a class="feat-go" href="' + trackHref(пример) + '">Попробовать оценить ↗</a>' : '') +
+    '</article>' +
+    '<article class="feat"><div class="feat-top"><span class="feat-i">02 / ИССЛЕДОВАНИЕ</span>' +
+      '<span class="feat-ic v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-5 2 2-5z"/></svg></span></div>' +
+      '<h2>Открывай новые жанры</h2><p>' + число(жанры.length) + ' ' + plural(жанры.length, 'жанр', 'жанра', 'жанров') +
+        ' в архиве. Выбирай незнакомый и смотри, что композитор о нём думает.</p>' +
+      '<div class="feat-live"><div class="cap"><span>Ты уже оценивал</span><b>' + пробовал + ' / ' + жанры.length + '</b></div>' +
+        '<div class="gbars">' + жанры.slice(0, 10).map(g => '<i' + (мои.has(g) ? ' class="on"' : '') + '></i>').join('') + '</div>' +
+        '<div class="bar"><span style="width:' + доля + '%"></span></div></div>' +
+      '<button type="button" class="feat-go" data-genre-luck>Случайный жанр ↗</button>' +
+    '</article>' +
+    '<article class="feat"><div class="feat-top"><span class="feat-i">03 / РАЗНОСЫ НА СТРИМАХ</span>' +
+      '<span class="feat-ic r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg></span></div>' +
+      '<h2>Смотри разнос композитора</h2><p>Запись эфира стоит на минуте разбора, рядом — оригинал трека. Слушай, что он сказал, и решай, согласен ли.</p>' +
+      '<div class="feat-live prev"><span class="prev-play"><svg viewBox="0 0 24 24"><path d="M8 5.5 18 12 8 18.5Z" fill="currentColor"/></svg></span>' +
+        '<span class="prev-tx"><b>Реакция и музыкальный разбор</b><small>Вердикт композитора и обсуждение с чатом</small></span>' +
+        '<span class="prev-chat"><i></i><i></i><i></i></span></div>' +
+      '<button type="button" class="feat-go" data-roast-luck>Случайный разнос ↗</button>' +
+    '</article>';
+  шить($('hFeats'));
+  tb.classList.toggle('hero-on', ГЛ.наВиду && !$('page').hidden);
+}
+
+/* Превью в подсказках и списках. Не доехала картинка — убираем её,
+   как на карточке: под ней цветная заглушка с буквами. */
+function шить(box) {
+  box.querySelectorAll('img').forEach(img => {
+    img.addEventListener('error', () => img.remove());
+    if (img.dataset.sp) spCover(img, img.dataset.sp);
+  });
+}
+
+/* Шапка над витриной та же, что везде, — у неё только ник вместо совы. */
+function ава() {
+  const б = буквы(ПРОФ.ник);
+  const a = $('ava');
+  a.classList.toggle('me', !!б);
+  a.textContent = б || '🦉';
+}
+
+function поискСГлавной(q) {
+  q = q.trim();
+  скрытьПодсказки();
+  вКаталог(() => { $('q').value = q; F.q = q.toLowerCase(); });
+}
+
+function подсказки() {
+  const q = $('hq').value.trim();
+  const w = слова(q);
+  if (!w.length) return скрытьПодсказки();
+  ГЛ.подсказки = CAT.filter(r => w.every(t => совпало(r, t, r.слова))).slice(0, 5);
+  ГЛ.выбор = -1;
+  const box = $('hSuggest');
+  box.innerHTML = '<div class="sg-t">' + (ГЛ.подсказки.length ? 'Совпадения в каталоге' : 'Ничего не нашлось по началу слова') + '</div>' +
+    ГЛ.подсказки.map(r => '<a class="sg" href="' + trackHref(r) + '"><span class="th">' + covHtml(r) + '</span>' +
+      '<span class="tx"><b>' + esc(r.title) + '</b><small>' + esc(r.artist) + '</small></span>' +
+      '<span class="rt" style="--tc:' + tColor(r.rate) + '">' + esc(r.rate ? r.rate.label : '') + '</span></a>').join('') +
+    '<button type="button" class="sg-all">Найти «' + esc(q) + '» в каталоге ↓</button>';
+  шить(box);
+  box.hidden = false;
+  $('hq').setAttribute('aria-expanded', 'true');
+}
+function скрытьПодсказки() {
+  $('hSuggest').hidden = true;
+  $('hq').setAttribute('aria-expanded', 'false');
+  ГЛ.выбор = -1;
+}
+
+function главнаяПульт() {
+  const hq = $('hq');
+  let timer;
+  hq.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(подсказки, 120); });
+  hq.addEventListener('keydown', e => {
+    const box = $('hSuggest');
+    if (e.key === 'Escape') return скрытьПодсказки();
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !box.hidden) {
+      e.preventDefault();
+      ГЛ.выбор = Math.max(-1, Math.min(ГЛ.подсказки.length - 1, ГЛ.выбор + (e.key === 'ArrowDown' ? 1 : -1)));
+      box.querySelectorAll('.sg').forEach((a, i) => a.classList.toggle('sel', i === ГЛ.выбор));
+    } else if (e.key === 'Enter' && ГЛ.выбор >= 0) {
+      e.preventDefault();
+      const r = ГЛ.подсказки[ГЛ.выбор];
+      скрытьПодсказки();
+      openTrack(r);
+    }
+  });
+  $('hForm').addEventListener('submit', e => { e.preventDefault(); поискСГлавной(hq.value); });
+  $('hSuggest').addEventListener('click', e => {
+    if (e.target.closest('.sg-all')) поискСГлавной(hq.value);
+    else if (e.target.closest('.sg')) скрытьПодсказки();
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('.home-search')) скрытьПодсказки(); });
+
+  $('hQuick').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.q) { hq.value = b.dataset.q; поискСГлавной(b.dataset.q); }
+    else if (b.dataset.g) поЖанру(b.dataset.g);
+    else if (b.hasAttribute('data-luck')) {
+      const пул = CAT.filter(r => !r.mine);
+      if (пул.length) openTrack(пул[Math.floor(Math.random() * пул.length)]);
+    }
+  });
+  $('hFeats').addEventListener('click', e => {
+    if (e.target.closest('[data-genre-luck]')) {
+      const жанры = жанрыАрхива();
+      const мои = new Set(мойСписок().flatMap(x => x.r.genres));
+      const новые = жанры.filter(g => !мои.has(g));
+      const из = новые.length ? новые : жанры;
+      if (из.length) поЖанру(из[Math.floor(Math.random() * из.length)]);
+    } else if (e.target.closest('[data-roast-luck]')) {
+      const пул = CAT.filter(r => r.vod && !r.mine);
+      if (пул.length) openTrack(пул[Math.floor(Math.random() * пул.length)]);
+    }
+  });
+
+  $('navHome').addEventListener('click', e => {
+    if (location.hash !== '' && location.hash !== '#') return;
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('navBase').addEventListener('click', e => {
+    if (location.hash !== '#base') return;
+    e.preventDefault();
+    window.scrollTo({ top: кКаталогу(), behavior: 'smooth' });
+  });
+
+  new IntersectionObserver(es => {
+    ГЛ.наВиду = es[0].isIntersecting;
+    document.querySelector('.tb').classList.toggle('hero-on', ГЛ.наВиду && !$('page').hidden);
+  }, { rootMargin: '-70px 0px 0px 0px' }).observe($('hForm'));
+}
+
+function поЖанру(g) {
+  вКаталог(() => {
+    reset_soft();
+    F.q = ''; $('q').value = '';
+    F.genre.set(g, 1);
+  });
+  toast('Жанр «' + g + '»');
+}
+
+/* ---------- личный кабинет ---------- */
+
+/* Свои оценки рядом с треками. Оценка трека, которого в таблице
+   больше нет, в счёт не идёт: сравнить её не с чем. */
+let МОИ_КЭШ = { cat: null, my: '', list: [] };
+function мойСписок() {
+  const сл = JSON.stringify(MY);
+  if (МОИ_КЭШ.cat === CAT && МОИ_КЭШ.my === сл) return МОИ_КЭШ.list;
+  const по = new Map(CAT.map(r => [r.key, r]));
+  const list = Object.entries(MY).map(([k, v]) => ({ r: по.get(k), v }))
+    .filter(x => x.r && TIERS.some(t => t.key === x.v.t));
+  МОИ_КЭШ = { cat: CAT, my: сл, list };
+  return list;
+}
+const баллМой = v => {
+  const t = TIERS.find(x => x.key === v.t);
+  const m = MODS.find(x => x[0] === v.m);
+  return t ? t.base + (m ? m[1] : 0) : null;
+};
+/* Совпало — значит его ступень хоть в одном из разносов та же. Отбор
+   и «Угадай оценку» тоже смотрят на все разносы трека. */
+const совпалС = x => разы(x.r).some(y => y.rate && y.rate.tier === x.v.t);
+const сравнимые = list => list.filter(x => x.r.rate);
+
+const МЕНЮ = [['', 'обзор'], ['ratings', 'мои оценки'], ['settings', 'настройки']];
+
+function showMe() {
+  уходИзИгры();
+  фон('');
+  if (T.r) уходСТрека();
+  T.r = null;
+  const тут = !$('mpage').hidden;
+  $('page').hidden = true;
+  $('footNote').hidden = true;
+  $('tpage').hidden = true;
+  $('apage').hidden = true;
+  $('fpage').hidden = true;
+  $('mpage').hidden = false;
+  плашкаЭфира();
+  document.title = 'Личный кабинет — база треков';
+  drawMe();
+  if (!тут) window.scrollTo(0, 0);
+}
+
+function drawMe() {
+  const вкладка = (location.hash.match(/^#me\/(\w+)/) || [])[1] || '';
+  const list = мойСписок();
+  ава();
+
+  const ник = ПРОФ.ник || '';
+  const с = new Date(ПРОФ.с || Date.now());
+  $('meHero').innerHTML =
+    '<div class="me-ava">' + esc(буквы(ник) || '🦉') + '</div>' +
+    '<div class="me-id"><div class="me-k">слушатель архива</div>' +
+      '<h2 class="me-nm' + (ник ? '' : ' none') + '">' + esc(ник || 'без ника') + '</h2>' +
+      '<div class="me-bio">' + esc(ПРОФ.о || (ник ? '' : 'Ник и пару слов о себе можно вписать в настройках.')) + '</div>' +
+      '<div class="me-pills"><span class="me-pill o">' + число(list.length) + ' ' +
+        plural(list.length, 'оценка', 'оценки', 'оценок') + '</span>' +
+        '<span class="me-pill" data-tip="Входа на сайте пока нет: всё твоё лежит в этом браузере">здесь с ' +
+        МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span></div></div>' +
+    '<a class="me-edit" href="#me/settings" data-tip="Настроить профиль" aria-label="Настроить профиль">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></a>';
+
+  $('meTabs').innerHTML = МЕНЮ.map(([k, name]) =>
+    '<a class="tab" role="tab" href="#me' + (k ? '/' + k : '') + '" aria-selected="' + (k === вкладка) + '"' +
+    ' style="text-decoration:none">' + name + '</a>').join('');
+
+  const box = $('meTab');
+  if (вкладка === 'ratings') return meRatings(box, list);
+  if (вкладка === 'settings') return meSettings(box);
+  meOverview(box, list);
+}
+
+function строкаМоя(x) {
+  const r = x.r, v = x.v;
+  return '<a class="trow" href="' + trackHref(r) + '"><span class="th">' + covHtml(r) + '</span>' +
+    '<span style="min-width:0"><span class="ta">' + esc(r.artist || '—') + '</span>' +
+      '<span class="tn">' + esc(r.title || '—') + '</span></span>' +
+    '<span class="gr" style="--tc:' + TCOLOR[v.t] + ';--tc2:' + tColor(r.rate) + '">' +
+      esc(v.t + modLabel(v.m)) +
+      '<small>композитор: <i>' + esc(r.rate ? r.rate.label : '—') + '</i></small></span>' +
+    '<span class="dt">' + (v.w ? датаКор(v.w) : '') + '</span></a>';
+}
+
+/* Достижения — только из того, что на самом деле сделано. Ноты и
+   уровни макета сюда не входят: см. шапку раздела. */
+const ЗНАЧКИ = {
+  star: '<path d="M12 3 15 9l6 .9-4.4 4.3 1 6.2L12 17.4 6.4 20.4l1-6.2L3 9.9 9 9Z"/>',
+  head: '<path d="M3 14v-3a9 9 0 0 1 18 0v3"/><rect x="2" y="13" width="5" height="8" rx="2"/><rect x="17" y="13" width="5" height="8" rx="2"/>',
+  comp: '<circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-5 2 2-5z"/>',
+  wave: '<path d="M2 12c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/>',
+  aim:  '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  talk: '<path d="M20 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 20l1-4.3A8.5 8.5 0 1 1 20 11.5Z"/>'
+};
+function достижения(list) {
+  const жанры = new Set(list.flatMap(x => x.r.genres)).size;
+  const совпало = сравнимые(list).filter(совпалС).length;
+  const игра = играСчёт();
+  const слов = Object.values(TALK).reduce((n, л) => n + (л || []).length, 0);
+  return [
+    ['star', 'первая оценка', 'одна оценка', list.length, 1],
+    ['head', 'первые 100', '100 оценок', list.length, 100],
+    ['comp', 'исследователь', '10 жанров', жанры, 10],
+    ['wave', 'на одной волне', '25 совпадений', совпало, 25],
+    ['aim', 'угадайка', '10 угаданных', игра.hits, 10],
+    ['talk', 'голос', '10 комментариев', слов, 10]
+  ];
+}
+
+function meOverview(box, list) {
+  const архив = CAT.filter(r => !r.mine).length;
+  const ср = сравнимые(list);
+  const совп = ср.filter(совпалС);
+  const жанр = new Map();
+  list.forEach(x => x.r.genres.forEach(g => жанр.set(g, (жанр.get(g) || 0) + 1)));
+  const жанры = [...жанр].sort((a, b) => b[1] - a[1]);
+  const упоминаний = жанры.reduce((n, [, c]) => n + c, 0);
+
+  const metrics = '<div class="me-metrics">' +
+    '<div class="me-m"><div class="l">оценено треков</div><div class="v">' + число(list.length) + '</div>' +
+      '<div class="s">из ' + число(архив) + ' в архиве</div></div>' +
+    '<div class="me-m"><div class="l">совпало с композитором</div><div class="v">' +
+      (ср.length ? Math.round(совп.length / ср.length * 100) + '<small>%</small>' : '—') + '</div>' +
+      '<div class="s">' + (ср.length ? 'по ступени · ' + число(совп.length) + ' из ' + число(ср.length) : 'нужна хоть одна оценка') + '</div></div>' +
+    '<div class="me-m"><div class="l">любимый жанр</div><div class="v w">' + esc(жанры.length ? жанры[0][0] : '—') + '</div>' +
+      '<div class="s">чаще всего среди оценённых</div></div></div>';
+
+  let taste;
+  if (!list.length) {
+    taste = '<section class="pan me-pan"><h2>мой музыкальный вкус</h2><div class="me-empty">Оценок пока нет. ' +
+      'Наведи на обложку в <a href="#base">каталоге</a> — шкала там же, — и здесь появится твой вкус рядом со вкусом композитора.</div></section>';
+  } else {
+    const по = TIERS.map(t => list.filter(x => x.v.t === t.key).length);
+    const макс = Math.max(...по, 1);
+    const топ = жанры.slice(0, 5);
+    const прочее = упоминаний - топ.reduce((n, [, c]) => n + c, 0);
+    const пр = c => Math.max(1, Math.round(c / упоминаний * 100));
+    // На какой ступени чаще всего совпадаете — и в какую сторону расходитесь.
+    const где = TIERS.map(t => [t.key, совп.filter(x => x.v.t === t.key).length]).sort((a, b) => b[1] - a[1])[0];
+    const разница = ср.length ? ср.reduce((s, x) => s + баллМой(x.v) - x.r.rate.score, 0) / ср.length / 2 : 0;
+    const сторона = Math.abs(разница) < .15 ? 'В среднем оцениваешь вровень с ним.'
+      : 'В среднем ты ' + (разница > 0 ? 'мягче' : 'строже') + ' на ' +
+        Math.abs(разница).toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + ' ступени.';
+    taste = '<section class="pan me-pan"><h2>мой музыкальный вкус <small>по ' + число(list.length) + ' ' +
+        plural(list.length, 'оценке', 'оценкам', 'оценкам') + '</small></h2>' +
+      '<div class="me-taste"><div><div class="me-lab">как я оцениваю</div>' +
+        TIERS.map((t, i) => '<div class="rbar" style="--tc:' + TCOLOR[t.key] + '"><span class="n">' + t.key + '</span>' +
+          '<span class="tr"><span style="width:' + (по[i] / макс * 100).toFixed(1) + '%"></span></span>' +
+          '<span class="c">' + по[i] + '</span></div>').join('') + '</div>' +
+        '<div><div class="me-lab">что оцениваю чаще</div><div class="gchips">' +
+          (топ.length ? топ.map(([g, c]) => '<button type="button" class="gchip" data-g="' + esc(g) + '">' + esc(g) + ' <b>' + пр(c) + '%</b></button>').join('') +
+            (прочее > 0 ? '<span class="gchip">другое <b>' + пр(прочее) + '%</b></span>' : '')
+            : '<span class="me-cnt">у оценённых треков жанр не указан</span>') +
+        '</div></div></div>' +
+      (ср.length ? '<div class="me-note"><span>' + (где && где[1]
+          ? 'С композитором чаще всего совпадаете на <b>«' + esc(где[0]) + '»</b>. '
+          : 'Пока ни разу не совпали по ступени. ') + сторона + '</span></div>' : '') +
+      '</section>';
+  }
+
+  const свежие = list.slice().sort((a, b) => (b.v.w || 0) - (a.v.w || 0)).slice(0, 5);
+  const recent = list.length ? '<section class="pan me-pan"><h2>последние оценки ' +
+      '<a class="lnk" href="#me/ratings" style="margin:0">смотреть все →</a></h2>' +
+      '<div>' + свежие.map(строкаМоя).join('') + '</div></section>' : '';
+
+  const зн = достижения(list);
+  const получено = зн.filter(x => x[3] >= x[4]).length;
+  const badges = '<section class="pan me-pan"><h2>достижения <small>' + получено + ' из ' + зн.length + '</small></h2>' +
+    '<div class="badges">' + зн.map(([ic, name, how, n, need]) => {
+      const есть = n >= need;
+      return '<div class="bdg' + (есть ? '' : ' off') + '"><div class="bv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round">' +
+        ЗНАЧКИ[ic] + '</svg></div><b>' + name + '</b><small>' + (есть ? how : Math.min(n, need) + ' / ' + need) + '</small>' +
+        (есть ? '' : '<div class="me-bar"><span style="width:' + Math.min(100, n / need * 100) + '%"></span></div>') + '</div>';
+    }).join('') + '</div></section>';
+
+  const игра = играСчёт();
+  const слов = Object.values(TALK).reduce((n, л) => n + (л || []).length, 0);
+  const своё = '<section class="pan me-pan"><h2>моё на сайте</h2><div>' +
+    [['в избранном', FAV.size, FAV.size ? 'fav' : ''],
+     ['комментариев', слов, ''],
+     ['угадано оценок', игра.total ? игра.hits + ' из ' + игра.total : 0, ''],
+     ['предложено треков', MINE.length, '']].map(([k, v, go]) =>
+      '<div class="kv"><span>' + k + '</span>' +
+        (go ? '<button type="button" class="lnk" data-has="' + go + '">' + v + ' →</button>'
+            : '<b>' + v + '</b>') + '</div>').join('') +
+    '</div></section>';
+
+  box.innerHTML = '<div class="me-cols"><div class="me-main">' + metrics + taste + recent + '</div>' +
+    '<aside class="me-side">' + badges + своё + '</aside></div>';
+  шить(box);
+  box.querySelectorAll('.gchip[data-g]').forEach(b => b.addEventListener('click', () => поЖанру(b.dataset.g)));
+  box.querySelectorAll('[data-has]').forEach(b => b.addEventListener('click', () =>
+    toCatalog(() => { reset_soft(); F.q = ''; $('q').value = ''; F.has.set(b.dataset.has, 1); })));
+}
+
+function meRatings(box, list) {
+  if (!list.length) {
+    box.innerHTML = '<section class="pan me-pan"><div class="me-empty">Оценок пока нет. Их ставят в ' +
+      '<a href="#base">каталоге</a>, на обложке, или на странице трека.</div></section>';
+    return;
+  }
+  box.innerHTML = '<div class="me-list"><section class="pan me-pan"><h2>все мои оценки</h2>' +
+    '<div class="me-tools"><input id="meQ" type="search" placeholder="Найти трек или исполнителя" aria-label="Найти трек или исполнителя">' +
+    '<select id="meT" aria-label="Моя оценка"><option value="">все оценки</option>' +
+      TIERS.map(t => '<option value="' + t.key + '">' + t.key + '</option>').join('') + '</select>' +
+    '<select id="meC" aria-label="Сравнение с композитором"><option value="">с композитором — любое</option>' +
+      '<option value="eq">совпало</option><option value="up">я выше</option><option value="down">я ниже</option></select></div>' +
+    '<div id="meRows"></div><div class="me-cnt" id="meCnt"></div></section>' +
+    '<aside class="pan me-pan me-tip"><h2>о моих оценках</h2>' +
+      '<p>«Совпало» — твоя ступень та же, что у композитора хоть в одном из разносов трека. «Выше» и «ниже» сравнивают со свежим разносом, вместе с плюсами и минусами.</p>' +
+      '<p>Оценки живут в этом браузере: входа на сайте пока нет, и с другого устройства их не видно.</p>' +
+      '<a class="btn ghost" href="#base" style="margin-top:14px;text-decoration:none">в каталог →</a></aside></div>';
+  const рисовать = () => {
+    const w = слова($('meQ').value);
+    const t = $('meT').value, c = $('meC').value;
+    const out = list.filter(x => {
+      if (t && x.v.t !== t) return false;
+      if (c) {
+        if (!x.r.rate) return false;
+        if (c === 'eq' && !совпалС(x)) return false;
+        const d = баллМой(x.v) - x.r.rate.score;
+        if (c === 'up' && !(d > 0)) return false;
+        if (c === 'down' && !(d < 0)) return false;
+      }
+      return !w.length || w.every(q => совпало(x.r, q, x.r.слова));
+    }).sort((a, b) => (b.v.w || 0) - (a.v.w || 0) || (a.r.title || '').localeCompare(b.r.title || '', 'ru'));
+    const показ = out.slice(0, 300);
+    $('meRows').innerHTML = показ.length ? показ.map(строкаМоя).join('')
+      : '<div class="me-empty">По такому отбору ничего не нашлось.</div>';
+    шить($('meRows'));
+    $('meCnt').textContent = 'Показано ' + число(показ.length) + ' из ' + число(out.length) +
+      (out.length !== list.length ? ' · всего оценок ' + число(list.length) : '');
+  };
+  let timer;
+  $('meQ').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(рисовать, 120); });
+  $('meT').addEventListener('change', рисовать);
+  $('meC').addEventListener('change', рисовать);
+  рисовать();
+}
+
+function meSettings(box) {
+  let цвет = ПРОФ.цвет || ЦВЕТА[0];
+  box.innerHTML = '<div class="me-list"><section class="pan me-pan"><h2>настройки профиля</h2>' +
+    '<form class="me-form" id="meForm">' +
+      '<label>ник<input id="meNick" maxlength="28" autocomplete="nickname" value="' + esc(ПРОФ.ник || '') + '"></label>' +
+      '<label>немного о себе<input id="meBio" maxlength="90" value="' + esc(ПРОФ.о || '') + '"></label>' +
+      '<div><div style="font-size:12.5px;color:#c9c9c9;margin-bottom:6px">цвет человечка на главной</div>' +
+        '<div class="me-sw" id="meSw">' + ЦВЕТА.map(c => '<button type="button" style="--c:' + c + '" data-c="' + c + '"' +
+          ' aria-label="Цвет ' + c + '" aria-pressed="' + (c === цвет) + '"></button>').join('') + '</div></div>' +
+      '<button type="submit" class="btn">сохранить</button></form></section>' +
+    '<aside class="pan me-pan me-tip"><h2>где это хранится</h2>' +
+      '<p>Входа на сайте пока нет. Ник, оценки и комментарии лежат в этом браузере — другие их не видят, а с телефона будет свой кабинет.</p>' +
+      '<p>Когда у сайта появятся аккаунты, сюда же переедет и то, что уже накоплено.</p></aside></div>';
+  $('meSw').addEventListener('click', e => {
+    const b = e.target.closest('[data-c]'); if (!b) return;
+    цвет = b.dataset.c;
+    $('meSw').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  });
+  $('meForm').addEventListener('submit', e => {
+    e.preventDefault();
+    ПРОФ.ник = $('meNick').value.trim().slice(0, 28);
+    ПРОФ.о = $('meBio').value.trim().slice(0, 90);
+    ПРОФ.цвет = цвет;
+    saveПроф();
+    toast('Профиль сохранён');
+    главная();
+    location.hash = '#me';
+  });
+}
+
+главнаяПульт();
+главная();
 
 window.addEventListener('hashchange', route);
 
