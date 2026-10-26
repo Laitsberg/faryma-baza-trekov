@@ -1219,6 +1219,53 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
 .cl-act input:focus{outline:none;border-color:var(--brand)}
 .cl-act .btn{min-height:37px}
 
+/* ---------- профиль: ответы, уведомления, активность, приватность ---------- */
+.ava.dot{outline:2px solid var(--brand);outline-offset:2px}
+.msg.reply{margin-left:45px;padding-top:10px}
+.msg .who{color:inherit;text-decoration:none}
+.msg .who:hover b{color:var(--brand-hi)}
+.msg .re{display:inline-block;margin-top:5px;padding:0;font-size:12px;color:var(--faint)}
+.msg .re:hover{color:var(--brand-hi)}
+.re-form{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px 45px}
+.re-form textarea{flex:1 1 100%;min-height:60px;padding:9px 12px;border-radius:8px;border:1px solid var(--line);
+  background:var(--bg);color:var(--ink);font:inherit;font-size:13.5px;resize:vertical}
+.re-form textarea:focus{outline:none;border-color:var(--brand)}
+.re-form .btn{min-height:34px;padding:6px 13px;font-size:13px}
+.who-link{color:var(--brand-hi);text-decoration:none;border-bottom:1px solid rgba(255,148,36,.35)}
+.who-link:hover{border-color:var(--brand-hi)}
+.who-was{color:var(--faint);font-weight:400}
+.note-row{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:9px 0;
+  border-top:1px solid rgba(255,255,255,.065);color:inherit;text-decoration:none;font-size:13.5px}
+.note-row:first-child{border-top:0;padding-top:2px}
+.note-row:hover span{color:var(--brand-hi)}
+.note-row time{flex:none;font:500 11px var(--m);color:var(--faint)}
+.note-row.fresh span::before{content:'';display:inline-block;width:7px;height:7px;margin-right:8px;border-radius:50%;
+  background:var(--brand);vertical-align:1px}
+.cal{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:3px;max-width:620px}
+.cal i{aspect-ratio:1;border-radius:3px;background:#2f3033}
+.cal i.off{background:transparent}
+.cal i.l1{background:rgba(242,102,15,.3)}
+.cal i.l2{background:rgba(242,102,15,.5)}
+.cal i.l3{background:rgba(242,102,15,.75)}
+.cal i.l4{background:var(--brand)}
+.near{display:inline-flex;align-items:center;gap:9px}
+.near img{width:24px;height:24px;border-radius:50%;object-fit:cover}
+.tgl{display:flex;gap:11px;align-items:flex-start;padding:10px 0;cursor:pointer}
+.tgl input{margin-top:3px;width:17px;height:17px;accent-color:var(--brand);flex:none}
+.tgl b{display:block;font-size:13.5px;font-weight:600}
+.tgl small{display:block;color:var(--faint);font-size:12px;margin-top:2px}
+.danger{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px;
+  padding-top:14px;border-top:1px solid var(--line)}
+.danger b{display:block;font-size:13.5px;color:#ff9a9a}
+.danger small{display:block;color:var(--faint);font-size:12px;margin-top:2px}
+.btn.danger-btn{background:var(--like);color:#fff}
+.btn.danger-btn:hover{background:#ff7088}
+.btn.danger-btn:disabled{opacity:.4}
+.u-body{display:grid;gap:18px;margin-top:18px}
+@media(max-width:760px){
+  .msg.reply,.re-form{margin-left:22px}
+}
+
 /* ---------- личный кабинет ---------- */
 .me-hero{display:flex;align-items:center;gap:25px;padding:26px 28px;margin-top:14px}
 .me-ava{position:relative;width:89px;height:89px;flex:none;display:grid;place-items:center;
@@ -1512,6 +1559,17 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
 
 <!-- Личный кабинет (#me): своя статистика по своим оценкам. Всё
      считается из того, что лежит в этом браузере, — общей базы нет. -->
+<!-- Чужой профиль (#u=логин): только то, что зритель сам открыл. -->
+<div class="tpage" id="upage" hidden>
+ <div class="tp-top">
+  <nav class="crumbs" aria-label="Где я">
+   <a href="#base">база треков</a><span class="sep">›</span><b id="uCrumb">профиль</b>
+  </nav>
+ </div>
+ <section class="pan me-hero" id="uHero"></section>
+ <div id="uBody"></div>
+</div>
+
 <div class="tpage" id="mpage" hidden>
  <div class="tp-top">
   <nav class="crumbs" aria-label="Где я">
@@ -1538,6 +1596,25 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
   <div class="mact">
    <button type="button" class="btn ghost" data-close>Позже</button>
    <button type="button" class="tw-in" data-login></button>
+  </div>
+ </div>
+</div>
+
+<!-- Удаление аккаунта: слово «удалить» вписывается руками — случайным
+     щелчком такое не делается. -->
+<div class="modal" id="mDel" hidden>
+ <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="delTitle">
+  <button class="mx" data-close aria-label="Закрыть">✕</button>
+  <div class="mhd">
+   <div class="k" style="color:var(--like)">аккаунт</div>
+   <h2 id="delTitle">Удалить аккаунт?</h2>
+   <p>Из базы сайта сотрутся профиль, оценки, сердечки, комментарии и заявки на треки. Вернуть их будет нельзя. Войти через Twitch потом можно заново — с чистого листа.</p>
+  </div>
+  <div class="field"><label for="delWord">Чтобы подтвердить, впиши «удалить»</label><input id="delWord" autocomplete="off"></div>
+  <label class="tgl" style="margin-top:12px"><input type="checkbox" id="delLocal" checked><span><b>стереть и то, что лежит в этом браузере</b><small>оценки, комментарии и ник, сохранённые здесь</small></span></label>
+  <div class="mact">
+   <button type="button" class="btn ghost" data-close>Отмена</button>
+   <button type="button" class="btn danger-btn" id="delGo" disabled>Удалить навсегда</button>
   </div>
  </div>
 </div>
@@ -12263,6 +12340,11 @@ function route() {
   if (location.hash === '#covers') return showAdmin();
   if (location.hash === '#fun') return showFun();
   if (/^#me(\/|$)/.test(location.hash)) return showMe();
+  if (location.hash.startsWith('#u=')) {
+    let login = location.hash.slice(3);
+    try { login = decodeURIComponent(login); } catch {}
+    return showUser(login);
+  }
   const m = location.hash.match(/^#t=([\s\S]+)$/);
   let r = null;
   if (m) {
@@ -12282,7 +12364,7 @@ function route() {
    треков; прикольчики и кабинет — свои. */
 function навигация() {
   const h = location.hash;
-  const где = h === '#fun' ? 'navFun' : /^#me(\/|$)/.test(h) ? '' :
+  const где = h === '#fun' ? 'navFun' : /^#me(\/|$)/.test(h) ? '' : h.startsWith('#u=') ? '-' :
               h === '' || h === '#' ? 'navHome' : 'navBase';
   ['navHome', 'navBase', 'navFun'].forEach(id => {
     if (id === где) $(id).setAttribute('aria-current', 'page');
@@ -12306,6 +12388,7 @@ function showTrack(r) {
   $('apage').hidden = true;
   $('fpage').hidden = true;
   $('mpage').hidden = true;
+  $('upage').hidden = true;
   $('tpage').hidden = false;
   document.title = (r.title || '—') + ' — база треков';
   drawTrack();
@@ -12322,6 +12405,7 @@ function showCatalog() {
   $('apage').hidden = true;
   $('fpage').hidden = true;
   $('mpage').hidden = true;
+  $('upage').hidden = true;
   плашкаЭфира();
   $('page').hidden = false;
   $('footNote').hidden = false;
@@ -12531,9 +12615,7 @@ function drawHero() {
           '<b>' + esc(r.rate ? r.rate.label : 'нет') + '</b>' +
           '<small>' + (r.rate ? r.rate.score.toFixed(1) + ' из 10' : 'ещё не разобран') +
             (разносы.length > 1 ? ' · эфир №' + r.streamNum : '') + '</small></div>' +
-        '<div class="sc nobody" data-tip="' + esc('Общих оценок пока нет: у сайта нет базы, и всё, что ставят ' +
-          'зрители, видно только им самим. Своя оценка — в панели «Твоя оценка».') + '">' +
-          '<span>оценка пользователей</span><b>пока нет</b><small>появится с общей базой</small></div>' +
+        '<div class="sc nobody"><span>оценка пользователей</span><b>…</b><small></small></div>' +
       '</div>' +
     '</div>';
   covWire(box);
@@ -13488,18 +13570,24 @@ function drawTalk() {
       лента.innerHTML = '<p class="talk-empty">Пока нет комментариев. Начни обсуждение!</p>';
       return;
     }
-    (ПОРЯДОК === 'new' ? [...список].reverse() : список).forEach(м => {
+    // Ответы — веткой под своим комментарием, всегда по порядку; сами
+    // комментарии — в выбранном порядке.
+    const корни = список.filter(м => !м.parent);
+    const ветки = new Map();
+    список.filter(м => м.parent).forEach(м => ветки.set(м.parent, (ветки.get(м.parent) || []).concat(м)));
+    const один = (м, ответ) => {
       const el = document.createElement('article');
-      el.className = 'msg';
+      el.className = 'msg' + (ответ ? ' reply' : '');
       const роль = РОЛИ[м.роль];
       el.innerHTML =
         '<span class="ini">' + (м.аватар ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(м.аватар) + '">'
                                          : esc((м.who || '?').trim()[0].toUpperCase())) + '</span>' +
-        '<div class="bd"><b>' + esc(м.who) + '</b>' +
+        '<div class="bd">' + (м.логин ? '<a class="who" href="#u=' + encodeURIComponent(м.логин) + '"><b>' + esc(м.who) + '</b></a>'
+                                       : '<b>' + esc(м.who) + '</b>') +
           (роль ? '<span class="role ' + м.роль + '">' + роль + '</span>' : '') +
           '<time>' + когда(м.when) + '</time>' +
           (м.локально && ОБЛ && ОБЛ.sb ? '<span class="only-me" data-tip="Этот комментарий лежит только в твоём браузере">видишь только ты</span>' : '') +
-          '<p></p></div>' +
+          '<p></p>' + (м.id && можноОтвечать() ? '<button class="re" type="button">ответить</button>' : '') + '</div>' +
         (м.можноБан ? '<button class="ban" type="button" data-tip="Закрыть автору комментарии">⊘</button>' : '') +
         (м.можноУдалить ? '<button class="del" type="button" aria-label="Удалить">✕</button>' : '');
       el.querySelector('p').textContent = м.text;
@@ -13515,7 +13603,13 @@ function drawTalk() {
       });
       const ban = el.querySelector('.ban');
       if (ban) ban.addEventListener('click', () => закрытьКомментарии(м.user_id, м.who));
-      лента.append(el);
+      const re = el.querySelector('.re');
+      if (re) re.addEventListener('click', () => формаОтвета(el, r, м.parent || м.id, м.who));
+      return el;
+    };
+    (ПОРЯДОК === 'new' ? [...корни].reverse() : корни).forEach(м => {
+      лента.append(один(м, false));
+      (ветки.get(м.id) || []).forEach(о => лента.append(один(о, true)));
     });
   };
 
@@ -13540,7 +13634,7 @@ function лентаКомментариев(key) {
   const штат = ['moder', 'admin', 'owner'].includes(я);
   const общие = ((ОБЛ && ОБЛ.комм[key]) || []).map(c => {
     const п = c.profiles || {};
-    return { id: c.id, user_id: c.user_id, who: п.name || п.login || 'зритель', аватар: п.avatar_url || '',
+    return { id: c.id, parent: c.parent_id || null, user_id: c.user_id, who: п.name || п.login || 'зритель', логин: п.login || '', аватар: п.avatar_url || '',
              роль: п.role, when: Date.parse(c.created_at), text: c.body,
              можноУдалить: c.user_id === мой || штат,
              можноБан: штат && c.user_id !== мой && (!п.role || п.role === 'user') };
@@ -13568,9 +13662,32 @@ function подписьФормы(форма) {
 }
 
 /* Написать: вошедший — в базу, гость или закрытый — в браузер. */
-async function опубликовать(r, text) {
+const можноОтвечать = () => вошёл() && !(ОБЛ.проф && ОБЛ.проф.banned);
+
+/* Поле ответа — прямо под комментарием. Ответ на ответ встаёт в ту же
+   ветку: сервер всё равно привяжет его к исходному комментарию. */
+function формаОтвета(el, r, корень, кому) {
+  const было = el.parentNode.querySelector('.re-form');
+  if (было) было.remove();
+  const f = document.createElement('form');
+  f.className = 're-form';
+  f.innerHTML = '<textarea maxlength="1500" aria-label="Ответ"></textarea>' +
+    '<button type="submit" class="btn">ответить</button><button type="button" class="btn ghost">отмена</button>';
+  f.querySelector('textarea').placeholder = 'Ответ для ' + кому;
+  el.after(f);
+  f.querySelector('textarea').focus();
+  f.querySelector('.ghost').addEventListener('click', () => f.remove());
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const text = f.querySelector('textarea').value.trim();
+    if (text && await опубликовать(r, text, корень)) f.remove();
+  });
+}
+
+async function опубликовать(r, text, корень) {
   if (вошёл() && !(ОБЛ.проф && ОБЛ.проф.banned)) {
-    const { error } = await ОБЛ.sb.from('comments').insert({ track_key: r.key, body: text });
+    const { error } = await ОБЛ.sb.from('comments').insert(Object.assign({ track_key: r.key, body: text },
+      корень ? { parent_id: корень } : {}));
     if (error) {
       toast(/too many/.test(error.message) ? 'Слишком часто — подожди пару минут'
           : /banned/.test(error.message) ? 'Тебе закрыли комментарии'
@@ -13637,7 +13754,7 @@ function tabInfo(box) {
   пара('жанр', esc(r.genres.join(' / ')));
   пара('тэги', esc(r.tags.join(', ')));
   пара('фича', esc(r.feat || ''));
-  пара('заказал', esc(r.user || ''));
+  пара('заказал', заказалHtml(r.user));
   пара('откуда', esc(r.origin || ''));
   пара('оценка композера', r.rate
     ? '<b style="--tc:' + tColor(r.rate) + '">' + esc(r.rate.label) + '</b> · ' + r.rate.score.toFixed(1) + ' из 10'
@@ -13928,7 +14045,7 @@ function drawFacts() {
 
   if (r.user) {
     const его = CAT.filter(x => x.user === r.user);
-    факты.push('Заказал <b>' + esc(r.user) + '</b>' + (его.length > 1
+    факты.push('Заказал <b>' + заказалHtml(r.user) + '</b>' + (его.length > 1
       ? ' — всего в архиве у него <b>' + число(его.length) + '</b> ' +
         plural(его.length, 'заявка', 'заявки', 'заявок') + '.'
       : ' — это его единственная заявка.'));
@@ -14005,7 +14122,8 @@ function drawFacts() {
    в его браузере. Поэтому честно — голос здесь один, твой, и так и
    подписано. Чужих голосов не выдумываем. Когда база появится, менять
    надо только голосаЗа(): разметка уже считает любое их число. */
-const голосаЗа = r => MY[r.key] ? [MY[r.key]] : [];
+const голосаЗа = r => (MY[r.key] ? [Object.assign({ я: true }, MY[r.key])] : [])
+  .concat((ОБЛ && ОБЛ.голоса[r.key]) || []);
 
 function drawDist() {
   const r = T.r;
@@ -14025,10 +14143,36 @@ function drawDist() {
         (n[i] / max * 100).toFixed(1) + '%"></i></span>' +
       '<span class="vl">' + n[i] + '</span>').join('') +
     '</div>' +
-    '<p class="note" style="margin-top:12px">' + (голоса.length
-      ? 'Пока здесь только твой голос: общей базы оценок ещё нет, и голоса других зрителей сюда не доходят.'
-      : 'Общей базы оценок ещё нет, поэтому голосов других зрителей здесь не видно. Твой появится, как только поставишь оценку выше.') +
+    '<p class="note" style="margin-top:12px">' + (голоса.some(v => !v.я)
+      ? 'Твой голос и голоса тех, кто открыл свои оценки в настройках профиля.'
+      : 'Чужих голосов пока нет: оценки других зрителей видны, только если они сами их открыли.' +
+        (голоса.length ? '' : ' Твой появится, как только поставишь оценку выше.')) +
     '</p>';
+  оценкаЗрителейВШапке(голоса);
+  if (ОБЛ && ОБЛ.sb && !(r.key in ОБЛ.голоса)) голосаЗагрузить(r.key);
+}
+
+/* В шапке трека — средняя зрителей, но только от трёх голосов: один-два
+   голоса — это не «оценка пользователей», а чьё-то мнение. */
+const ГОЛОСОВ_МИН = 3;
+function оценкаЗрителейВШапке(голоса) {
+  const sc = document.querySelector('#tHero .sc.nobody');
+  if (!sc) return;
+  if (голоса.length < ГОЛОСОВ_МИН) {
+    sc.style.removeProperty('--tc');
+    sc.innerHTML = '<span>оценка пользователей</span><b>мало голосов</b><small>' +
+      (голоса.length ? число(голоса.length) + ' ' + plural(голоса.length, 'голос', 'голоса', 'голосов') + ', нужно от ' + ГОЛОСОВ_МИН : 'пока никто не оценил') + '</small>';
+    sc.dataset.tip = 'Видны голоса тех, кто открыл свои оценки в настройках профиля, и твой.';
+    return;
+  }
+  const ср = голоса.reduce((a, v) => a + баллМой(v), 0) / голоса.length;
+  const ближ = SCALE_ORDER.map(l => parseRate(l)).filter(Boolean)
+    .sort((a, b) => Math.abs(a.score - ср) - Math.abs(b.score - ср))[0];
+  sc.style.setProperty('--tc', TCOLOR[ближ.tier]);
+  sc.innerHTML = '<span>оценка пользователей</span><b>' + esc(ближ.label) + '</b><small>' +
+    ср.toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + ' из 10 · ' + число(голоса.length) + ' ' +
+    plural(голоса.length, 'голос', 'голоса', 'голосов') + '</small>';
+  sc.dataset.tip = 'Средняя по голосам тех, кто открыл свои оценки, и твоему.';
 }
 
 /* ============================================================
@@ -14243,6 +14387,7 @@ function showAdmin() {
   $('tpage').hidden = true;
   $('fpage').hidden = true;
   $('mpage').hidden = true;
+  $('upage').hidden = true;
   $('apage').hidden = false;
   плашкаЭфира();
   document.title = 'Заявки на обложки — база треков';
@@ -14555,6 +14700,7 @@ function showFun() {
   $('tpage').hidden = true;
   $('apage').hidden = true;
   $('mpage').hidden = true;
+  $('upage').hidden = true;
   $('fpage').hidden = false;
   document.title = 'Прикольчики — база треков';
   $('fBack').onclick = e => { e.preventDefault(); toCatalog(); };
@@ -14759,7 +14905,7 @@ const онлайн = () => {
   const мой = вошёл() ? ОБЛ.user.id : '';
   return [{ ник: мойНик() || 'это ты', цвет: ПРОФ.цвет || ЦВЕТА[0], я: true }].concat(
     (ОБЛ ? ОБЛ.онлайн : []).filter(x => x.user_id !== мой).map(x => ({
-      ник: x.name || x.login || 'зритель', цвет: x.color || цветПо(x.user_id), я: false })));
+      ник: x.name || x.login || 'зритель', логин: x.login || '', цвет: x.color || цветПо(x.user_id), я: false })));
 };
 
 /* Гость или вошедший. Вошедшему не объясняем, что это за сайт: у него
@@ -14879,8 +15025,8 @@ function шить(box) {
 
 /* Полоса с человечками и строка под поиском. Отдельно от главной:
    кто на сайте, база сообщает раз в минуту, и остальное приветствие
-   ради этого перерисовывать незачем. Чужой человечек — пока не
-   ссылка: страницы профиля у других ещё нет. */
+   ради этого перерисовывать незачем. Чужой человечек ведёт в его
+   профиль (#u=логин). */
 function полоса() {
   const все = онлайн().slice(0, 14);
   const html = все.map((ч, i) => {
@@ -14889,7 +15035,7 @@ function полоса() {
       '<span class="spr"><i class="hd0"></i><i class="bd0"></i><i class="lg l"></i><i class="lg r"></i></span>';
     return ч.я
       ? '<a class="walker you" href="#me" ' + стиль + ' data-tip="Это ты. Открыть личный кабинет">' + тело + '</a>'
-      : '<span class="walker" tabindex="0" ' + стиль + ' data-tip="' + esc(ч.ник) + '">' + тело + '</span>';
+      : '<a class="walker" href="#u=' + encodeURIComponent(ч.логин) + '" ' + стиль + ' data-tip="' + esc(ч.ник) + ' — открыть профиль">' + тело + '</a>';
   }).join('');
   if ($('runway').innerHTML !== html) $('runway').innerHTML = html;
   const ещё = онлайн().length - 1;
@@ -14909,6 +15055,9 @@ function ава() {
   const img = мойАватар();
   const б = буквы(мойНик());
   a.classList.toggle('me', !!(б || img));
+  const новых = ОБЛ ? ОБЛ.новых : 0;
+  a.classList.toggle('dot', !!новых);
+  a.dataset.tip = новых ? 'личный кабинет · новое: ' + новых : 'личный кабинет';
   if (img) {
     if (a.dataset.img !== img) {
       a.dataset.img = img;
@@ -15043,7 +15192,7 @@ const баллМой = v => {
 const совпалС = x => разы(x.r).some(y => y.rate && y.rate.tier === x.v.t);
 const сравнимые = list => list.filter(x => x.r.rate);
 
-const МЕНЮ = [['', 'обзор'], ['ratings', 'мои оценки'], ['orders', 'мои треки'], ['settings', 'настройки']];
+const МЕНЮ = [['', 'обзор'], ['ratings', 'мои оценки'], ['orders', 'мои треки'], ['favs', 'избранное'], ['settings', 'настройки']];
 
 function showMe() {
   уходИзИгры();
@@ -15056,6 +15205,7 @@ function showMe() {
   $('tpage').hidden = true;
   $('apage').hidden = true;
   $('fpage').hidden = true;
+  $('upage').hidden = true;
   $('mpage').hidden = false;
   плашкаЭфира();
   document.title = 'Личный кабинет — база треков';
@@ -15080,6 +15230,7 @@ function drawMe() {
   const box = $('meTab');
   if (вкладка === 'ratings') return meRatings(box, list);
   if (вкладка === 'orders') return meOrders(box);
+  if (вкладка === 'favs') return meFavs(box);
   if (вкладка === 'claims') return meClaims(box);
   if (вкладка === 'settings') return meSettings(box);
   meOverview(box, list);
@@ -15100,6 +15251,7 @@ function meHero(list = мойСписок()) {
     вход = (п && РОЛИ[п.role] ? '<span class="me-pill role ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '') +
       '<span class="me-pill tw">' + ЗНАЧОК_TW + 'Twitch' + (п && п.login ? ' · ' + esc(п.login) : '') + '</span>' +
       (ОБЛ.ошибка ? '<span class="me-pill bad" data-tip="' + esc(ОБЛ.ошибка) + '">не сохраняется на сервер</span>' : '') +
+      (п && п.login ? '<a class="me-pill out" href="#u=' + encodeURIComponent(п.login) + '" style="text-decoration:none">как меня видят</a>' : '') +
       '<button type="button" class="me-pill out" data-logout>выйти</button>';
   else if (ОБЛ.состояние === 'гость')
     вход = '<div class="me-login"><button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' +
@@ -15143,7 +15295,8 @@ const ЗНАЧКИ = {
   comp: '<circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-5 2 2-5z"/>',
   wave: '<path d="M2 12c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/>',
   aim:  '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
-  talk: '<path d="M20 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 20l1-4.3A8.5 8.5 0 1 1 20 11.5Z"/>'
+  talk: '<path d="M20 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 20l1-4.3A8.5 8.5 0 1 1 20 11.5Z"/>',
+  disc: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3a9 9 0 0 1 9 9"/>'
 };
 function достижения(list) {
   const жанры = new Set(list.flatMap(x => x.r.genres)).size;
@@ -15157,7 +15310,7 @@ function достижения(list) {
     ['wave', 'на одной волне', '25 совпадений', совпало, 25],
     ['aim', 'угадайка', '10 угаданных', игра.hits, 10],
     ['talk', 'голос', '10 комментариев', слов, 10]
-  ];
+  ].concat(заказДостижения());
 }
 
 function meOverview(box, list) {
@@ -15238,9 +15391,13 @@ function meOverview(box, list) {
             : '<b>' + v + '</b>') + '</div>').join('') +
     '</div></section>';
 
-  box.innerHTML = '<div class="me-cols"><div class="me-main">' + metrics + taste + recent + '</div>' +
-    '<aside class="me-side">' + badges + своё + '</aside></div>';
+  box.innerHTML = '<div class="me-cols"><div class="me-main">' + уведомленияHtml() + metrics + taste +
+      расхожденияHtml(list) + календарьHtml(list) + recent + '</div>' +
+    '<aside class="me-side">' + (вошёл() ? '<section class="pan me-pan" data-near><h2>близкие по вкусу</h2><p class="me-cnt">считаю…</p></section>' : '') +
+      badges + своё + '</aside></div>';
   шить(box);
+  близкиеНарисовать(box.querySelector('[data-near]'));
+  уведомленияПросмотрены();
   box.querySelectorAll('.gchip[data-g]').forEach(b => b.addEventListener('click', () => поЖанру(b.dataset.g)));
   box.querySelectorAll('[data-has]').forEach(b => b.addEventListener('click', () =>
     toCatalog(() => { reset_soft(); F.q = ''; $('q').value = ''; F.has.set(b.dataset.has, 1); })));
@@ -15261,8 +15418,11 @@ function meRatings(box, list) {
     '<div id="meRows"></div><div class="me-cnt" id="meCnt"></div></section>' +
     '<aside class="pan me-pan me-tip"><h2>о моих оценках</h2>' +
       '<p>«Совпало» — твоя ступень та же, что у композитора хоть в одном из разносов трека. «Выше» и «ниже» сравнивают со свежим разносом, вместе с плюсами и минусами.</p>' +
-      '<p>Оценки живут в этом браузере: входа на сайте пока нет, и с другого устройства их не видно.</p>' +
-      '<a class="btn ghost" href="#base" style="margin-top:14px;text-decoration:none">в каталог →</a></aside></div>';
+      (вошёл() ? '<p>Оценки лежат в базе сайта и видны с любого устройства, где ты вошёл. Другим — только если открыть их в настройках.</p>'
+               : '<p>Без входа оценки лежат в этом браузере, и с другого устройства их не видно.</p>') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">' +
+        '<button type="button" class="btn ghost" id="meCsv">скачать CSV</button>' +
+        '<a class="btn ghost" href="#base" style="text-decoration:none">в каталог →</a></div></aside></div>';
   const рисовать = () => {
     const w = слова($('meQ').value);
     const t = $('meT').value, c = $('meC').value;
@@ -15288,6 +15448,7 @@ function meRatings(box, list) {
   $('meQ').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(рисовать, 120); });
   $('meT').addEventListener('change', рисовать);
   $('meC').addEventListener('change', рисовать);
+  $('meCsv').addEventListener('click', () => оценкиВCsv(list));
   рисовать();
 }
 
@@ -15305,13 +15466,15 @@ function meSettings(box) {
       '<button type="submit" class="btn">сохранить</button></form></section>' +
     '<aside class="pan me-pan me-tip"><h2>где это хранится</h2>' + (вошёл()
       ? '<p>Оценки, сердечки, цвет и пара слов о себе лежат в базе сайта и приезжают на любое устройство, где ты вошёл через Twitch. Свои оценки видишь только ты.</p>' +
-        '<p>Другим видны твой ник и аватар с Twitch, цвет и пара слов — и то, что ты сейчас на сайте.</p>' +
+        '<p>Другим видны твой ник и аватар с Twitch, цвет и пара слов, привязанные заказы и то, что ты сейчас на сайте. Оценки — только если откроешь их ниже.</p>' +
         '<p>Комментарии видят все. Заявки на обложки и факты пока остаются в этом браузере.</p>'
       : '<p>Без входа ник, оценки и комментарии лежат в этом браузере — другие их не видят, а с телефона будет свой кабинет.</p>' +
         '<p>Войдёшь через Twitch — оценки и сердечки отсюда переедут в твой аккаунт.</p>') + '</aside></div>' +
+    (вошёл() ? приватностьHtml() : '') +
     (['admin', 'owner'].includes(мояРоль())
       ? '<section class="pan me-pan" style="margin-top:18px"><h2>команда сайта</h2><div id="meTeam"><p class="me-cnt">загружаю…</p></div></section>' : '');
   командаНарисовать($('meTeam'));
+  приватностьПодключить(box);
   $('meSw').addEventListener('click', e => {
     const b = e.target.closest('[data-c]'); if (!b) return;
     цвет = b.dataset.c;
@@ -15367,7 +15530,8 @@ const ВХОД_LS = 'faryma-after-login';
    упал бы с ReferenceError. var к тому времени просто undefined. */
 var ОБЛ = { sb: null, user: null, проф: null, состояние: 'грузится', ошибка: '',
             онлайн: [], пишем: false, ещё: false, таймер: 0, сказали: false,
-            комм: {}, моихКомм: null, заявки: null, ждут: 0 };
+            комм: {}, моихКомм: null, заявки: null, ждут: 0,
+            голоса: {}, владельцы: null, увед: null, новых: 0 };
 
 /* Роли раздаёт сервер по логину Twitch (role_grants в schema.sql):
    композитор входит — и сразу «композитор». Страница только читает. */
@@ -15407,7 +15571,9 @@ async function облакоСтарт() {
       flowType: 'pkce', persistSession: true, autoRefreshToken: true,
       detectSessionInUrl: true, storageKey: 'faryma-auth' } });
   } catch { return облакоНет('сеть'); }
-  if (T.r) комментарииЗагрузить(T.r.key);
+  if (T.r) { комментарииЗагрузить(T.r.key); голосаЗагрузить(T.r.key); }
+  владельцыЗагрузить();
+  if (!$('upage').hidden) route();
   /* Внутри этого обработчика нельзя ждать других вызовов Supabase:
      они встанут в очередь за ним самим. Поэтому дела — следующим тиком. */
   ОБЛ.sb.auth.onAuthStateChange((событие, сессия) => { setTimeout(() => облакоСессия(сессия), 0); });
@@ -15424,6 +15590,9 @@ async function облакоСессия(сессия) {
   ОБЛ.user = u;
   ОБЛ.состояние = 'вошёл';
   ОБЛ.ошибка = '';
+  // Голоса, взятые до входа, могли включать свой же открытый — как чужой.
+  ОБЛ.голоса = {};
+  if (T.r) голосаЗагрузить(T.r.key);
   const m = u.user_metadata || {};
   ПРОФ.twitch = { ник: m.nickname || m.name || '', аватар: m.avatar_url || m.picture || '' };
   saveПроф();
@@ -15433,6 +15602,7 @@ async function облакоСессия(сессия) {
   try { куда = sessionStorage.getItem(ВХОД_LS) || ''; sessionStorage.removeItem(ВХОД_LS); } catch {}
   if (куда && куда !== location.hash) location.hash = куда;
   await профильИзБазы();
+  уведомленияЗагрузить();
   await сверитьВсё();
   отметиться();
 }
@@ -15441,6 +15611,7 @@ function облакоВышел() {
   const был = ОБЛ.состояние === 'вошёл';
   ОБЛ.user = null;
   ОБЛ.проф = null;
+  ОБЛ.увед = null; ОБЛ.новых = 0; ОБЛ.заявки = null; ОБЛ.голоса = {};
   ОБЛ.состояние = 'гость';
   ОБЛ.ошибка = '';
   if (ПРОФ.twitch) { delete ПРОФ.twitch; saveПроф(); }
@@ -15491,7 +15662,7 @@ function облакоСбой(e) {
 /* ---------- профиль ---------- */
 async function профильИзБазы() {
   const { data, error } = await ОБЛ.sb.from('profiles')
-    .select('name,login,avatar_url,color,bio,role,banned,created_at').eq('id', ОБЛ.user.id).maybeSingle();
+    .select('name,login,avatar_url,color,bio,role,banned,ratings_public,hide_online,created_at').eq('id', ОБЛ.user.id).maybeSingle();
   if (error) return облакоСбой(error);
   ОБЛ.проф = data;
   const к = await ОБЛ.sb.from('comments').select('id', { count: 'exact', head: true }).eq('user_id', ОБЛ.user.id);
@@ -15530,10 +15701,14 @@ async function профильВБазу() {
    Особый случай — чужой браузер. Если здесь уже входил другой
    аккаунт, то, что лежит в браузере, — его, а не твоё: на сервер
    это не везём, а показываем то, что лежит там. */
+/* Только свои строки — отбором по своему id, а не надеждой на правила
+   базы: открытые оценки других зрителей база отдаёт тоже, и без отбора
+   они бы уехали в мои. */
 async function выбратьВсё(таблица, поля) {
   const все = [];
   for (let от = 0; ; от += 1000) {   // больше тысячи строк сервер за раз не отдаёт
-    const { data, error } = await ОБЛ.sb.from(таблица).select(поля).order('track_key').range(от, от + 999);
+    const { data, error } = await ОБЛ.sb.from(таблица).select(поля).eq('user_id', ОБЛ.user.id)
+      .order('track_key').range(от, от + 999);
     if (error) throw error;
     все.push(...data);
     if (data.length < 1000) return все;
@@ -15660,7 +15835,7 @@ async function облакоЗаписать() {
    две с половиной минуты, и срок тоже считает сервер. Спрятанная
    вкладка не отмечается: человек ушёл — пропадёт и человечек. */
 async function отметиться() {
-  if (!ОБЛ.user || document.visibilityState === 'hidden') return;
+  if (!ОБЛ.user || document.visibilityState === 'hidden' || (ОБЛ.проф && ОБЛ.проф.hide_online)) return;
   await ОБЛ.sb.from('online').upsert({ user_id: ОБЛ.user.id }, { onConflict: 'user_id' });
 }
 async function ктоНаСайте() {
@@ -15673,6 +15848,7 @@ async function ктоНаСайте() {
 function онлайнЦикл() {
   ктоНаСайте();
   setInterval(() => { отметиться(); ктоНаСайте(); }, 60000);
+  setInterval(уведомленияЗагрузить, 5 * 60000);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') { отметиться(); ктоНаСайте(); }
   });
@@ -15695,7 +15871,7 @@ function облакоРисовать(сВкладкой) {
 async function комментарииЗагрузить(key) {
   if (!ОБЛ.sb) return;
   const { data, error } = await ОБЛ.sb.from('comments')
-    .select('id,body,created_at,user_id,profiles(name,login,avatar_url,role)')
+    .select('id,body,created_at,user_id,parent_id,profiles(name,login,avatar_url,role)')
     .eq('track_key', key).order('created_at').limit(500);
   if (error) return;
   ОБЛ.комм[key] = data || [];
@@ -15806,6 +15982,67 @@ function строкаЗаказа(o) {
     '<span class="dt">' + (x.streamNum != null ? '№' + x.streamNum : '') + '</span></a>';
 }
 
+/* Статистика заказов — одна на кабинет и на чужой профиль. */
+function заказыHtml(заказы, заголовок, кому) {
+  const с = заказы.filter(o => o.x.rate);
+  const ср = с.length ? с.reduce((a, o) => a + o.x.rate.score, 0) / с.length : null;
+  const ярлык = v => v == null ? null : SCALE_ORDER.map(l => parseRate(l)).filter(Boolean)
+    .sort((a, b) => Math.abs(a.score - v) - Math.abs(b.score - v))[0];
+  const ближ = ярлык(ср);
+  const лучш = с.slice().sort((a, b) => b.x.rate.score - a.x.rate.score)[0];
+  const по = TIERS.map(t => с.filter(o => o.x.rate.tier === t.key).length);
+  const макс = Math.max(...по, 1);
+  const пути = new Map();
+  заказы.forEach(o => { const w = (o.x.way || '').replace(/\s*[xх]\s*\d+.*$/i, '').trim() || 'не указано';
+    пути.set(w, (пути.get(w) || 0) + 1); });
+  const номера = заказы.map(o => o.x.streamNum).filter(n => n != null);
+
+  // Место среди заказчиков: по числу заказов, против каждого имени таблицы.
+  const имена = именаТаблицы();
+  const мои = new Set(заказы.flatMap(o => заказчики(o.x).map(u => u.toLowerCase())));
+  const выше = [...имена].filter(([k, e]) => !мои.has(k) && e.n > заказы.length).length;
+  // Средняя оценка по всему архиву — с чем сравнивать свою.
+  let сумма = 0, всего = 0;
+  CAT.forEach(r => { if (!r.mine) разы(r).forEach(x => { if (x.rate) { сумма += x.rate.score; всего++; } }); });
+  const срАрхив = всего ? сумма / всего : null;
+  // Жанр, который композитору нравится в этих заказах больше всего (от трёх оценок).
+  const жанр = new Map();
+  с.forEach(o => o.r.genres.forEach(g => { const e = жанр.get(g) || [0, 0]; e[0] += o.x.rate.score; e[1]++; жанр.set(g, e); }));
+  const лучЖанр = [...жанр].filter(([, e]) => e[1] >= 3).sort((a, b) => b[1][0] / b[1][1] - a[1][0] / a[1][1])[0];
+  const дробь = v => v.toLocaleString('ru-RU', { maximumFractionDigits: 1 });
+
+  return '<div class="me-metrics">' +
+      '<div class="me-m"><div class="l">заказано треков</div><div class="v">' + число(заказы.length) + '</div>' +
+        '<div class="s">' + (номера.length ? 'эфиры №' + Math.min(...номера) + '–' + Math.max(...номера) : '') + '</div></div>' +
+      '<div class="me-m"><div class="l">в среднем у композитора</div><div class="v w" style="color:' + (ближ ? TCOLOR[ближ.tier] : 'inherit') + '">' +
+        esc(ближ ? ближ.label : '—') + '</div><div class="s">' + (ср != null ? дробь(ср) + ' из 10' +
+          (срАрхив != null ? ' · по архиву ' + дробь(срАрхив) : '') : '') + '</div></div>' +
+      '<div class="me-m"><div class="l">лучший заказ</div><div class="v w" style="font-size:17px">' + (лучш ? esc(лучш.r.title) : '—') + '</div>' +
+        '<div class="s">' + (лучш ? esc(лучш.r.artist) + ' · ' + esc(лучш.x.rate.label) : '') + '</div></div></div>' +
+    '<section class="pan me-pan"><h2>среди заказчиков</h2><div>' +
+      '<div class="kv"><span>место по числу заказов</span><b>' + (выше + 1) + ' из ' + число(имена.size) + '</b></div>' +
+      (ср != null && срАрхив != null ? '<div class="kv"><span>оценка заказов против средней по архиву</span><b>' +
+        (ср >= срАрхив ? '+' : '−') + дробь(Math.abs(ср - срАрхив)) + '</b></div>' : '') +
+      (лучЖанр ? '<div class="kv"><span>в каком жанре заказы удаются лучше всего</span><b>' + esc(лучЖанр[0]) + ' · ' +
+        дробь(лучЖанр[1][0] / лучЖанр[1][1]) + '</b></div>' : '') + '</div></section>' +
+    '<section class="pan me-pan"><h2>что композитор поставил ' + кому + ' <small>по ' + число(с.length) + ' ' + plural(с.length, 'оценке', 'оценкам', 'оценкам') + '</small></h2>' +
+      '<div class="me-taste"><div>' + TIERS.map((t, i) => '<div class="rbar" style="--tc:' + TCOLOR[t.key] + '"><span class="n">' + t.key + '</span>' +
+        '<span class="tr"><span style="width:' + (по[i] / макс * 100).toFixed(1) + '%"></span></span><span class="c">' + по[i] + '</span></div>').join('') + '</div>' +
+      '<div><div class="me-lab">как приносил</div><div class="gchips">' +
+        [...пути].sort((a, b) => b[1] - a[1]).map(([w, n]) => '<span class="gchip">' + esc(w) + ' <b>' + n + '</b></span>').join('') +
+      '</div></div></div></section>' +
+    '<section class="pan me-pan"><h2>' + заголовок + ' <small>сначала свежие</small></h2><div data-ord-rows></div>' +
+      (заказы.length > 60 ? '<button type="button" class="me-more" data-ord-more>показать все ' + число(заказы.length) + '</button>' : '') + '</section>';
+}
+function заказыДорисовать(box, заказы) {
+  const ряды = box.querySelector('[data-ord-rows]');
+  if (!ряды) return;
+  const рисовать = n => { ряды.innerHTML = заказы.slice(0, n).map(строкаЗаказа).join(''); шить(ряды); };
+  рисовать(60);
+  const ещё = box.querySelector('[data-ord-more]');
+  if (ещё) ещё.addEventListener('click', () => { рисовать(заказы.length); ещё.remove(); });
+}
+
 function meOrders(box) {
   if (!вошёл()) {
     box.innerHTML = '<section class="pan me-pan"><div class="me-empty">Свои заказы можно привязать к профилю после входа через Twitch.' +
@@ -15819,34 +16056,7 @@ function meOrders(box) {
   const имена = именаТаблицы();
   let html = '';
 
-  if (мои.size) {
-    const с = заказы.filter(o => o.x.rate);
-    const ср = с.length ? с.reduce((a, o) => a + o.x.rate.score, 0) / с.length : null;
-    const ближ = ср == null ? null : SCALE_ORDER.map(l => [l, parseRate(l)]).filter(([, v]) => v)
-      .sort((a, b) => Math.abs(a[1].score - ср) - Math.abs(b[1].score - ср))[0][1];
-    const лучш = с.slice().sort((a, b) => b.x.rate.score - a.x.rate.score)[0];
-    const по = TIERS.map(t => с.filter(o => o.x.rate.tier === t.key).length);
-    const макс = Math.max(...по, 1);
-    const пути = new Map();
-    заказы.forEach(o => { const w = (o.x.way || '').replace(/\s*[xх]\s*\d+.*$/i, '').trim() || 'не указано';
-      пути.set(w, (пути.get(w) || 0) + 1); });
-    const номера = заказы.map(o => o.x.streamNum).filter(n => n != null);
-    html += '<div class="me-metrics">' +
-      '<div class="me-m"><div class="l">заказано треков</div><div class="v">' + число(заказы.length) + '</div>' +
-        '<div class="s">' + (номера.length ? 'эфиры №' + Math.min(...номера) + '–' + Math.max(...номера) : '') + '</div></div>' +
-      '<div class="me-m"><div class="l">в среднем у композитора</div><div class="v w" style="color:' + (ближ ? TCOLOR[ближ.tier] : 'inherit') + '">' +
-        esc(ближ ? ближ.label : '—') + '</div><div class="s">' + (ср != null ? ср.toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + ' из 10' : '') + '</div></div>' +
-      '<div class="me-m"><div class="l">лучший заказ</div><div class="v w" style="font-size:17px">' + (лучш ? esc(лучш.r.title) : '—') + '</div>' +
-        '<div class="s">' + (лучш ? esc(лучш.r.artist) + ' · ' + esc(лучш.x.rate.label) : '') + '</div></div></div>' +
-      '<section class="pan me-pan"><h2>что композитор поставил моим трекам <small>по ' + число(с.length) + ' ' + plural(с.length, 'оценке', 'оценкам', 'оценкам') + '</small></h2>' +
-        '<div class="me-taste"><div>' + TIERS.map((t, i) => '<div class="rbar" style="--tc:' + TCOLOR[t.key] + '"><span class="n">' + t.key + '</span>' +
-          '<span class="tr"><span style="width:' + (по[i] / макс * 100).toFixed(1) + '%"></span></span><span class="c">' + по[i] + '</span></div>').join('') + '</div>' +
-        '<div><div class="me-lab">как приносил</div><div class="gchips">' +
-          [...пути].sort((a, b) => b[1] - a[1]).map(([w, n]) => '<span class="gchip">' + esc(w) + ' <b>' + n + '</b></span>').join('') +
-        '</div></div></div></section>' +
-      '<section class="pan me-pan"><h2>мои заказы <small>сначала свежие</small></h2><div id="meOrdRows"></div>' +
-        (заказы.length > 60 ? '<button type="button" class="me-more" id="meOrdMore">показать все ' + число(заказы.length) + '</button>' : '') + '</section>';
-  }
+  if (мои.size) html += заказыHtml(заказы, 'мои заказы', 'моим трекам');
 
   // Заявки и форма
   const подпись = c => '<b>' + esc(c.shown || c.name) + '</b> <small style="color:var(--faint)">' +
@@ -15878,13 +16088,7 @@ function meOrders(box) {
   box.innerHTML = html;
   шить(box);
 
-  const ряды = $('meOrdRows');
-  if (ряды) {
-    const рисовать = n => { ряды.innerHTML = заказы.slice(0, n).map(строкаЗаказа).join(''); шить(ряды); };
-    рисовать(60);
-    const ещё = $('meOrdMore');
-    if (ещё) ещё.addEventListener('click', () => { рисовать(заказы.length); ещё.remove(); });
-  }
+  заказыДорисовать(box, заказы);
 
   const поле = $('clName'), сп = $('clSug');
   const подобрать = () => {
@@ -15980,6 +16184,350 @@ function meHeroTabs() {
   if (!ОБЛ.ждут) { if (b) b.remove(); return; }
   if (!b) { b = document.createElement('b'); b.className = 'tab-n'; a.append(' ', b); }
   b.textContent = ОБЛ.ждут;
+}
+
+/* ---------- кто заказал: ссылкой на профиль ----------
+   Одобренные заявки видны всем, поэтому «заказал» на странице трека
+   ведёт к профилю того, кто это имя к себе привязал. */
+async function владельцыЗагрузить() {
+  const { data, error } = await ОБЛ.sb.from('claims')
+    .select('name,profiles!claims_user_id_fkey(name,login)').eq('status', 'approved').limit(5000);
+  if (error) return;
+  ОБЛ.владельцы = new Map((data || []).filter(c => c.profiles && c.profiles.login)
+    .map(c => [c.name, { name: c.profiles.name, login: c.profiles.login }]));
+  if (T.r && ОБЛ.владельцы.size) drawTrack();
+}
+function заказалHtml(user) {
+  if (!user) return '';
+  return заказчики({ user }).map(u => {
+    const в = ОБЛ && ОБЛ.владельцы && ОБЛ.владельцы.get(u.toLowerCase());
+    if (!в) return esc(u);
+    return '<a class="who-link" href="#u=' + encodeURIComponent(в.login) + '">' + esc(в.name || в.login) + '</a>' +
+      ((в.name || в.login).toLowerCase() !== u.toLowerCase() ? ' <small class="who-was">в таблице «' + esc(u) + '»</small>' : '');
+  }).join('; ');
+}
+
+/* ---------- голоса зрителей ----------
+   Правила базы сами отдают только открытые оценки (и свои). Свою берём
+   из MY — она свежее, чем то, что успело доехать до сервера. */
+async function голосаЗагрузить(key) {
+  ОБЛ.голоса[key] = ОБЛ.голоса[key] || [];
+  const { data, error } = await ОБЛ.sb.from('ratings').select('user_id,tier,mod').eq('track_key', key).limit(1000);
+  if (error) return;
+  const я = вошёл() ? ОБЛ.user.id : '';
+  ОБЛ.голоса[key] = (data || []).filter(x => x.user_id !== я).map(x => ({ t: x.tier, m: x.mod }));
+  if (T.r && T.r.key === key) drawDist();
+}
+
+/* ---------- уведомления ---------- */
+async function уведомленияЗагрузить() {
+  if (!вошёл()) return;
+  const { data, error } = await ОБЛ.sb.rpc('my_notifications');
+  if (error) return;
+  ОБЛ.увед = data || [];
+  ОБЛ.новых = ОБЛ.увед.filter(n => n.fresh).length;
+  ава();
+}
+const обрезать = (t, n) => { t = String(t || ''); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+function уведомленияHtml() {
+  const u = вошёл() && ОБЛ.увед;
+  if (!u || !u.length) return '';
+  const по = new Map(CAT.map(r => [r.key, r]));
+  return '<section class="pan me-pan"><h2>новое <small>за месяц</small></h2><div>' + u.slice(0, 8).map(n => {
+    const t = n.kind === 'reply' ? по.get(n.track_key) : null;
+    const текст = n.kind === 'claim'
+      ? (n.status === 'approved' ? 'Заявку на <b>' + esc(n.claim) + '</b> одобрили — заказы привязаны'
+                                 : 'Заявку на <b>' + esc(n.claim) + '</b> отклонили') + (n.answer ? ': «' + esc(n.answer) + '»' : '')
+      : 'Ответ от <b>' + esc(n.who || n.who_login) + '</b>' + (t ? ' к «' + esc(t.title) + '»' : '') + ': «' + esc(обрезать(n.body, 90)) + '»';
+    const куда = n.kind === 'claim' ? '#me/orders' : (t ? trackHref(t) : '#me');
+    return '<a class="note-row' + (n.fresh ? ' fresh' : '') + '" href="' + куда + '"><span>' + текст + '</span><time>' +
+      когда(Date.parse(n.at)) + '</time></a>';
+  }).join('') + '</div></section>';
+}
+async function уведомленияПросмотрены() {
+  if (!вошёл() || !ОБЛ.новых) return;
+  const { error } = await ОБЛ.sb.rpc('notifications_seen');
+  if (error) return;
+  ОБЛ.новых = 0;
+  (ОБЛ.увед || []).forEach(n => { n.fresh = false; });
+  ава();
+}
+
+/* ---------- где расходишься с композитором ----------
+   Расхождение — от двух ступеней: «атлична» против «хорошечно» — это
+   оттенок, а «гениально» против «нормас» — уже другое мнение. Согласие
+   по жанрам — от пяти общих оценок в жанре, иначе процент случайный. */
+function расхожденияHtml(list) {
+  const ср = сравнимые(list);
+  if (ср.length < 5) return '';
+  const разн = ср.map(x => ({ x, d: баллМой(x.v) - x.r.rate.score })).filter(o => Math.abs(o.d) >= 4)
+    .sort((a, b) => Math.abs(b.d) - Math.abs(a.d)).slice(0, 5);
+  const жанры = new Map();
+  ср.forEach(x => x.r.genres.forEach(g => { const e = жанры.get(g) || [0, 0]; e[1]++; if (совпалС(x)) e[0]++; жанры.set(g, e); }));
+  const сог = [...жанры].filter(([, e]) => e[1] >= 5).map(([g, e]) => [g, Math.round(e[0] / e[1] * 100), e[1]])
+    .sort((a, b) => b[1] - a[1]);
+  if (!разн.length && !сог.length) return '';
+  return '<section class="pan me-pan"><h2>где расходишься с композитором</h2>' +
+    (разн.length ? '<div>' + разн.map(o => '<a class="trow" href="' + trackHref(o.x.r) + '"><span class="th">' + covHtml(o.x.r) + '</span>' +
+        '<span style="min-width:0"><span class="ta">' + esc(o.x.r.artist || '—') + '</span><span class="tn">' + esc(o.x.r.title || '—') + '</span></span>' +
+        '<span class="gr" style="--tc:' + TCOLOR[o.x.v.t] + ';--tc2:' + tColor(o.x.r.rate) + '">ты: ' + esc(o.x.v.t + modLabel(o.x.v.m)) +
+          '<small>он: <i>' + esc(o.x.r.rate.label) + '</i></small></span>' +
+        '<span class="dt">' + (o.d > 0 ? 'мягче' : 'строже') + '</span></a>').join('') + '</div>'
+      : '<p class="me-cnt">Сильных расхождений нет — разница ни разу не дотянула до двух ступеней.</p>') +
+    (сог.length ? '<div class="me-lab" style="margin-top:16px">совпадение по жанрам</div><div class="gchips">' +
+      сог.slice(0, 8).map(([g, p, n]) => '<span class="gchip" data-tip="' + n + ' ' + plural(n, 'оценка', 'оценки', 'оценок') + ' в жанре">' +
+        esc(g) + ' <b>' + p + '%</b></span>').join('') + '</div>' : '') + '</section>';
+}
+
+/* ---------- активность ----------
+   Клетка — день, столбец — неделя, полгода. Считаются только оценки со
+   временем: у поставленных до кабинета его нет. */
+function календарьHtml(list) {
+  const недель = 26;
+  const сег = new Date(); сег.setHours(0, 0, 0, 0);
+  const пн = d => { const x = new Date(d); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; };
+  const старт = пн(сег); старт.setDate(старт.getDate() - (недель - 1) * 7);
+  const счёт = new Map();
+  list.forEach(x => { if (x.v.w && x.v.w >= старт) { const k = день(x.v.w); счёт.set(k, (счёт.get(k) || 0) + 1); } });
+  if (!счёт.size) return '';
+  const всего = [...счёт.values()].reduce((a, b) => a + b, 0);
+  const ур = n => !n ? 0 : n === 1 ? 1 : n <= 3 ? 2 : n <= 6 ? 3 : 4;
+  let клетки = '';
+  for (let w = 0; w < недель; w++) for (let d = 0; d < 7; d++) {
+    const t = new Date(старт); t.setDate(t.getDate() + w * 7 + d);
+    if (t > сег) { клетки += '<i class="off"></i>'; continue; }
+    const n = счёт.get(день(t)) || 0;
+    клетки += '<i class="l' + ур(n) + '" data-tip="' + String(t.getDate()).padStart(2, '0') + '.' + String(t.getMonth() + 1).padStart(2, '0') +
+      ': ' + (n ? n + ' ' + plural(n, 'оценка', 'оценки', 'оценок') : 'ничего') + '"></i>';
+  }
+  return '<section class="pan me-pan"><h2>активность <small>за полгода · ' + число(всего) + ' ' + plural(всего, 'оценка', 'оценки', 'оценок') +
+    ' за ' + счёт.size + ' ' + plural(счёт.size, 'день', 'дня', 'дней') + '</small></h2><div class="cal" style="--w:' + недель + '">' + клетки + '</div></section>';
+}
+
+/* ---------- близкие по вкусу ----------
+   Считает сервер (taste_neighbors): среди тех, кто открыл оценки, у кого
+   больше всего совпадений со мной, от пяти общих треков. */
+async function близкиеНарисовать(el) {
+  if (!el || !вошёл()) return;
+  const { data, error } = await ОБЛ.sb.rpc('taste_neighbors');
+  if (error) { el.querySelector('.me-cnt').textContent = 'Не удалось посчитать.'; return; }
+  el.innerHTML = '<h2>близкие по вкусу</h2>' + ((data || []).length
+    ? '<div>' + data.map(x => '<a class="kv" href="#u=' + encodeURIComponent(x.login) + '" style="text-decoration:none;color:inherit">' +
+        '<span class="near">' + (x.avatar_url ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(x.avatar_url) + '">' : '') + esc(x.name || x.login) + '</span>' +
+        '<b>' + Math.round(x.same / x.common * 100) + '% · ' + x.common + ' общих</b></a>').join('') + '</div>' +
+      '<p class="me-cnt">Процент — сколько общих треков вы оценили одной ступенью.</p>'
+    : '<p class="me-cnt">Пока никого. Сравнение — с теми, кто открыл свои оценки, и от пяти общих треков.</p>');
+  el.querySelectorAll('img').forEach(im => im.addEventListener('error', () => im.remove()));
+}
+
+/* ---------- достижения за заказы ----------
+   Только у тех, к кому заказы привязаны: без привязки это были бы нули
+   у всех подряд. */
+function заказДостижения() {
+  const имена = new Set(((ОБЛ && ОБЛ.заявки) || []).filter(c => c.status === 'approved').map(c => c.name));
+  if (!имена.size) return [];
+  const з = заказыПо(имена);
+  const ген = з.filter(o => o.x.rate && o.x.rate.tier === 'гениально').length;
+  const жанров = new Set(з.flatMap(o => o.r.genres)).size;
+  return [
+    ['disc', 'заказчик', '10 заказов', з.length, 10],
+    ['disc', 'завсегдатай', '100 заказов', з.length, 100],
+    ['star', 'в точку', '5 «гениально» в заказах', ген, 5],
+    ['comp', 'разносторонний', 'заказы в 10 жанрах', жанров, 10]
+  ];
+}
+
+/* ---------- избранное ---------- */
+function meFavs(box) {
+  const по = new Map(CAT.map(r => [r.key, r]));
+  const list = [...FAV].map(k => по.get(k)).filter(Boolean).reverse();
+  box.innerHTML = list.length
+    ? '<section class="pan me-pan"><h2>избранное <small>' + число(list.length) + ' ' + plural(list.length, 'трек', 'трека', 'треков') +
+        ', сначала новые</small></h2><div>' + list.map(r => строкаЗаказа({ r, x: r })).join('') + '</div></section>'
+    : '<section class="pan me-pan"><div class="me-empty">Сердечек пока нет. Нажми ♡ на обложке в <a href="#base">каталоге</a>.</div></section>';
+  шить(box);
+}
+
+/* ---------- выгрузить мои оценки ---------- */
+function оценкиВCsv(list) {
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const строки = [['исполнитель', 'трек', 'моя оценка', 'оценка композитора', 'эфир', 'дата эфира', 'когда оценил', 'ключ']]
+    .concat(list.slice().sort((a, b) => (b.v.w || 0) - (a.v.w || 0)).map(x => [x.r.artist, x.r.title,
+      x.v.t + modLabel(x.v.m), x.r.rate ? x.r.rate.label : '', x.r.streamNum ?? '', x.r.date ? дата(x.r.date) : '',
+      x.v.w ? день(x.v.w) : '', x.r.key]));
+  // BOM впереди — иначе Excel откроет кириллицу кракозябрами.
+  const csv = '﻿' + строки.map(r => r.map(q).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'мои-оценки-' + день() + '.csv';
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  toast('Выгружено ' + число(list.length) + ' ' + plural(list.length, 'оценка', 'оценки', 'оценок'));
+}
+
+/* ---------- приватность и удаление аккаунта ---------- */
+function приватностьHtml() {
+  const п = ОБЛ.проф || {};
+  return '<section class="pan me-pan" style="margin-top:18px"><h2>приватность</h2>' +
+    '<label class="tgl"><input type="checkbox" id="prRates"' + (п.ratings_public ? ' checked' : '') + '><span><b>показывать мои оценки другим</b>' +
+      '<small>Они появятся в «оценках зрителей» на страницах треков и в твоём профиле, а ты — в «близких по вкусу» у других.</small></span></label>' +
+    '<label class="tgl"><input type="checkbox" id="prHide"' + (п.hide_online ? ' checked' : '') + '><span><b>не показывать меня в человечках</b>' +
+      '<small>На главной тебя не будет видно, даже когда ты на сайте.</small></span></label>' +
+    '<div class="danger"><div><b>удалить аккаунт</b><small>Сотрёт из базы профиль, оценки, сердечки, комментарии и заявки. Вернуть будет нельзя.</small></div>' +
+      '<button type="button" class="btn ghost" id="prDel">удалить…</button></div></section>';
+}
+function приватностьПодключить(box) {
+  const оц = box.querySelector('#prRates'), пр = box.querySelector('#prHide');
+  if (!оц) return;
+  const сохранить = async (поле, el, да, нет) => {
+    el.disabled = true;
+    const { error } = await ОБЛ.sb.from('profiles').update({ [поле]: el.checked }).eq('id', ОБЛ.user.id);
+    el.disabled = false;
+    if (error) { el.checked = !el.checked; return toast('Не удалось: ' + error.message); }
+    ОБЛ.проф[поле] = el.checked;
+    toast(el.checked ? да : нет);
+    if (поле === 'hide_online') { if (!el.checked) отметиться(); ктоНаСайте(); }
+  };
+  оц.addEventListener('change', () => сохранить('ratings_public', оц, 'Оценки теперь видны другим', 'Оценки снова видишь только ты'));
+  пр.addEventListener('change', () => сохранить('hide_online', пр, 'На главной тебя больше не видно', 'Тебя снова видно на главной'));
+  box.querySelector('#prDel').addEventListener('click', () => {
+    $('delWord').value = ''; $('delGo').disabled = true; $('mDel').hidden = false; $('delWord').focus();
+  });
+}
+$('delWord').addEventListener('input', () => { $('delGo').disabled = $('delWord').value.trim().toLowerCase() !== 'удалить'; });
+$('delGo').addEventListener('click', async () => {
+  if (!вошёл()) return;
+  $('delGo').disabled = true;
+  const { error } = await ОБЛ.sb.rpc('delete_me');
+  if (error) { $('delGo').disabled = false; return toast('Не удалось удалить: ' + error.message); }
+  try { await ОБЛ.sb.auth.signOut(); } catch {}
+  const стереть = $('delLocal').checked;
+  try {
+    localStorage.removeItem('faryma-auth');
+    if (стереть) [LS, ОБЛ_LS, ПРОФ_LS, TALK_LS, WHO_LS, УЧЁТ_LS, ИГРА_LS].forEach(k => localStorage.removeItem(k));
+    // Без снимка оставшееся здесь снова считается гостевым и при новом
+    // входе уедет в новый аккаунт.
+    else localStorage.removeItem(ОБЛ_LS);
+  } catch {}
+  location.hash = '';
+  location.reload();
+});
+
+/* ---------- чужой профиль (#u=логин) ----------
+   Только то, что зритель сам открыл: ник и аватар с Twitch, роль, пара
+   слов о себе, привязанные заказы, комментарии. Оценки — если он их
+   открыл, и тогда же «совпадение с тобой». */
+function showUser(login) {
+  уходИзИгры();
+  фон('');
+  if (T.r) уходСТрека();
+  T.r = null;
+  ['page', 'tpage', 'apage', 'fpage', 'mpage', 'footNote'].forEach(id => { $(id).hidden = true; });
+  $('upage').hidden = false;
+  плашкаЭфира();
+  document.title = login + ' — база треков';
+  window.scrollTo(0, 0);
+  drawUser(login);
+}
+
+async function drawUser(login) {
+  const l = String(login || '').trim().toLowerCase();
+  const адрес = location.hash;
+  $('uCrumb').textContent = l || 'профиль';
+  $('uBody').innerHTML = '';
+  if (!ОБЛ.sb) {
+    $('uHero').innerHTML = '<p class="me-cnt">' + (ОБЛ.состояние === 'грузится' ? 'загружаю…'
+      : 'Профили зрителей видны только на сайте, когда есть связь с сервером.') + '</p>';
+    return;
+  }
+  $('uHero').innerHTML = '<p class="me-cnt">загружаю…</p>';
+  const { data: п, error } = await ОБЛ.sb.from('profiles')
+    .select('id,name,login,avatar_url,color,bio,role,ratings_public,created_at').eq('login', l).maybeSingle();
+  if (location.hash !== адрес) return;
+  if (error || !п) {
+    $('uHero').innerHTML = '<div class="me-id"><div class="me-k">профиль</div><h2 class="me-nm none">' + esc(l) + '</h2>' +
+      '<div class="me-bio">Такой зритель на сайт ещё не входил.</div></div>';
+    return;
+  }
+  const это = вошёл() && ОБЛ.user.id === п.id;
+  document.title = (п.name || п.login) + ' — база треков';
+  $('uCrumb').textContent = п.name || п.login;
+  const с = new Date(п.created_at);
+  $('uHero').innerHTML =
+    '<div class="me-ava">' + (п.avatar_url ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(п.avatar_url) + '">' : esc(буквы(п.name || п.login))) + '</div>' +
+    '<div class="me-id"><div class="me-k">' + (это ? 'так тебя видят другие' : 'зритель') + '</div>' +
+      '<h2 class="me-nm">' + esc(п.name || п.login) + '</h2>' +
+      (п.bio ? '<div class="me-bio">' + esc(п.bio) + '</div>' : '') +
+      '<div class="me-pills">' + (РОЛИ[п.role] ? '<span class="me-pill role ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '') +
+        '<span class="me-pill">на сайте с ' + МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span>' +
+        '<a class="me-pill tw" href="https://www.twitch.tv/' + encodeURIComponent(п.login) + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none">' +
+          ЗНАЧОК_TW + 'twitch.tv/' + esc(п.login) + '</a>' +
+        (это ? '<a class="me-pill out" href="#me/settings" style="text-decoration:none">настройки</a>' : '') + '</div></div>';
+  const im = $('uHero').querySelector('.me-ava img');
+  if (im) im.addEventListener('error', () => { im.parentNode.textContent = буквы(п.name || п.login); });
+
+  const [cl, cm, rt] = await Promise.all([
+    ОБЛ.sb.from('claims').select('name,shown').eq('user_id', п.id).eq('status', 'approved'),
+    ОБЛ.sb.from('comments').select('id,track_key,body,created_at').eq('user_id', п.id).order('created_at', { ascending: false }).limit(5),
+    п.ratings_public ? оценкиЗрителя(п.id) : Promise.resolve(null)
+  ]);
+  if (location.hash !== адрес) return;
+  const по = new Map(CAT.map(r => [r.key, r]));
+  let html = '';
+
+  // Оценки: только если зритель их открыл.
+  if (rt) {
+    const list = rt.map(x => ({ r: по.get(x.track_key), v: { t: x.tier, m: x.mod, w: Date.parse(x.rated_at) || 0 } })).filter(x => x.r);
+    const ср = сравнимые(list), совп = ср.filter(совпалС);
+    const жанр = new Map(); list.forEach(x => x.r.genres.forEach(g => жанр.set(g, (жанр.get(g) || 0) + 1)));
+    const любимый = [...жанр].sort((a, b) => b[1] - a[1])[0];
+    let сТобой = '';
+    if (вошёл() && !это) {
+      const общие = list.filter(x => MY[x.r.key]);
+      if (общие.length) {
+        const одна = общие.filter(x => MY[x.r.key].t === x.v.t).length;
+        const разница = общие.reduce((a, x) => a + Math.abs(баллМой(MY[x.r.key]) - баллМой(x.v)), 0) / общие.length / 2;
+        сТобой = '<div class="me-m"><div class="l">совпадение с тобой</div><div class="v">' + Math.round(одна / общие.length * 100) +
+          '<small>%</small></div><div class="s">' + число(общие.length) + ' ' + plural(общие.length, 'общий трек', 'общих трека', 'общих треков') +
+          ' · в среднем ' + разница.toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + ' ступени разницы</div></div>';
+      }
+    }
+    const свежие = list.slice().sort((a, b) => (b.v.w || 0) - (a.v.w || 0)).slice(0, 8);
+    html += '<div class="me-metrics">' +
+        '<div class="me-m"><div class="l">оценено треков</div><div class="v">' + число(list.length) + '</div></div>' +
+        '<div class="me-m"><div class="l">совпало с композитором</div><div class="v">' + (ср.length ? Math.round(совп.length / ср.length * 100) + '<small>%</small>' : '—') + '</div>' +
+          '<div class="s">' + (любимый ? 'чаще всего оценивает ' + esc(любимый[0]) : '') + '</div></div>' +
+        (сТобой || '<div class="me-m"><div class="l">совпадение с тобой</div><div class="v">—</div><div class="s">' +
+          (это ? 'это ты' : вошёл() ? 'общих оценок нет' : 'войди, чтобы сравнить') + '</div></div>') + '</div>' +
+      (свежие.length ? '<section class="pan me-pan"><h2>последние оценки</h2><div>' + свежие.map(строкаМоя).join('') + '</div></section>' : '');
+  } else html += '<section class="pan me-pan"><p class="me-cnt" style="margin:0">Оценки скрыты: зритель их не открывал.' +
+    (это ? ' Открыть можно в <a href="#me/settings">настройках</a>.' : '') + '</p></section>';
+
+  // Заказы — по одобренным заявкам.
+  const имена = new Set(((cl && cl.data) || []).map(c => c.name));
+  if (имена.size) html += заказыHtml(заказыПо(имена), 'заказы', 'трекам этого зрителя');
+  else html += '<section class="pan me-pan"><p class="me-cnt" style="margin:0">Заказы из таблицы разносов к профилю пока не привязаны.</p></section>';
+
+  // Комментарии.
+  const кс = ((cm && cm.data) || []).filter(c => по.get(c.track_key));
+  if (кс.length) html += '<section class="pan me-pan"><h2>комментарии <small>последние</small></h2><div>' + кс.map(c => {
+    const r = по.get(c.track_key);
+    return '<a class="note-row" href="' + trackHref(r) + '"><span><b>' + esc(r.title) + '</b> — ' + esc(обрезать(c.body, 120)) + '</span><time>' + когда(Date.parse(c.created_at)) + '</time></a>';
+  }).join('') + '</div></section>';
+
+  $('uBody').innerHTML = '<div class="u-body">' + html + '</div>';
+  шить($('uBody'));
+  заказыДорисовать($('uBody'), заказыПо(имена));
+}
+async function оценкиЗрителя(uid) {
+  const все = [];
+  for (let от = 0; ; от += 1000) {
+    const { data, error } = await ОБЛ.sb.from('ratings').select('track_key,tier,mod,rated_at')
+      .eq('user_id', uid).order('track_key').range(от, от + 999);
+    if (error) return null;
+    все.push(...data);
+    if (data.length < 1000) return все;
+  }
 }
 
 облакоЗапуск();

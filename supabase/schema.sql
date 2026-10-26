@@ -23,6 +23,8 @@
 --   claims   — заявки «это я в таблице»: зритель просит привязать к
 --              себе имя из колонки «Кто», админ или композитор одобряет,
 --              сверив ник на Twitch. Одно имя — одному аккаунту.
+--   my_notifications, delete_me, taste_neighbors — уведомления, удаление
+--              своего аккаунта и «близкие по вкусу».
 --
 -- «Automatically expose new tables» при создании проекта выключен,
 -- поэтому доступ к каждой таблице ниже выдаётся явно (grant).
@@ -45,6 +47,12 @@ create table if not exists public.profiles (
 alter table public.profiles add column if not exists role text not null default 'user'
   check (role in ('user', 'moder', 'admin', 'owner'));
 alter table public.profiles add column if not exists banned boolean not null default false;
+-- Согласие показывать свои оценки другим и желание не мелькать в
+-- человечках — решает сам зритель, по умолчанию закрыто.
+alter table public.profiles add column if not exists ratings_public boolean not null default false;
+alter table public.profiles add column if not exists hide_online boolean not null default false;
+-- Когда зритель последний раз смотрел уведомления.
+alter table public.profiles add column if not exists notes_seen_at timestamptz;
 alter table public.profiles enable row level security;
 
 drop policy if exists profiles_read on public.profiles;
@@ -57,7 +65,7 @@ create policy profiles_update_own on public.profiles
 
 revoke all on public.profiles from anon, authenticated;
 grant select on public.profiles to anon, authenticated;
-grant update (color, bio) on public.profiles to authenticated;
+grant update (color, bio, ratings_public, hide_online) on public.profiles to authenticated;
 
 -- Twitch отдаёт: name — логин, nickname — отображаемое имя,
 -- avatar_url / picture — аватар, provider_id — id на Twitch.
@@ -307,8 +315,17 @@ create policy favs_own on public.favs
   for all to authenticated
   using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
 
+-- Чужие оценки видны, только если их хозяин сам включил «показывать мои
+-- оценки». Сердечки — всегда только свои.
+drop policy if exists ratings_public_read on public.ratings;
+create policy ratings_public_read on public.ratings
+  for select to anon, authenticated
+  using (exists (select 1 from public.profiles p where p.id = ratings.user_id and p.ratings_public));
+create index if not exists ratings_track on public.ratings (track_key);
+
 revoke all on public.ratings, public.favs from anon, authenticated;
 grant select, insert, update, delete on public.ratings, public.favs to authenticated;
+grant select on public.ratings to anon;
 
 -- ---------- комментарии ----------
 create table if not exists public.comments (
@@ -316,9 +333,12 @@ create table if not exists public.comments (
   track_key   text not null check (char_length(track_key) between 1 and 600),
   user_id     uuid not null default auth.uid() references public.profiles (id) on delete cascade,
   body        text not null check (char_length(btrim(body)) between 1 and 1500),
+  parent_id   bigint references public.comments (id) on delete cascade,
   created_at  timestamptz not null default now()
 );
+alter table public.comments add column if not exists parent_id bigint references public.comments (id) on delete cascade;
 create index if not exists comments_track on public.comments (track_key, created_at);
+create index if not exists comments_parent on public.comments (parent_id);
 alter table public.comments enable row level security;
 
 -- Время — сервера; не больше двадцати комментариев за десять минут
@@ -334,6 +354,13 @@ begin
   if (select count(*) from public.comments
       where user_id = new.user_id and created_at > now() - interval '10 minutes') >= 20 then
     raise exception 'too many comments';
+  end if;
+  -- Ответ — к комментарию того же трека, и ветка одна: ответ на ответ
+  -- встаёт под тот же исходный комментарий.
+  if new.parent_id is not null then
+    select coalesce(parent_id, id), track_key into new.parent_id, new.track_key
+      from public.comments where id = new.parent_id;
+    if new.parent_id is null then raise exception 'no such comment'; end if;
   end if;
   return new;
 end $$;
@@ -354,7 +381,7 @@ create policy comments_delete on public.comments
 
 revoke all on public.comments from anon, authenticated;
 grant select on public.comments to anon, authenticated;
-grant insert (track_key, body) on public.comments to authenticated;
+grant insert (track_key, body, parent_id) on public.comments to authenticated;
 grant delete on public.comments to authenticated;
 
 -- ---------- заявки на свои заказы ----------
@@ -440,6 +467,77 @@ end $$;
 revoke execute on function public.decide_claim(bigint, boolean, text) from public, anon;
 grant execute on function public.decide_claim(bigint, boolean, text) to authenticated;
 
+-- ---------- уведомления ----------
+-- Что нового у зрителя: решения по его заявкам и ответы на его
+-- комментарии за последний месяц. «Новое» — позже, чем он в последний
+-- раз открывал уведомления.
+create or replace function public.my_notifications()
+returns table (kind text, at timestamptz, track_key text, body text, who text, who_login text,
+               status text, claim text, answer text, fresh boolean)
+language sql stable security definer set search_path = '' as $$
+  with me as (select id, coalesce(notes_seen_at, 'epoch'::timestamptz) seen
+              from public.profiles where id = (select auth.uid()))
+  select 'claim', c.decided_at, null, null, null, null, c.status, coalesce(c.shown, c.name), c.answer,
+         c.decided_at > me.seen
+    from public.claims c, me
+   where c.user_id = me.id and c.status <> 'pending' and c.decided_at > now() - interval '30 days'
+  union all
+  select 'reply', r.created_at, r.track_key, r.body, p.name, p.login, null, null, null,
+         r.created_at > me.seen
+    from public.comments r
+    join public.comments mine on mine.id = r.parent_id
+    join public.profiles p on p.id = r.user_id, me
+   where mine.user_id = me.id and r.user_id <> me.id and r.created_at > now() - interval '30 days'
+  order by 2 desc
+  limit 50
+$$;
+create or replace function public.notifications_seen()
+returns void language sql security definer set search_path = '' as $$
+  update public.profiles set notes_seen_at = now() where id = (select auth.uid())
+$$;
+revoke execute on function public.my_notifications(), public.notifications_seen() from public, anon;
+grant execute on function public.my_notifications(), public.notifications_seen() to authenticated;
+
+-- ---------- удалить себя ----------
+-- Зритель стирает аккаунт сам, без админа: профиль, оценки, сердечки,
+-- комментарии, заявки и отметку «на сайте» — всё каскадом от auth.users.
+create or replace function public.delete_me()
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if (select auth.uid()) is null then raise exception 'not signed in'; end if;
+  delete from auth.users where id = (select auth.uid());
+end $$;
+revoke execute on function public.delete_me() from public, anon;
+grant execute on function public.delete_me() to authenticated;
+
+-- ---------- близкие по вкусу ----------
+-- Среди тех, кто открыл свои оценки, — у кого больше всего совпадений
+-- с тобой. Считает сервер: чужие оценки по одной на страницу не тянем.
+-- Нужно хотя бы пять общих треков, иначе «совпадение» — случайность.
+create or replace function public.rate_score(t text, m text)
+returns numeric language sql immutable set search_path = '' as $$
+  select (case t when 'гениально' then 10 when 'атлична' then 8 when 'хорошечно' then 6
+                 when 'нормас' then 4 when 'ну такое' then 2 else 0 end)
+       + (case m when '++' then .6 when '+' then .3 when '-' then -.3 when '- -' then -.6 else 0 end)
+$$;
+create or replace function public.taste_neighbors()
+returns table (user_id uuid, name text, login text, avatar_url text, common int, same int, diff numeric)
+language sql stable security definer set search_path = '' as $$
+  select o.user_id, p.name, p.login, p.avatar_url,
+         count(*)::int, count(*) filter (where o.tier = m.tier)::int,
+         round(avg(abs(public.rate_score(o.tier, o.mod) - public.rate_score(m.tier, m.mod))) / 2, 2)
+    from public.ratings m
+    join public.ratings o on o.track_key = m.track_key and o.user_id <> m.user_id
+    join public.profiles p on p.id = o.user_id and p.ratings_public
+   where m.user_id = (select auth.uid())
+   group by o.user_id, p.name, p.login, p.avatar_url
+  having count(*) >= 5
+   order by count(*) filter (where o.tier = m.tier)::numeric / count(*) desc, count(*) desc
+   limit 10
+$$;
+revoke execute on function public.taste_neighbors() from public, anon;
+grant execute on function public.taste_neighbors() to authenticated;
+
 -- ---------- кто сейчас на сайте ----------
 create table if not exists public.online (
   user_id  uuid primary key default auth.uid() references public.profiles (id) on delete cascade,
@@ -479,6 +577,6 @@ grant insert, update on public.online to authenticated;
 create or replace view public.online_now with (security_invoker = true) as
   select o.user_id, p.name, p.login, p.avatar_url, p.color
   from public.online o join public.profiles p on p.id = o.user_id
-  where o.seen_at > now() - interval '150 seconds';
+  where o.seen_at > now() - interval '150 seconds' and not p.hide_online;
 revoke all on public.online_now from anon, authenticated;
 grant select on public.online_now to anon, authenticated;
