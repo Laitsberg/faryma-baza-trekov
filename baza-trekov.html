@@ -1038,7 +1038,7 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   align-items:center;min-width:44px;margin-left:-22px;color:inherit;text-decoration:none;
   animation:stroll var(--t,46s) ease-in-out infinite alternate;animation-delay:var(--d0,0s)}
 .walker:hover,.walker:focus-visible{animation-play-state:paused;z-index:3}
-.walker .nick{font:600 10px/1.25 var(--b);white-space:nowrap;color:#ffcc9e;
+.walker .nick{font:600 10px/1.25 var(--b);white-space:nowrap;color:#d8d8df;
   text-shadow:0 1px 6px #111,0 0 3px #111;padding:2px 3px;margin-bottom:3px;letter-spacing:-.012em}
 .walker:hover .nick{color:#fff}
 .walker .spr{position:relative;width:25px;height:32px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
@@ -1051,7 +1051,8 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   animation:step .42s linear infinite alternate}
 .walker .lg.l{left:6px}
 .walker .lg.r{right:6px;animation-direction:alternate-reverse}
-.walker .spr::after{content:'★';position:absolute;top:-10px;right:-5px;color:#ffd184;font-size:9px}
+.walker.you .nick{color:#ffcc9e}
+.walker.you .spr::after{content:'★';position:absolute;top:-10px;right:-5px;color:#ffd184;font-size:9px}
 .walker:hover .lg,.walker:focus-visible .lg{animation-play-state:paused}
 @keyframes stroll{0%{left:7%}30%{left:38%}55%{left:24%}100%{left:92%}}
 @keyframes step{to{transform:rotate(24deg)}}
@@ -1155,6 +1156,25 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 a.ava{color:inherit;text-decoration:none}
 a.ava:hover,a.ava[aria-current]{border-color:var(--brand)}
 .ava.me{background:#34302d;border-color:rgba(236,135,76,.32);color:#f5b087;font:800 12px var(--b)}
+.ava img,.me-ava img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
+.ava{overflow:hidden}
+
+/* Вход через Twitch — фирменным фиолетовым Twitch: кнопку узнают
+   по цвету раньше, чем прочтут. */
+.tw-in{display:inline-flex;align-items:center;gap:9px;min-height:40px;padding:8px 16px;border-radius:8px;
+  background:#9146FF;color:#fff;font-weight:700;font-size:14px}
+.tw-in:hover{background:#a970ff}
+.tw-in svg,.me-pill.tw svg{width:17px;height:17px;flex:none}
+.me-login{flex-basis:100%;display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;margin-top:6px;
+  color:var(--dim);font-size:12.5px}
+.me-pill.tw{display:inline-flex;align-items:center;gap:6px;color:#c9b3ff;border-color:rgba(145,70,255,.4);
+  background:rgba(145,70,255,.12)}
+.me-pill.tw svg{width:13px;height:13px}
+.me-pill.bad{color:#ff9a9a;border-color:rgba(233,88,89,.4);background:rgba(233,88,89,.1)}
+button.me-pill.out{cursor:pointer;color:var(--dim)}
+button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
+.lnk-tw{color:#c9b3ff;font-size:11px;padding:0;text-decoration:underline;text-underline-offset:3px}
+.lnk-tw:hover{color:#fff}
 
 /* ---------- личный кабинет ---------- */
 .me-hero{display:flex;align-items:center;gap:25px;padding:26px 28px;margin-top:14px}
@@ -10459,7 +10479,8 @@ const save = () => { try {
   localStorage.setItem(LS, JSON.stringify({
     rates: MY, favs: [...FAV], adds: MINE, covers: MYCOV, facts: MYFACT
   }));
-} catch {} };
+} catch {}
+  облакоПоменялось(); };
 
 // Что уже утверждено, того ждать больше не надо: заявка своё отработала.
 { const было = JSON.stringify([MYCOV, MYFACT]);
@@ -14542,10 +14563,10 @@ function играСчётРисовать() {
    поиск, над ним человечки, ниже три карточки «что тут делают».
    Кабинет (#me) — своя статистика по своим оценкам.
 
-   Человечки — это те, кто сейчас на сайте. Общей базы у сайта нет,
-   и узнать про чужую вкладку нельзя, поэтому на полосе один
-   человечек — ты сам. Выдумывать прохожих нельзя: зрители заметят.
-   Появится общий онлайн — менять только онлайн().
+   Человечки — это те, кто сейчас на сайте. Знаем мы только тех, кто
+   вошёл через Twitch: они раз в минуту отмечаются в базе (см. раздел
+   «вход через Twitch» ниже). Гостей не видно и не считаем — выдумывать
+   прохожих нельзя, зрители заметят. Ты сам на полосе всегда.
 
    Задания, ноты, уровни из макета кабинета пока не показываем —
    заказчик сам просил: «механики подсчёта — это внутрянка, в начале
@@ -14593,12 +14614,29 @@ if (!ПРОФ.с) {
 }
 учёт('visit');
 
-/* Кто сейчас на сайте. Пока — только ты: см. шапку раздела. */
-const онлайн = () => [{ ник: ПРОФ.ник || 'это ты', цвет: ПРОФ.цвет || ЦВЕТА[0], я: true }];
+/* Ник и аватар: вошедшему — с Twitch, гостю — что вписал в кабинете. */
+const вошёл = () => !!(ОБЛ && ОБЛ.user);
+const мойНик = () => вошёл()
+  ? ((ОБЛ.проф && ОБЛ.проф.name) || (ПРОФ.twitch && ПРОФ.twitch.ник) || '')
+  : (ПРОФ.ник || '');
+const мойАватар = () => вошёл()
+  ? ((ОБЛ.проф && ОБЛ.проф.avatar_url) || (ПРОФ.twitch && ПРОФ.twitch.аватар) || '') : '';
 
-/* Первый заход или бывалый. Входа на сайте нет, поэтому «бывалый» —
-   тот, кто уже что-то здесь сделал: оценил, лайкнул, назвался. */
-const бывалый = () => !!(Object.keys(MY).length || FAV.size || ПРОФ.ник);
+/* Цвет того, кто его не выбрал, — по id, чтобы не мигал от минуты к минуте. */
+const цветПо = id => ЦВЕТА[[...String(id)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % ЦВЕТА.length];
+
+/* Кто сейчас на сайте: ты и те, кого база видела за последние две
+   с половиной минуты. */
+const онлайн = () => {
+  const мой = вошёл() ? ОБЛ.user.id : '';
+  return [{ ник: мойНик() || 'это ты', цвет: ПРОФ.цвет || ЦВЕТА[0], я: true }].concat(
+    (ОБЛ ? ОБЛ.онлайн : []).filter(x => x.user_id !== мой).map(x => ({
+      ник: x.name || x.login || 'зритель', цвет: x.color || цветПо(x.user_id), я: false })));
+};
+
+/* Первый заход или бывалый: тот, кто уже что-то здесь сделал —
+   оценил, лайкнул, назвался или вошёл через Twitch. */
+const бывалый = () => !!(Object.keys(MY).length || FAV.size || ПРОФ.ник || вошёл());
 
 const буквы = s => {
   const v = String(s || '').trim().split(/\s+/).filter(Boolean);
@@ -14649,16 +14687,7 @@ function главная() {
     plural(архив.length, 'трек', 'трека', 'треков') + ' с разносами в одном месте! ' +
     'Оценивай любимое, открывай незнакомое и сравнивай свой вкус со вкусом композитора!';
 
-  const полоса = онлайн().map((ч, i) =>
-    '<a class="walker" href="#me" style="--c:' + esc(ч.цвет) + ';--d0:-' + (i * 7) + 's" ' +
-      'data-tip="' + (ч.я ? 'Это ты. Открыть личный кабинет' : esc(ч.ник)) + '">' +
-      '<span class="nick">' + esc(ч.ник) + '</span>' +
-      '<span class="spr"><i class="hd0"></i><i class="bd0"></i><i class="lg l"></i><i class="lg r"></i></span></a>').join('');
-  if ($('runway').innerHTML !== полоса) $('runway').innerHTML = полоса;
-  const n = онлайн().length;
-  $('hOnline').innerHTML = 'на сайте сейчас: <a href="#me" data-tip="Человечки над поиском — кто сейчас на сайте. ' +
-    'Общего онлайна у сайта пока нет, поэтому видно только тебя.">' +
-    (n === 1 ? 'ты' : число(n) + ' ' + plural(n, 'человек', 'человека', 'человек')) + '</a>';
+  полоса();
 
   const жанры = жанрыАрхива();
   $('hQuick').innerHTML = '<span>Например:</span>' +
@@ -14718,12 +14747,45 @@ function шить(box) {
   });
 }
 
-/* Шапка над витриной та же, что везде, — у неё только ник вместо совы. */
+/* Полоса с человечками и строка под поиском. Отдельно от главной:
+   кто на сайте, база сообщает раз в минуту, и остальное приветствие
+   ради этого перерисовывать незачем. Чужой человечек — пока не
+   ссылка: страницы профиля у других ещё нет. */
+function полоса() {
+  const все = онлайн().slice(0, 14);
+  const html = все.map((ч, i) => {
+    const стиль = 'style="--c:' + esc(ч.цвет) + ';--d0:-' + (i * 11) + 's;--t:' + (40 + i * 7 % 23) + 's"';
+    const тело = '<span class="nick">' + esc(ч.ник) + '</span>' +
+      '<span class="spr"><i class="hd0"></i><i class="bd0"></i><i class="lg l"></i><i class="lg r"></i></span>';
+    return ч.я
+      ? '<a class="walker you" href="#me" ' + стиль + ' data-tip="Это ты. Открыть личный кабинет">' + тело + '</a>'
+      : '<span class="walker" tabindex="0" ' + стиль + ' data-tip="' + esc(ч.ник) + '">' + тело + '</span>';
+  }).join('');
+  if ($('runway').innerHTML !== html) $('runway').innerHTML = html;
+  const ещё = онлайн().length - 1;
+  const правило = ОБЛ && ОБЛ.sb
+    ? 'Человечки над поиском — кто сейчас на сайте. Видно тех, кто вошёл через Twitch; гостей не считаем.'
+    : 'Человечки над поиском — кто сейчас на сайте. Сервер сейчас недоступен, поэтому видно только тебя.';
+  $('hOnline').innerHTML = 'на сайте сейчас: <a href="#me" data-tip="' + правило + '">' +
+    (ещё ? 'ты и ещё ' + число(ещё) + ' ' + plural(ещё, 'человек', 'человека', 'человек') : 'ты') + '</a>' +
+    (ОБЛ && ОБЛ.состояние === 'гость'
+      ? ' · <button type="button" class="lnk-tw" data-login>войди через Twitch</button>, чтобы тебя видели' : '');
+}
+
+/* Шапка над витриной та же, что везде, — у неё только аватар или ник
+   вместо совы. */
 function ава() {
-  const б = буквы(ПРОФ.ник);
   const a = $('ava');
-  a.classList.toggle('me', !!б);
-  a.textContent = б || '🦉';
+  const img = мойАватар();
+  const б = буквы(мойНик());
+  a.classList.toggle('me', !!(б || img));
+  if (img) {
+    if (a.dataset.img !== img) {
+      a.dataset.img = img;
+      a.innerHTML = '<img alt="" referrerpolicy="no-referrer" src="' + esc(img) + '">';
+      a.querySelector('img').addEventListener('error', () => { a.dataset.img = ''; a.textContent = б || '🦉'; });
+    }
+  } else { a.dataset.img = ''; a.textContent = б || '🦉'; }
 }
 
 function поискСГлавной(q) {
@@ -14876,19 +14938,7 @@ function drawMe() {
   const list = мойСписок();
   ава();
 
-  const ник = ПРОФ.ник || '';
-  const с = new Date(ПРОФ.с || Date.now());
-  $('meHero').innerHTML =
-    '<div class="me-ava">' + esc(буквы(ник) || '🦉') + '</div>' +
-    '<div class="me-id"><div class="me-k">слушатель архива</div>' +
-      '<h2 class="me-nm' + (ник ? '' : ' none') + '">' + esc(ник || 'без ника') + '</h2>' +
-      '<div class="me-bio">' + esc(ПРОФ.о || (ник ? '' : 'Ник и пару слов о себе можно вписать в настройках.')) + '</div>' +
-      '<div class="me-pills"><span class="me-pill o">' + число(list.length) + ' ' +
-        plural(list.length, 'оценка', 'оценки', 'оценок') + '</span>' +
-        '<span class="me-pill" data-tip="Входа на сайте пока нет: всё твоё лежит в этом браузере">здесь с ' +
-        МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span></div></div>' +
-    '<a class="me-edit" href="#me/settings" data-tip="Настроить профиль" aria-label="Настроить профиль">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></a>';
+  meHero(list);
 
   $('meTabs').innerHTML = МЕНЮ.map(([k, name]) =>
     '<a class="tab" role="tab" href="#me' + (k ? '/' + k : '') + '" aria-selected="' + (k === вкладка) + '"' +
@@ -14898,6 +14948,44 @@ function drawMe() {
   if (вкладка === 'ratings') return meRatings(box, list);
   if (вкладка === 'settings') return meSettings(box);
   meOverview(box, list);
+}
+
+const ЗНАЧОК_TW = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.3 3 3 6.4v13.1h4.5V22h2.5l2.4-2.5h3.7L21 14.6V3H4.3Zm15 10.8-2.8 2.8H12l-2.4 2.4v-2.4H5.8V4.6h13.5v9.2ZM16.5 7.6h-1.7v4.9h1.7V7.6Zm-4.6 0h-1.7v4.9h1.7V7.6Z"/></svg>';
+
+/* Шапка профиля. Отдельно от вкладок: вход и выход перерисовывают
+   только её, а поле поиска или формы во вкладке не теряет фокус. */
+function meHero(list = мойСписок()) {
+  const ник = мойНик();
+  const img = мойАватар();
+  const п = вошёл() ? ОБЛ.проф : null;
+  const с = new Date((п && п.created_at) || ПРОФ.с || Date.now());
+  let вход = '';
+  if (!ОБЛ || ОБЛ.состояние === 'грузится') вход = '';
+  else if (ОБЛ.состояние === 'вошёл')
+    вход = '<span class="me-pill tw">' + ЗНАЧОК_TW + 'Twitch' + (п && п.login ? ' · ' + esc(п.login) : '') + '</span>' +
+      (ОБЛ.ошибка ? '<span class="me-pill bad" data-tip="' + esc(ОБЛ.ошибка) + '">не сохраняется на сервер</span>' : '') +
+      '<button type="button" class="me-pill out" data-logout>выйти</button>';
+  else if (ОБЛ.состояние === 'гость')
+    вход = '<div class="me-login"><button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' +
+      '<span>Оценки и сердечки будут с тобой на любом устройстве, а на главной тебя увидят другие.</span></div>';
+  else
+    вход = '<div class="me-login"><span>' + (ОБЛ.ошибка === 'файл'
+      ? 'Вход через Twitch работает на сайте, а не в файле, открытом с диска.'
+      : 'Сервер входа сейчас не отвечает — всё твоё пока сохраняется в этом браузере.') + '</span></div>';
+  $('meHero').innerHTML =
+    '<div class="me-ava">' + (img ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(img) + '">' : esc(буквы(ник) || '🦉')) + '</div>' +
+    '<div class="me-id"><div class="me-k">слушатель архива</div>' +
+      '<h2 class="me-nm' + (ник ? '' : ' none') + '">' + esc(ник || 'без ника') + '</h2>' +
+      '<div class="me-bio">' + esc(ПРОФ.о || (ник ? '' : 'Войди через Twitch или впиши ник в настройках.')) + '</div>' +
+      '<div class="me-pills"><span class="me-pill o">' + число(list.length) + ' ' +
+        plural(list.length, 'оценка', 'оценки', 'оценок') + '</span>' +
+        '<span class="me-pill"' + (п ? '' : ' data-tip="Без входа всё твоё лежит в этом браузере"') + '>' +
+        (п ? 'на сайте с ' : 'здесь с ') + МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span>' +
+        вход + '</div></div>' +
+    '<a class="me-edit" href="#me/settings" data-tip="Настроить профиль" aria-label="Настроить профиль">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></a>';
+  const im = $('meHero').querySelector('.me-ava img');
+  if (im) im.addEventListener('error', () => { im.parentNode.textContent = буквы(ник) || '🦉'; });
 }
 
 function строкаМоя(x) {
@@ -15071,15 +15159,20 @@ function meSettings(box) {
   let цвет = ПРОФ.цвет || ЦВЕТА[0];
   box.innerHTML = '<div class="me-list"><section class="pan me-pan"><h2>настройки профиля</h2>' +
     '<form class="me-form" id="meForm">' +
-      '<label>ник<input id="meNick" maxlength="28" autocomplete="nickname" value="' + esc(ПРОФ.ник || '') + '"></label>' +
+      (вошёл()
+        ? '<label>ник<input id="meNick" disabled value="' + esc(мойНик()) + '"><small style="color:var(--faint)">берётся с Twitch — поменяешь там, поменяется и здесь</small></label>'
+        : '<label>ник<input id="meNick" maxlength="28" autocomplete="nickname" value="' + esc(ПРОФ.ник || '') + '"></label>') +
       '<label>немного о себе<input id="meBio" maxlength="90" value="' + esc(ПРОФ.о || '') + '"></label>' +
       '<div><div style="font-size:12.5px;color:#c9c9c9;margin-bottom:6px">цвет человечка на главной</div>' +
         '<div class="me-sw" id="meSw">' + ЦВЕТА.map(c => '<button type="button" style="--c:' + c + '" data-c="' + c + '"' +
           ' aria-label="Цвет ' + c + '" aria-pressed="' + (c === цвет) + '"></button>').join('') + '</div></div>' +
       '<button type="submit" class="btn">сохранить</button></form></section>' +
-    '<aside class="pan me-pan me-tip"><h2>где это хранится</h2>' +
-      '<p>Входа на сайте пока нет. Ник, оценки и комментарии лежат в этом браузере — другие их не видят, а с телефона будет свой кабинет.</p>' +
-      '<p>Когда у сайта появятся аккаунты, сюда же переедет и то, что уже накоплено.</p></aside></div>';
+    '<aside class="pan me-pan me-tip"><h2>где это хранится</h2>' + (вошёл()
+      ? '<p>Оценки, сердечки, цвет и пара слов о себе лежат в базе сайта и приезжают на любое устройство, где ты вошёл через Twitch. Свои оценки видишь только ты.</p>' +
+        '<p>Другим видны твой ник и аватар с Twitch, цвет и пара слов — и то, что ты сейчас на сайте.</p>' +
+        '<p>Комментарии, заявки на обложки и факты пока остаются в этом браузере.</p>'
+      : '<p>Без входа ник, оценки и комментарии лежат в этом браузере — другие их не видят, а с телефона будет свой кабинет.</p>' +
+        '<p>Войдёшь через Twitch — оценки и сердечки отсюда переедут в твой аккаунт.</p>') + '</aside></div>';
   $('meSw').addEventListener('click', e => {
     const b = e.target.closest('[data-c]'); if (!b) return;
     цвет = b.dataset.c;
@@ -15087,11 +15180,12 @@ function meSettings(box) {
   });
   $('meForm').addEventListener('submit', e => {
     e.preventDefault();
-    ПРОФ.ник = $('meNick').value.trim().slice(0, 28);
+    if (!вошёл()) ПРОФ.ник = $('meNick').value.trim().slice(0, 28);
     ПРОФ.о = $('meBio').value.trim().slice(0, 90);
     ПРОФ.цвет = цвет;
     saveПроф();
-    toast('Профиль сохранён');
+    if (вошёл()) профильВБазу();
+    else toast('Профиль сохранён');
     главная();
     location.hash = '#me';
   });
@@ -15099,6 +15193,342 @@ function meSettings(box) {
 
 главнаяПульт();
 главная();
+
+/* ============================================================
+   ВХОД ЧЕРЕЗ TWITCH И ОБЩАЯ БАЗА
+   ------------------------------------------------------------
+   База — Supabase, схема и правила доступа в supabase/schema.sql.
+   Вошедший носит оценки и сердечки с собой между устройствами, а
+   на главной его видят другие. Без входа всё как раньше: своё
+   лежит в браузере.
+
+   Страница обязана работать без сети и с диска, поэтому библиотеку
+   Supabase грузим сами и последней. Не доехала — нет кнопки входа,
+   и только.
+
+   Ключ здесь публичный (publishable): что можно читать и писать,
+   решают правила в самой базе, а не секретность ключа. Секретный
+   ключ в страницу не кладётся никогда.
+
+   Вход — по PKCE: Twitch возвращает на страницу с ?code=… в
+   строке адреса, а не с токенами в решётке. Решётка у нас занята
+   маршрутами (#t=…, #me), и токены в ней сбили бы роутинг.
+   ============================================================ */
+
+const ОБЛАКО = {
+  адрес: 'https://zqywwbtevztkaqaqbtlb.supabase.co',
+  ключ: 'sb_publishable_qCOperShCWXbpcq0BsCohg_APa71Fk-',
+  скрипт: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js'
+};
+const ОБЛ_LS = 'faryma-catalog-cloud';
+const ВХОД_LS = 'faryma-after-login';
+
+/* var, а не const: save() зовёт облакоПоменялось() уже при разборе
+   скрипта, раньше, чем дело дойдёт до этой строки, — и const там
+   упал бы с ReferenceError. var к тому времени просто undefined. */
+var ОБЛ = { sb: null, user: null, проф: null, состояние: 'грузится', ошибка: '',
+            онлайн: [], пишем: false, ещё: false, таймер: 0, сказали: false };
+
+/* Снимок того, что лежит на сервере, после последней сверки:
+   { владелец: id, rates: { ключ: 'ступень|модификатор' }, favs: [ключи] }.
+   По нему видно, что поменялось здесь, а что — на другом устройстве. */
+var ОБЛ_СНИМОК = (() => { try { return JSON.parse(localStorage.getItem(ОБЛ_LS)) || {}; }
+                          catch { return {}; } })();
+const saveСнимок = () => { try { localStorage.setItem(ОБЛ_LS, JSON.stringify(ОБЛ_СНИМОК)); } catch {} };
+const видОценки = v => v.t + '|' + (v.m || '');
+/* Треки, добавленные зрителем самим («my|…»), живут только в его
+   браузере: на другом устройстве их нет, и оценка к ним некуда. */
+const вОблако = k => !k.startsWith('my|');
+
+function облакоЗапуск() {
+  if (!/^https?:$/.test(location.protocol)) return облакоНет('файл');
+  const s = document.createElement('script');
+  s.src = ОБЛАКО.скрипт;
+  s.async = true;
+  const сдаться = setTimeout(() => { if (!ОБЛ.sb) облакоНет('сеть'); }, 15000);
+  s.onload = () => { clearTimeout(сдаться); облакоСтарт(); };
+  s.onerror = () => { clearTimeout(сдаться); облакоНет('сеть'); };
+  document.head.append(s);
+}
+function облакоНет(почему) {
+  ОБЛ.состояние = 'нет';
+  ОБЛ.ошибка = почему;
+  облакоРисовать();
+}
+
+async function облакоСтарт() {
+  try {
+    ОБЛ.sb = window.supabase.createClient(ОБЛАКО.адрес, ОБЛАКО.ключ, { auth: {
+      flowType: 'pkce', persistSession: true, autoRefreshToken: true,
+      detectSessionInUrl: true, storageKey: 'faryma-auth' } });
+  } catch { return облакоНет('сеть'); }
+  /* Внутри этого обработчика нельзя ждать других вызовов Supabase:
+     они встанут в очередь за ним самим. Поэтому дела — следующим тиком. */
+  ОБЛ.sb.auth.onAuthStateChange((событие, сессия) => { setTimeout(() => облакоСессия(сессия), 0); });
+  let сессия = null;
+  try { сессия = (await ОБЛ.sb.auth.getSession()).data.session; } catch {}
+  await облакоСессия(сессия);
+  онлайнЦикл();
+}
+
+async function облакоСессия(сессия) {
+  const u = сессия ? сессия.user : null;
+  if (u && ОБЛ.user && u.id === ОБЛ.user.id) return;   // обновился токен — для нас ничего не поменялось
+  if (!u) return облакоВышел();
+  ОБЛ.user = u;
+  ОБЛ.состояние = 'вошёл';
+  ОБЛ.ошибка = '';
+  const m = u.user_metadata || {};
+  ПРОФ.twitch = { ник: m.nickname || m.name || '', аватар: m.avatar_url || m.picture || '' };
+  saveПроф();
+  облакоРисовать();
+  // Вернулись с Twitch — на ту страницу сайта, откуда уходили.
+  let куда = '';
+  try { куда = sessionStorage.getItem(ВХОД_LS) || ''; sessionStorage.removeItem(ВХОД_LS); } catch {}
+  if (куда && куда !== location.hash) location.hash = куда;
+  await профильИзБазы();
+  await сверитьВсё();
+  отметиться();
+}
+
+function облакоВышел() {
+  const был = ОБЛ.состояние === 'вошёл';
+  ОБЛ.user = null;
+  ОБЛ.проф = null;
+  ОБЛ.состояние = 'гость';
+  ОБЛ.ошибка = '';
+  if (ПРОФ.twitch) { delete ПРОФ.twitch; saveПроф(); }
+  облакоРисовать();
+  if (был) toast('Ты вышел. Оценки остаются в этом браузере');
+}
+
+function войти() {
+  if (!ОБЛ.sb) return;
+  try { sessionStorage.setItem(ВХОД_LS, location.hash); } catch {}
+  ОБЛ.sb.auth.signInWithOAuth({ provider: 'twitch',
+    options: { redirectTo: location.origin + location.pathname } })
+    .then(r => { if (r && r.error) toast('Не получилось уйти на Twitch: ' + r.error.message); });
+}
+async function выйти() {
+  if (!ОБЛ.sb) return;
+  try { await ОБЛ.sb.auth.signOut(); } catch {}
+  облакоВышел();
+}
+
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-login]')) { e.preventDefault(); войти(); }
+  else if (e.target.closest('[data-logout]')) { e.preventDefault(); выйти(); }
+});
+
+function облакоСбой(e) {
+  const код = e && (e.code || '');
+  ОБЛ.ошибка = (код === 'PGRST205' || код === '42P01')
+    ? 'В базе ещё нет таблиц — их создаёт supabase/schema.sql'
+    : ((e && e.message) || 'сервер не ответил');
+  if (!ОБЛ.сказали) { ОБЛ.сказали = true; toast('Не удалось сохранить на сервер — пока всё лежит в браузере'); }
+  облакоРисовать();
+}
+
+/* ---------- профиль ---------- */
+async function профильИзБазы() {
+  const { data, error } = await ОБЛ.sb.from('profiles')
+    .select('name,login,avatar_url,color,bio,created_at').eq('id', ОБЛ.user.id).maybeSingle();
+  if (error) return облакоСбой(error);
+  ОБЛ.проф = data;
+  if (data) {
+    // Цвет и пару слов, выбранные до входа, кладём в профиль, если там пусто.
+    const нужно = {};
+    if (!data.color && ПРОФ.цвет) нужно.color = ПРОФ.цвет;
+    if (data.bio == null && ПРОФ.о) нужно.bio = ПРОФ.о;
+    if (Object.keys(нужно).length) {
+      const r = await ОБЛ.sb.from('profiles').update(нужно).eq('id', ОБЛ.user.id);
+      if (!r.error) Object.assign(data, нужно);
+    }
+    if (data.color) ПРОФ.цвет = data.color;
+    if (data.bio != null) ПРОФ.о = data.bio;
+    saveПроф();
+  }
+  облакоРисовать();
+}
+async function профильВБазу() {
+  const { error } = await ОБЛ.sb.from('profiles')
+    .update({ color: ПРОФ.цвет || null, bio: ПРОФ.о || null }).eq('id', ОБЛ.user.id);
+  if (error) return облакоСбой(error);
+  if (ОБЛ.проф) Object.assign(ОБЛ.проф, { color: ПРОФ.цвет || null, bio: ПРОФ.о || null });
+  toast('Профиль сохранён');
+  облакоРисовать();
+}
+
+/* ---------- сверка оценок и сердечек ----------
+   Правило одно: побеждает свежее. Оценка есть и тут, и там, и они
+   разные — берём ту, что поставлена позже. Есть только здесь — её
+   либо поставили без сети, либо до первого входа: везём на сервер.
+   Есть только там — ставили с другого устройства: забираем.
+
+   Особый случай — чужой браузер. Если здесь уже входил другой
+   аккаунт, то, что лежит в браузере, — его, а не твоё: на сервер
+   это не везём, а показываем то, что лежит там. */
+async function выбратьВсё(таблица, поля) {
+  const все = [];
+  for (let от = 0; ; от += 1000) {   // больше тысячи строк сервер за раз не отдаёт
+    const { data, error } = await ОБЛ.sb.from(таблица).select(поля).order('track_key').range(от, от + 999);
+    if (error) throw error;
+    все.push(...data);
+    if (data.length < 1000) return все;
+  }
+}
+
+async function сверитьВсё() {
+  const uid = ОБЛ.user.id;
+  let rs, fs;
+  try {
+    [rs, fs] = await Promise.all([выбратьВсё('ratings', 'track_key,tier,mod,rated_at'),
+                                  выбратьВсё('favs', 'track_key')]);
+  } catch (e) { return облакоСбой(e); }
+  if (!ОБЛ.user || ОБЛ.user.id !== uid) return;   // пока ждали, вышли
+
+  const чужое = ОБЛ_СНИМОК.владелец && ОБЛ_СНИМОК.владелец !== uid;
+  const свой = ОБЛ_СНИМОК.владелец === uid;
+  const былоR = свой ? (ОБЛ_СНИМОК.rates || {}) : {};
+  const былоF = new Set(свой ? (ОБЛ_СНИМОК.favs || []) : []);
+
+  const тамR = {};
+  rs.forEach(x => { тамR[x.track_key] = { t: x.tier, m: x.mod, w: Date.parse(x.rated_at) || 0 }; });
+  const итогR = Object.assign({}, тамR);
+  if (!чужое) {
+    Object.entries(MY).forEach(([k, v]) => {
+      if (!вОблако(k)) { итогR[k] = v; return; }
+      const t = тамR[k];
+      if (!t) { if (!(k in былоR)) итогR[k] = v; }                 // в снимке была, на сервере нет — убрали там
+      else if (видОценки(t) !== видОценки(v) && (v.w || 0) > t.w) итогR[k] = v;
+    });
+    // Здесь ключ пропал (трек переехал на новый ключ), а там ещё лежит.
+    Object.keys(былоR).forEach(k => { if (!(k in MY) && тамR[k] && видОценки(тамR[k]) === былоR[k]) delete итогR[k]; });
+  }
+
+  const тамF = new Set(fs.map(x => x.track_key));
+  const итогF = new Set(тамF);
+  if (!чужое) {
+    FAV.forEach(k => { if (!вОблако(k) || (!тамF.has(k) && !былоF.has(k))) итогF.add(k); });
+    былоF.forEach(k => { if (!FAV.has(k) && тамF.has(k)) итогF.delete(k); });
+  }
+
+  // Снимок — то, что на сервере сейчас; разницу с итогом допишет облакоЗаписать().
+  ОБЛ_СНИМОК = { владелец: uid,
+    rates: Object.fromEntries(Object.entries(тамR).map(([k, v]) => [k, видОценки(v)])),
+    favs: [...тамF] };
+  saveСнимок();
+  Object.keys(MY).forEach(k => { delete MY[k]; });
+  Object.assign(MY, итогR);
+  FAV.clear();
+  итогF.forEach(k => FAV.add(k));
+  save();
+  await облакоЗаписать();
+
+  rail(); render(true);
+  if (T.r) drawTrack();
+  облакоРисовать(true);
+}
+
+/* Каждый save() — повод досверить. Ждём чуть-чуть: щелчки по шкале
+   идут пачкой, и слать по запросу на каждый незачем. */
+function облакоПоменялось() {
+  if (!ОБЛ || ОБЛ.состояние !== 'вошёл') return;
+  clearTimeout(ОБЛ.таймер);
+  ОБЛ.таймер = setTimeout(облакоЗаписать, 700);
+}
+
+async function облакоЗаписать() {
+  clearTimeout(ОБЛ.таймер);
+  if (!ОБЛ.user || ОБЛ_СНИМОК.владелец !== ОБЛ.user.id) return;
+  if (ОБЛ.пишем) { ОБЛ.ещё = true; return; }
+  ОБЛ.пишем = true;
+  const uid = ОБЛ.user.id;
+  const сн = ОБЛ_СНИМОК;
+  const былоF = new Set(сн.favs);
+  const поставить = Object.entries(MY).filter(([k, v]) => вОблако(k) &&
+    TIERS.some(t => t.key === v.t) && сн.rates[k] !== видОценки(v));
+  const убрать = Object.keys(сн.rates).filter(k => !(k in MY));
+  const лайк = [...FAV].filter(k => вОблако(k) && !былоF.has(k));
+  const снять = сн.favs.filter(k => !FAV.has(k));
+  try {
+    for (let i = 0; i < поставить.length; i += 500) {
+      const пачка = поставить.slice(i, i + 500);
+      const { error } = await ОБЛ.sb.from('ratings').upsert(пачка.map(([k, v]) => ({
+        user_id: uid, track_key: k, tier: v.t, mod: v.m || '',
+        rated_at: new Date(v.w || Date.now()).toISOString() })), { onConflict: 'user_id,track_key' });
+      if (error) throw error;
+      пачка.forEach(([k, v]) => { сн.rates[k] = видОценки(v); });
+    }
+    for (let i = 0; i < убрать.length; i += 100) {
+      const пачка = убрать.slice(i, i + 100);
+      const { error } = await ОБЛ.sb.from('ratings').delete().eq('user_id', uid).in('track_key', пачка);
+      if (error) throw error;
+      пачка.forEach(k => { delete сн.rates[k]; });
+    }
+    for (let i = 0; i < лайк.length; i += 500) {
+      const пачка = лайк.slice(i, i + 500);
+      const { error } = await ОБЛ.sb.from('favs').upsert(пачка.map(k => ({ user_id: uid, track_key: k })),
+        { onConflict: 'user_id,track_key', ignoreDuplicates: true });
+      if (error) throw error;
+      пачка.forEach(k => былоF.add(k));
+    }
+    for (let i = 0; i < снять.length; i += 100) {
+      const пачка = снять.slice(i, i + 100);
+      const { error } = await ОБЛ.sb.from('favs').delete().eq('user_id', uid).in('track_key', пачка);
+      if (error) throw error;
+      пачка.forEach(k => былоF.delete(k));
+    }
+    if (ОБЛ.ошибка) { ОБЛ.ошибка = ''; облакоРисовать(); }
+  } catch (e) {
+    облакоСбой(e);
+    // Не вышло — попробуем ещё раз через минуту; снимок помнит, что уже доехало.
+    ОБЛ.таймер = setTimeout(облакоЗаписать, 60000);
+  } finally {
+    сн.favs = [...былоF];
+    saveСнимок();
+    ОБЛ.пишем = false;
+    if (ОБЛ.ещё) { ОБЛ.ещё = false; облакоЗаписать(); }
+  }
+}
+
+/* ---------- кто на сайте ----------
+   Вошедший раз в минуту отмечается — время ставит сервер. Список
+   берём из online_now: там только те, кого база видела за последние
+   две с половиной минуты, и срок тоже считает сервер. Спрятанная
+   вкладка не отмечается: человек ушёл — пропадёт и человечек. */
+async function отметиться() {
+  if (!ОБЛ.user || document.visibilityState === 'hidden') return;
+  await ОБЛ.sb.from('online').upsert({ user_id: ОБЛ.user.id }, { onConflict: 'user_id' });
+}
+async function ктоНаСайте() {
+  if (!ОБЛ.sb || document.visibilityState === 'hidden') return;
+  const { data, error } = await ОБЛ.sb.from('online_now').select('user_id,name,login,avatar_url,color').limit(60);
+  if (error) return;
+  ОБЛ.онлайн = data || [];
+  if (!$('page').hidden && CAT.length) полоса();
+}
+function онлайнЦикл() {
+  ктоНаСайте();
+  setInterval(() => { отметиться(); ктоНаСайте(); }, 60000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') { отметиться(); ктоНаСайте(); }
+  });
+}
+
+/* Вход, выход и сверка меняют ник, аватар и счётчики — перерисовываем,
+   где они видны. Вкладку кабинета трогаем, только если в ней никто
+   не печатает. */
+function облакоРисовать(сВкладкой) {
+  ава();
+  if (!$('page').hidden && CAT.length) главная();
+  if (!$('mpage').hidden && CAT.length) {
+    if (сВкладкой && !$('meTab').contains(document.activeElement)) drawMe();
+    else meHero();
+  }
+}
+
+облакоЗапуск();
 
 window.addEventListener('hashchange', route);
 
