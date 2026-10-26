@@ -1190,6 +1190,35 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
 .msg .ban:hover{color:var(--like)}
 .talk-ft .note b{color:var(--ink);font-weight:600}
 
+/* ---------- мои треки и заявки ---------- */
+.tab-n{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:4px;
+  border-radius:999px;background:var(--brand);color:#160b04;font:700 11px var(--b);vertical-align:2px}
+.cl-hint{margin:0 0 14px;padding:10px 12px;border-radius:8px;background:rgba(145,70,255,.1);
+  border:1px solid rgba(145,70,255,.35);font-size:13px;color:#d9ccff}
+.cl-sug{display:flex;flex-direction:column;gap:2px;margin-top:-8px}
+.cl-sug:empty{display:none}
+.cl-sug button{text-align:left;padding:7px 10px;border-radius:6px;font-size:13.5px;color:var(--ink)}
+.cl-sug button:hover:not(:disabled){background:var(--card-2)}
+.cl-sug button:disabled{opacity:.45;cursor:default}
+.cl-sug small{color:var(--faint);margin-left:6px}
+.cl-card{padding:14px 0;border-top:1px solid rgba(255,255,255,.065)}
+.cl-card:first-of-type{border-top:0;padding-top:4px}
+.cl-who{display:flex;align-items:center;gap:11px}
+.cl-who img,.cl-who .ini{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:none;
+  display:grid;place-items:center;background:var(--card-2);font-weight:700}
+.cl-who b{font-size:14.5px}
+.cl-who a{margin-left:8px;color:#c9b3ff;font-size:12.5px;text-decoration:none}
+.cl-who a:hover{text-decoration:underline}
+.cl-who small{display:block;color:var(--faint);font-size:11.5px}
+.cl-ask{margin-top:10px;font-size:13.5px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.cl-note{margin-top:6px;color:var(--dim);font-size:13px;font-style:italic}
+.cl-last{margin-top:6px;color:var(--faint);font-size:12px}
+.cl-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.cl-act input{flex:1;min-width:180px;height:37px;padding:0 11px;border-radius:8px;border:1px solid var(--line);
+  background:#151719;color:var(--ink);font-size:13px}
+.cl-act input:focus{outline:none;border-color:var(--brand)}
+.cl-act .btn{min-height:37px}
+
 /* ---------- личный кабинет ---------- */
 .me-hero{display:flex;align-items:center;gap:25px;padding:26px 28px;margin-top:14px}
 .me-ava{position:relative;width:89px;height:89px;flex:none;display:grid;place-items:center;
@@ -15014,7 +15043,7 @@ const баллМой = v => {
 const совпалС = x => разы(x.r).some(y => y.rate && y.rate.tier === x.v.t);
 const сравнимые = list => list.filter(x => x.r.rate);
 
-const МЕНЮ = [['', 'обзор'], ['ratings', 'мои оценки'], ['settings', 'настройки']];
+const МЕНЮ = [['', 'обзор'], ['ratings', 'мои оценки'], ['orders', 'мои треки'], ['settings', 'настройки']];
 
 function showMe() {
   уходИзИгры();
@@ -15041,12 +15070,17 @@ function drawMe() {
 
   meHero(list);
 
-  $('meTabs').innerHTML = МЕНЮ.map(([k, name]) =>
+  // Заявки на привязку треков разбирают админ и композитор — им своя вкладка.
+  const меню = МЕНЮ.concat(['admin', 'owner'].includes(мояРоль()) ? [['claims', 'заявки']] : []);
+  $('meTabs').innerHTML = меню.map(([k, name]) =>
     '<a class="tab" role="tab" href="#me' + (k ? '/' + k : '') + '" aria-selected="' + (k === вкладка) + '"' +
-    ' style="text-decoration:none">' + name + '</a>').join('');
+    ' style="text-decoration:none">' + name +
+    (k === 'claims' && ОБЛ.ждут ? ' <b class="tab-n">' + ОБЛ.ждут + '</b>' : '') + '</a>').join('');
 
   const box = $('meTab');
   if (вкладка === 'ratings') return meRatings(box, list);
+  if (вкладка === 'orders') return meOrders(box);
+  if (вкладка === 'claims') return meClaims(box);
   if (вкладка === 'settings') return meSettings(box);
   meOverview(box, list);
 }
@@ -15333,7 +15367,7 @@ const ВХОД_LS = 'faryma-after-login';
    упал бы с ReferenceError. var к тому времени просто undefined. */
 var ОБЛ = { sb: null, user: null, проф: null, состояние: 'грузится', ошибка: '',
             онлайн: [], пишем: false, ещё: false, таймер: 0, сказали: false,
-            комм: {}, моихКомм: null };
+            комм: {}, моихКомм: null, заявки: null, ждут: 0 };
 
 /* Роли раздаёт сервер по логину Twitch (role_grants в schema.sql):
    композитор входит — и сразу «композитор». Страница только читает. */
@@ -15364,7 +15398,7 @@ function облакоЗапуск() {
 function облакоНет(почему) {
   ОБЛ.состояние = 'нет';
   ОБЛ.ошибка = почему;
-  облакоРисовать();
+  облакоРисовать(true);
 }
 
 async function облакоСтарт() {
@@ -15410,7 +15444,7 @@ function облакоВышел() {
   ОБЛ.состояние = 'гость';
   ОБЛ.ошибка = '';
   if (ПРОФ.twitch) { delete ПРОФ.twitch; saveПроф(); }
-  облакоРисовать();
+  облакоРисовать(true);
   if (был) toast('Ты вышел. Оценки остаются в этом браузере');
 }
 
@@ -15462,6 +15496,7 @@ async function профильИзБазы() {
   ОБЛ.проф = data;
   const к = await ОБЛ.sb.from('comments').select('id', { count: 'exact', head: true }).eq('user_id', ОБЛ.user.id);
   ОБЛ.моихКомм = к.error ? null : к.count;
+  await заявкиМои();
   if (data) {
     // Цвет и пару слов, выбранные до входа, кладём в профиль, если там пусто.
     const нужно = {};
@@ -15714,6 +15749,237 @@ async function командаНарисовать(box) {
     const l = box.querySelector('#roleLogin').value.trim();
     if (l) ставить(l, box.querySelector('#roleRole').value);
   });
+}
+
+/* ---------- мои треки: заявки на привязку ----------
+   В колонке «Кто» заказчик записан так, как его назвали на стриме, и
+   это не всегда ник на Twitch: «НеАноним(фанат декскора)», «50 50».
+   Поэтому заказы к профилю не угадываем, а просим: зритель называет
+   имя из таблицы, админ сверяет его с ником на Twitch и одобряет.
+   Имя сравнивается без регистра — «AndrLord» и «Andrlord» один
+   человек. Совместный заказ «TRISSAR; Static_Streams_» — каждому. */
+const заказчики = x => String(x.user || '').split(';').map(s => s.trim()).filter(Boolean);
+
+let ИМЕНА_КЭШ = { cat: null, map: null };
+/* Все имена из колонки «Кто»: строчными → { как пишут чаще, сколько заказов }. */
+function именаТаблицы() {
+  if (ИМЕНА_КЭШ.cat === CAT) return ИМЕНА_КЭШ.map;
+  const m = new Map();
+  CAT.forEach(r => { if (!r.mine) разы(r).forEach(x => заказчики(x).forEach(u => {
+    const k = u.toLowerCase();
+    const e = m.get(k) || { n: 0, как: new Map() };
+    e.n++; e.как.set(u, (e.как.get(u) || 0) + 1);
+    m.set(k, e);
+  })); });
+  m.forEach(e => { e.shown = [...e.как].sort((a, b) => b[1] - a[1])[0][0]; });
+  ИМЕНА_КЭШ = { cat: CAT, map: m };
+  return m;
+}
+/* Заказы по набору имён: каждый разнос — отдельный заказ. */
+function заказыПо(имена) {
+  const out = [];
+  CAT.forEach(r => { if (!r.mine) разы(r).forEach(x => {
+    if (заказчики(x).some(u => имена.has(u.toLowerCase()))) out.push({ r, x });
+  }); });
+  return out.sort((a, b) => (b.x.streamNum ?? -1) - (a.x.streamNum ?? -1));
+}
+
+async function заявкиМои() {
+  if (!вошёл()) return;
+  const { data, error } = await ОБЛ.sb.from('claims')
+    .select('id,name,shown,note,status,answer,created_at,decided_at').eq('user_id', ОБЛ.user.id).order('created_at');
+  ОБЛ.заявки = error ? null : (data || []);
+  if (['admin', 'owner'].includes(мояРоль())) {
+    const к = await ОБЛ.sb.from('claims').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+    ОБЛ.ждут = к.error ? 0 : к.count;
+  }
+}
+
+/* Строка заказа: трек, что поставил композитор, номер и дата эфира. */
+function строкаЗаказа(o) {
+  const r = o.r, x = o.x;
+  return '<a class="trow" href="' + trackHref(r) + '"><span class="th">' + covHtml(r) + '</span>' +
+    '<span style="min-width:0"><span class="ta">' + esc(r.artist || '—') + '</span>' +
+      '<span class="tn">' + esc(r.title || '—') + '</span></span>' +
+    '<span class="gr" style="--tc:' + tColor(x.rate) + '">' + esc(x.rate ? x.rate.label : '—') +
+      '<small>' + esc(x.way || '') + '</small></span>' +
+    '<span class="dt">' + (x.streamNum != null ? '№' + x.streamNum : '') + '</span></a>';
+}
+
+function meOrders(box) {
+  if (!вошёл()) {
+    box.innerHTML = '<section class="pan me-pan"><div class="me-empty">Свои заказы можно привязать к профилю после входа через Twitch.' +
+      (ОБЛ && ОБЛ.sb ? '<div style="margin-top:14px"><button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button></div>' : '') +
+      '</div></section>';
+    return;
+  }
+  const все = ОБЛ.заявки || [];
+  const мои = new Set(все.filter(c => c.status === 'approved').map(c => c.name));
+  const заказы = заказыПо(мои);
+  const имена = именаТаблицы();
+  let html = '';
+
+  if (мои.size) {
+    const с = заказы.filter(o => o.x.rate);
+    const ср = с.length ? с.reduce((a, o) => a + o.x.rate.score, 0) / с.length : null;
+    const ближ = ср == null ? null : SCALE_ORDER.map(l => [l, parseRate(l)]).filter(([, v]) => v)
+      .sort((a, b) => Math.abs(a[1].score - ср) - Math.abs(b[1].score - ср))[0][1];
+    const лучш = с.slice().sort((a, b) => b.x.rate.score - a.x.rate.score)[0];
+    const по = TIERS.map(t => с.filter(o => o.x.rate.tier === t.key).length);
+    const макс = Math.max(...по, 1);
+    const пути = new Map();
+    заказы.forEach(o => { const w = (o.x.way || '').replace(/\s*[xх]\s*\d+.*$/i, '').trim() || 'не указано';
+      пути.set(w, (пути.get(w) || 0) + 1); });
+    const номера = заказы.map(o => o.x.streamNum).filter(n => n != null);
+    html += '<div class="me-metrics">' +
+      '<div class="me-m"><div class="l">заказано треков</div><div class="v">' + число(заказы.length) + '</div>' +
+        '<div class="s">' + (номера.length ? 'эфиры №' + Math.min(...номера) + '–' + Math.max(...номера) : '') + '</div></div>' +
+      '<div class="me-m"><div class="l">в среднем у композитора</div><div class="v w" style="color:' + (ближ ? TCOLOR[ближ.tier] : 'inherit') + '">' +
+        esc(ближ ? ближ.label : '—') + '</div><div class="s">' + (ср != null ? ср.toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + ' из 10' : '') + '</div></div>' +
+      '<div class="me-m"><div class="l">лучший заказ</div><div class="v w" style="font-size:17px">' + (лучш ? esc(лучш.r.title) : '—') + '</div>' +
+        '<div class="s">' + (лучш ? esc(лучш.r.artist) + ' · ' + esc(лучш.x.rate.label) : '') + '</div></div></div>' +
+      '<section class="pan me-pan"><h2>что композитор поставил моим трекам <small>по ' + число(с.length) + ' ' + plural(с.length, 'оценке', 'оценкам', 'оценкам') + '</small></h2>' +
+        '<div class="me-taste"><div>' + TIERS.map((t, i) => '<div class="rbar" style="--tc:' + TCOLOR[t.key] + '"><span class="n">' + t.key + '</span>' +
+          '<span class="tr"><span style="width:' + (по[i] / макс * 100).toFixed(1) + '%"></span></span><span class="c">' + по[i] + '</span></div>').join('') + '</div>' +
+        '<div><div class="me-lab">как приносил</div><div class="gchips">' +
+          [...пути].sort((a, b) => b[1] - a[1]).map(([w, n]) => '<span class="gchip">' + esc(w) + ' <b>' + n + '</b></span>').join('') +
+        '</div></div></div></section>' +
+      '<section class="pan me-pan"><h2>мои заказы <small>сначала свежие</small></h2><div id="meOrdRows"></div>' +
+        (заказы.length > 60 ? '<button type="button" class="me-more" id="meOrdMore">показать все ' + число(заказы.length) + '</button>' : '') + '</section>';
+  }
+
+  // Заявки и форма
+  const подпись = c => '<b>' + esc(c.shown || c.name) + '</b> <small style="color:var(--faint)">' +
+    число((имена.get(c.name) || { n: 0 }).n) + ' ' + plural((имена.get(c.name) || { n: 0 }).n, 'заказ', 'заказа', 'заказов') + '</small>';
+  const ждут = все.filter(c => c.status === 'pending');
+  const нет = все.filter(c => c.status === 'rejected').slice(-5);
+  const логин = ОБЛ.проф && ОБЛ.проф.login ? ОБЛ.проф.login.toLowerCase() : '';
+  const заявлено = new Set(все.filter(c => c.status !== 'rejected').map(c => c.name));
+  const мойЛогин = логин && имена.has(логин) && !заявлено.has(логин) ? имена.get(логин) : null;
+  html += '<div class="me-list"><section class="pan me-pan"><h2>' + (мои.size ? 'привязать ещё имя' : 'привязать свои заказы') + '</h2>' +
+    '<p class="me-cnt" style="margin:0 0 12px">В таблице разносов заказчик записан так, как его назвали на стриме, — это не всегда ник на Twitch. ' +
+      'Найди себя в колонке «Кто», и админ привяжет эти заказы к профилю, сверив твой ник на Twitch.</p>' +
+    (мойЛогин ? '<div class="cl-hint">В таблице есть <b>' + esc(мойЛогин.shown) + '</b> — ' + число(мойЛогин.n) + ' ' +
+      plural(мойЛогин.n, 'заказ', 'заказа', 'заказов') + ', как твой логин на Twitch. ' +
+      '<button type="button" class="lnk" data-claim-me="' + esc(логин) + '">это я →</button></div>' : '') +
+    '<form id="clForm" class="me-form" style="max-width:none">' +
+      '<label>как тебя записали в таблице<input id="clName" maxlength="80" autocomplete="off" placeholder="начни вводить имя"></label>' +
+      '<div class="cl-sug" id="clSug"></div>' +
+      '<label>чем подтвердить <small style="color:var(--faint)">— необязательно: «спросите в чате», «это мой второй ник»</small>' +
+        '<input id="clNote" maxlength="300" autocomplete="off"></label>' +
+      '<button type="submit" class="btn">отправить заявку</button></form></section>' +
+    '<aside class="pan me-pan me-tip"><h2>мои заявки</h2>' +
+      (мои.size ? '<p>Привязано: ' + все.filter(c => c.status === 'approved').map(подпись).join(', ') + '</p>' : '') +
+      (ждут.length ? ждут.map(c => '<div class="kv"><span>' + подпись(c) + '</span><span><span class="me-pill">ждёт</span> ' +
+        '<button type="button" class="lnk" data-uncl="' + c.id + '">отменить</button></span></div>').join('') : '') +
+      (нет.length ? нет.map(c => '<div class="kv"><span>' + подпись(c) + (c.answer ? '<br><small style="color:var(--faint)">' + esc(c.answer) + '</small>' : '') +
+        '</span><span class="me-pill bad">отклонена</span></div>').join('') : '') +
+      (!все.length ? '<p>Пока ни одной.</p>' : '') + '</aside></div>';
+  box.innerHTML = html;
+  шить(box);
+
+  const ряды = $('meOrdRows');
+  if (ряды) {
+    const рисовать = n => { ряды.innerHTML = заказы.slice(0, n).map(строкаЗаказа).join(''); шить(ряды); };
+    рисовать(60);
+    const ещё = $('meOrdMore');
+    if (ещё) ещё.addEventListener('click', () => { рисовать(заказы.length); ещё.remove(); });
+  }
+
+  const поле = $('clName'), сп = $('clSug');
+  const подобрать = () => {
+    const q = поле.value.trim().toLowerCase();
+    if (!q) { сп.innerHTML = ''; return; }
+    const найдено = [...имена].filter(([k]) => k.startsWith(q) || k.split(/[\s_\-().]+/).some(w => w.startsWith(q)))
+      .sort((a, b) => (b[0] === q) - (a[0] === q) || b[1].n - a[1].n).slice(0, 8);
+    сп.innerHTML = найдено.length ? найдено.map(([k, e]) => '<button type="button" data-k="' + esc(k) + '"' +
+      (заявлено.has(k) ? ' disabled' : '') + '>' + esc(e.shown) + ' <small>' + число(e.n) + ' ' + plural(e.n, 'заказ', 'заказа', 'заказов') +
+      (заявлено.has(k) ? ' · уже в твоих заявках' : '') + '</small></button>').join('')
+      : '<p class="me-cnt">Такого имени в колонке «Кто» нет.</p>';
+  };
+  поле.addEventListener('input', подобрать);
+  сп.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return;
+    поле.value = имена.get(b.dataset.k).shown; сп.innerHTML = ''; });
+  const подать = async (k, note) => {
+    const e = имена.get(k);
+    if (!e) return toast('Такого имени в таблице нет — выбери из подсказок');
+    const { error } = await ОБЛ.sb.from('claims').insert({ name: k, shown: e.shown, note: note || null });
+    if (error) return toast(/name taken/.test(error.message) ? 'Это имя уже привязано к другому аккаунту — напиши админу'
+      : /too many/.test(error.message) ? 'Слишком много заявок ждут ответа'
+      : error.code === '23505' ? 'Такая заявка уже есть' : 'Не удалось: ' + error.message);
+    toast('Заявка отправлена — админ сверит ник и ответит');
+    await заявкиМои(); meOrders(box); meHeroTabs();
+  };
+  $('clForm').addEventListener('submit', e => { e.preventDefault(); подать(поле.value.trim().toLowerCase(), $('clNote').value.trim()); });
+  box.querySelectorAll('[data-claim-me]').forEach(b => b.addEventListener('click', () => подать(b.dataset.claimMe, 'совпадает с логином на Twitch')));
+  box.querySelectorAll('[data-uncl]').forEach(b => b.addEventListener('click', async () => {
+    const { error } = await ОБЛ.sb.from('claims').delete().eq('id', Number(b.dataset.uncl));
+    if (error) return toast('Не удалось: ' + error.message);
+    await заявкиМои(); meOrders(box); meHeroTabs();
+  }));
+}
+
+/* ---------- заявки: разбор у админа ----------
+   Рядом с заявкой — всё, чтобы решить: ник и логин на Twitch со ссылкой
+   на канал, когда человек впервые зашёл на сайт, сколько заказов у
+   имени и какие последние, совпадает ли имя с логином и не занято ли. */
+async function meClaims(box) {
+  if (!['admin', 'owner'].includes(мояРоль())) { box.innerHTML = ''; return; }
+  box.innerHTML = '<section class="pan me-pan"><p class="me-cnt">загружаю…</p></section>';
+  const { data, error } = await ОБЛ.sb.from('claims')
+    .select('id,name,shown,note,status,answer,created_at,decided_at,user_id,profiles!claims_user_id_fkey(name,login,avatar_url,created_at)')
+    .order('created_at', { ascending: false }).limit(200);
+  if (error) { box.innerHTML = '<section class="pan me-pan"><p class="me-cnt">Не удалось загрузить: ' + esc(error.message) + '</p></section>'; return; }
+  const имена = именаТаблицы();
+  const занято = new Map(data.filter(c => c.status === 'approved').map(c => [c.name, c]));
+  const ждут = data.filter(c => c.status === 'pending').reverse();
+  const решены = data.filter(c => c.status !== 'pending').slice(0, 30);
+  ОБЛ.ждут = ждут.length;
+  const кто = c => { const п = c.profiles || {};
+    return '<div class="cl-who">' + (п.avatar_url ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(п.avatar_url) + '">' : '<span class="ini">' + esc((п.name || '?')[0]) + '</span>') +
+      '<div><b>' + esc(п.name || '—') + '</b> <a href="https://www.twitch.tv/' + encodeURIComponent(п.login || '') + '" target="_blank" rel="noopener noreferrer">twitch.tv/' + esc(п.login || '') + ' ↗</a>' +
+      '<small>на сайте с ' + (п.created_at ? датаКор(Date.parse(п.created_at)) : '—') + '</small></div></div>'; };
+  const карточка = c => {
+    const e = имена.get(c.name);
+    const п = c.profiles || {};
+    const посл = заказыПо(new Set([c.name])).slice(0, 3);
+    const чужое = занято.get(c.name);
+    return '<article class="cl-card" data-id="' + c.id + '">' + кто(c) +
+      '<div class="cl-ask">просит привязать <b>' + esc(c.shown || c.name) + '</b> — ' + (e ? число(e.n) + ' ' + plural(e.n, 'заказ', 'заказа', 'заказов') : 'в таблице такого имени нет') +
+        (п.login && п.login.toLowerCase() === c.name ? ' <span class="me-pill tw">совпадает с логином Twitch</span>' : '') +
+        (чужое ? ' <span class="me-pill bad">уже привязано к ' + esc((чужое.profiles || {}).name || 'другому') + '</span>' : '') + '</div>' +
+      (c.note ? '<div class="cl-note">«' + esc(c.note) + '»</div>' : '') +
+      (посл.length ? '<div class="cl-last">последние: ' + посл.map(o => esc(o.r.artist + ' — ' + o.r.title) + (o.x.streamNum != null ? ' (№' + o.x.streamNum + ')' : '')).join('; ') + '</div>' : '') +
+      '<div class="cl-act"><input placeholder="ответ — необязательно" maxlength="300">' +
+        '<button type="button" class="btn" data-ok="1">одобрить</button><button type="button" class="btn ghost" data-ok="0">отклонить</button></div></article>';
+  };
+  box.innerHTML = '<section class="pan me-pan"><h2>ждут решения <small>' + ждут.length + '</small></h2>' +
+      (ждут.length ? ждут.map(карточка).join('') : '<p class="me-cnt">Новых заявок нет.</p>') + '</section>' +
+    '<section class="pan me-pan" style="margin-top:18px"><h2>решённые <small>последние ' + решены.length + '</small></h2>' +
+      (решены.length ? решены.map(c => '<div class="kv"><span>' + esc((c.profiles || {}).name || '—') + ' → <b>' + esc(c.shown || c.name) + '</b>' +
+        (c.answer ? ' <small style="color:var(--faint)">' + esc(c.answer) + '</small>' : '') + '</span><span>' +
+        (c.status === 'approved' ? '<span class="me-pill tw">привязано</span> <button type="button" class="lnk" data-undo="' + c.id + '">снять</button>'
+                                 : '<span class="me-pill bad">отклонена</span>') + '</span></div>').join('') : '<p class="me-cnt">Пока пусто.</p>') + '</section>';
+  box.querySelectorAll('.cl-who img').forEach(im => im.addEventListener('error', () => im.remove()));
+  const решить = async (id, ok, ответ) => {
+    const { error } = await ОБЛ.sb.rpc('decide_claim', { p_id: id, p_ok: ok, p_answer: ответ || null });
+    if (error) return toast(/name taken/.test(error.message) ? 'Это имя уже привязано к другому — сначала сними ту привязку' : 'Не вышло: ' + error.message);
+    toast(ok ? 'Привязано' : 'Отклонено');
+    await заявкиМои(); meClaims(box); meHeroTabs();
+  };
+  box.querySelectorAll('.cl-card').forEach(к => к.querySelectorAll('[data-ok]').forEach(b => b.addEventListener('click', () =>
+    решить(Number(к.dataset.id), b.dataset.ok === '1', к.querySelector('input').value.trim()))));
+  box.querySelectorAll('[data-undo]').forEach(b => b.addEventListener('click', () => решить(Number(b.dataset.undo), false, 'привязка снята')));
+  meHeroTabs();
+}
+/* Число ждущих на вкладке — без перерисовки самой вкладки. */
+function meHeroTabs() {
+  const a = document.querySelector('#meTabs a[href="#me/claims"]');
+  if (!a) return;
+  let b = a.querySelector('.tab-n');
+  if (!ОБЛ.ждут) { if (b) b.remove(); return; }
+  if (!b) { b = document.createElement('b'); b.className = 'tab-n'; a.append(' ', b); }
+  b.textContent = ОБЛ.ждут;
 }
 
 облакоЗапуск();
