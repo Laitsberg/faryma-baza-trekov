@@ -1176,6 +1176,20 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
 .lnk-tw{color:#c9b3ff;font-size:11px;padding:0;text-decoration:underline;text-underline-offset:3px}
 .lnk-tw:hover{color:#fff}
 
+/* Роль — плашкой у ника: в комментариях, в кабинете, в списке команды.
+   Композитор — фирменным оранжевым, остальные спокойнее. */
+.role{display:inline-block;margin-left:7px;padding:1px 7px;border-radius:5px;vertical-align:1px;
+  font:600 10.5px/1.6 var(--b);color:#d7d7de;background:var(--card-2);border:1px solid var(--line)}
+.role.owner{color:#ffb27a;background:rgba(242,102,15,.13);border-color:rgba(242,102,15,.45)}
+.role.admin{color:#c9b3ff;background:rgba(145,70,255,.12);border-color:rgba(145,70,255,.4)}
+.me-pill.role{margin-left:0;font-size:11.5px;vertical-align:0}
+.msg .only-me{margin-left:9px;font-size:11px;color:var(--faint);border-bottom:1px dotted var(--faint)}
+.msg .ini img,.talk-form .ini img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.msg .ini,.talk-form .ini{overflow:hidden}
+.msg .ban{flex:none;color:var(--faint);font-size:13px;padding:5px 7px}
+.msg .ban:hover{color:var(--like)}
+.talk-ft .note b{color:var(--ink);font-weight:600}
+
 /* ---------- личный кабинет ---------- */
 .me-hero{display:flex;align-items:center;gap:25px;padding:26px 28px;margin-top:14px}
 .me-ava{position:relative;width:89px;height:89px;flex:none;display:grid;place-items:center;
@@ -13374,11 +13388,12 @@ function стопОригинал(el) {
 }
 
 /* ---------- комментарии ----------
-   Сервера нет: сказанное ложится в этот же браузер и дальше него не
-   уходит. Врать об этом нельзя, поэтому под полем стоит прямая
-   приписка. Поля для имени тоже нет: раз комментарии видит только
-   сам пишущий, подписываться было не для кого. Прежние, подписанные
-   именем, остаются со своей подписью. */
+   Вошедший через Twitch пишет в общую базу — его видят все, под его
+   ником с Twitch (КОММ, комментарииЗагрузить() ниже, в разделе входа).
+   Гость пишет, как раньше, в этот же браузер, и это прямо сказано под
+   полем. Старые локальные комментарии при входе в базу не уезжают:
+   их писали как личные, и выкладывать их без спроса нельзя — они
+   остаются в ленте с пометкой «видишь только ты». */
 const TALK_LS = 'faryma-catalog-talk';
 const WHO_LS  = 'faryma-catalog-who';
 let TALK = (() => { try { return JSON.parse(localStorage.getItem(TALK_LS)) || {}; }
@@ -13394,7 +13409,6 @@ function drawTalk() {
   // страницу. Поле при этом трогать нельзя — пропал бы недописанный текст.
   if (box.dataset.key === r.key) return;
   box.dataset.key = r.key;
-  const я = ктоЯ() || 'Я';
 
   box.innerHTML =
     '<div class="talk-hd"><h2>Комментарии</h2><span class="cnt-b">0</span>' +
@@ -13402,10 +13416,10 @@ function drawTalk() {
         '<option value="new">Сначала новые</option><option value="old">Сначала старые</option>' +
       '</select></div>' +
     '<form class="talk-form">' +
-      '<span class="ini">' + esc(я.trim()[0].toUpperCase()) + '</span>' +
+      '<span class="ini"></span>' +
       '<div class="talk-box">' +
         '<textarea maxlength="1500" placeholder="Что думаешь об этом треке и разборе?" aria-label="Комментарий"></textarea>' +
-        '<div class="talk-ft"><p class="note">Демо: комментарии сохраняются только в твоём браузере</p>' +
+        '<div class="talk-ft"><p class="note"></p>' +
           '<button type="submit" class="btn">Опубликовать →</button></div>' +
       '</div>' +
     '</form>' +
@@ -13418,7 +13432,8 @@ function drawTalk() {
   порядок.value = ПОРЯДОК;
 
   const рисовать = () => {
-    const список = TALK[r.key] || [];
+    подписьФормы(форма);
+    const список = лентаКомментариев(r.key);
     счёт.textContent = список.length;
     счётКомментариев();
     лента.textContent = '';
@@ -13429,36 +13444,102 @@ function drawTalk() {
     (ПОРЯДОК === 'new' ? [...список].reverse() : список).forEach(м => {
       const el = document.createElement('article');
       el.className = 'msg';
+      const роль = РОЛИ[м.роль];
       el.innerHTML =
-        '<span class="ini">' + esc((м.who || '?').trim()[0].toUpperCase()) + '</span>' +
+        '<span class="ini">' + (м.аватар ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(м.аватар) + '">'
+                                         : esc((м.who || '?').trim()[0].toUpperCase())) + '</span>' +
         '<div class="bd"><b>' + esc(м.who) + '</b>' +
+          (роль ? '<span class="role ' + м.роль + '">' + роль + '</span>' : '') +
           '<time>' + когда(м.when) + '</time>' +
+          (м.локально && ОБЛ && ОБЛ.sb ? '<span class="only-me" data-tip="Этот комментарий лежит только в твоём браузере">видишь только ты</span>' : '') +
           '<p></p></div>' +
-        '<button class="del" type="button" aria-label="Удалить">✕</button>';
+        (м.можноБан ? '<button class="ban" type="button" data-tip="Закрыть автору комментарии">⊘</button>' : '') +
+        (м.можноУдалить ? '<button class="del" type="button" aria-label="Удалить">✕</button>' : '');
       el.querySelector('p').textContent = м.text;
-      el.querySelector('.del').addEventListener('click', () => {
-        TALK[r.key] = (TALK[r.key] || []).filter(x => x !== м);
-        if (!TALK[r.key].length) delete TALK[r.key];
-        saveTalk(); рисовать();
+      const im = el.querySelector('.ini img');
+      if (im) im.addEventListener('error', () => { im.parentNode.textContent = (м.who || '?').trim()[0].toUpperCase(); });
+      const del = el.querySelector('.del');
+      if (del) del.addEventListener('click', () => {
+        if (м.локально) {
+          TALK[r.key] = (TALK[r.key] || []).filter(x => x !== м.исх);
+          if (!TALK[r.key].length) delete TALK[r.key];
+          saveTalk(); рисовать();
+        } else комментарийУдалить(r.key, м.id);
       });
+      const ban = el.querySelector('.ban');
+      if (ban) ban.addEventListener('click', () => закрытьКомментарии(м.user_id, м.who));
       лента.append(el);
     });
   };
 
   box._рисовать = рисовать;
   порядок.addEventListener('change', () => { ПОРЯДОК = порядок.value; рисовать(); });
-  форма.addEventListener('submit', e => {
+  форма.addEventListener('submit', async e => {
     e.preventDefault();
     const поле = форма.querySelector('textarea');
     const text = поле.value.trim();
     if (!text) return;
-    (TALK[r.key] = TALK[r.key] || []).push({ who: я, text, when: Date.now() });
-    saveTalk(); учёт('talk');
-    поле.value = '';
-    рисовать();
+    if (await опубликовать(r, text)) поле.value = '';
   });
 
   рисовать();
+  комментарииЗагрузить(r.key);
+}
+
+/* Лента одного трека: общие из базы и свои локальные, по времени. */
+function лентаКомментариев(key) {
+  const мой = вошёл() ? ОБЛ.user.id : '';
+  const я = мояРоль();
+  const штат = ['moder', 'admin', 'owner'].includes(я);
+  const общие = ((ОБЛ && ОБЛ.комм[key]) || []).map(c => {
+    const п = c.profiles || {};
+    return { id: c.id, user_id: c.user_id, who: п.name || п.login || 'зритель', аватар: п.avatar_url || '',
+             роль: п.role, when: Date.parse(c.created_at), text: c.body,
+             можноУдалить: c.user_id === мой || штат,
+             можноБан: штат && c.user_id !== мой && (!п.role || п.role === 'user') };
+  });
+  const свои = (TALK[key] || []).map(м => ({ who: м.who || 'Я', when: м.when, text: м.text,
+    локально: true, исх: м, можноУдалить: true }));
+  return общие.concat(свои).sort((a, b) => a.when - b.when);
+}
+
+/* Подпись под полем — честно о том, кто увидит написанное. */
+function подписьФормы(форма) {
+  const ini = форма.querySelector('.ini');
+  const note = форма.querySelector('.note');
+  const img = мойАватар();
+  const ник = мойНик() || ктоЯ() || 'Я';
+  if (ini) ini.innerHTML = img ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(img) + '">'
+                               : esc(ник.trim()[0].toUpperCase());
+  if (!note) return;
+  if (вошёл()) note.innerHTML = ОБЛ.проф && ОБЛ.проф.banned
+    ? 'Тебе закрыли комментарии — написанное увидишь только ты'
+    : 'Комментарий увидят все — под ником <b>' + esc(ник) + '</b>';
+  else if (ОБЛ && ОБЛ.sb) note.innerHTML = 'Без входа комментарий видишь только ты · ' +
+    '<button type="button" class="lnk-tw" data-login>войти через Twitch</button>';
+  else note.textContent = 'Комментарии сохраняются только в твоём браузере';
+}
+
+/* Написать: вошедший — в базу, гость или закрытый — в браузер. */
+async function опубликовать(r, text) {
+  if (вошёл() && !(ОБЛ.проф && ОБЛ.проф.banned)) {
+    const { error } = await ОБЛ.sb.from('comments').insert({ track_key: r.key, body: text });
+    if (error) {
+      toast(/too many/.test(error.message) ? 'Слишком часто — подожди пару минут'
+          : /banned/.test(error.message) ? 'Тебе закрыли комментарии'
+          : 'Не удалось опубликовать: ' + error.message);
+      return false;
+    }
+    учёт('talk');
+    if (ОБЛ.моихКомм != null) ОБЛ.моихКомм++;
+    await комментарииЗагрузить(r.key);
+    return true;
+  }
+  (TALK[r.key] = TALK[r.key] || []).push({ who: мойНик() || ктоЯ() || 'Я', text, when: Date.now() });
+  saveTalk(); учёт('talk');
+  const лента = $('tTalk');
+  if (лента._рисовать) лента._рисовать();
+  return true;
 }
 
 /* «сегодня, 14:20» вместо голой даты: комментарии свежие, и полная
@@ -13712,17 +13793,15 @@ function drawMine() {
      Ложится в тот же список, что и форма внизу, а кнопка ниже ведёт к
      нему — к комментариям под вкладками. */
   const форма = box.querySelector('.mine-talk');
-  форма.addEventListener('submit', e => {
+  форма.addEventListener('submit', async e => {
     e.preventDefault();
     const поле = форма.querySelector('textarea');
     const text = поле.value.trim();
     if (!text) return;
-    (TALK[r.key] = TALK[r.key] || []).push({ who: ктоЯ() || 'Я', text, when: Date.now() });
-    saveTalk(); учёт('talk');
-    поле.value = '';
-    const лента = $('tTalk');
-    if (лента._рисовать) лента._рисовать();
-    toast('Комментарий добавлен');
+    if (await опубликовать(r, text)) {
+      поле.value = '';
+      toast(вошёл() && !(ОБЛ.проф && ОБЛ.проф.banned) ? 'Комментарий опубликован' : 'Комментарий добавлен');
+    }
   });
   форма.querySelector('textarea').addEventListener('keydown', e => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) форма.requestSubmit();
@@ -13735,7 +13814,7 @@ function drawMine() {
 
 function счётКомментариев() {
   if (!T.r) return;
-  const n = (TALK[T.r.key] || []).length;
+  const n = лентаКомментариев(T.r.key).length;
   const b = document.querySelector('#tMine .mine-all b');
   if (b) b.textContent = n ? '(' + n + ')' : '';
 }
@@ -14962,7 +15041,8 @@ function meHero(list = мойСписок()) {
   let вход = '';
   if (!ОБЛ || ОБЛ.состояние === 'грузится') вход = '';
   else if (ОБЛ.состояние === 'вошёл')
-    вход = '<span class="me-pill tw">' + ЗНАЧОК_TW + 'Twitch' + (п && п.login ? ' · ' + esc(п.login) : '') + '</span>' +
+    вход = (п && РОЛИ[п.role] ? '<span class="me-pill role ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '') +
+      '<span class="me-pill tw">' + ЗНАЧОК_TW + 'Twitch' + (п && п.login ? ' · ' + esc(п.login) : '') + '</span>' +
       (ОБЛ.ошибка ? '<span class="me-pill bad" data-tip="' + esc(ОБЛ.ошибка) + '">не сохраняется на сервер</span>' : '') +
       '<button type="button" class="me-pill out" data-logout>выйти</button>';
   else if (ОБЛ.состояние === 'гость')
@@ -15013,7 +15093,7 @@ function достижения(list) {
   const жанры = new Set(list.flatMap(x => x.r.genres)).size;
   const совпало = сравнимые(list).filter(совпалС).length;
   const игра = играСчёт();
-  const слов = Object.values(TALK).reduce((n, л) => n + (л || []).length, 0);
+  const слов = Object.values(TALK).reduce((n, л) => n + (л || []).length, 0) + (вошёл() && ОБЛ.моихКомм || 0);
   return [
     ['star', 'первая оценка', 'одна оценка', list.length, 1],
     ['head', 'первые 100', '100 оценок', list.length, 100],
@@ -15091,7 +15171,7 @@ function meOverview(box, list) {
     }).join('') + '</div></section>';
 
   const игра = играСчёт();
-  const слов = Object.values(TALK).reduce((n, л) => n + (л || []).length, 0);
+  const слов = Object.values(TALK).reduce((n, л) => n + (л || []).length, 0) + (вошёл() && ОБЛ.моихКомм || 0);
   const своё = '<section class="pan me-pan"><h2>моё на сайте</h2><div>' +
     [['в избранном', FAV.size, FAV.size ? 'fav' : ''],
      ['комментариев', слов, ''],
@@ -15170,9 +15250,12 @@ function meSettings(box) {
     '<aside class="pan me-pan me-tip"><h2>где это хранится</h2>' + (вошёл()
       ? '<p>Оценки, сердечки, цвет и пара слов о себе лежат в базе сайта и приезжают на любое устройство, где ты вошёл через Twitch. Свои оценки видишь только ты.</p>' +
         '<p>Другим видны твой ник и аватар с Twitch, цвет и пара слов — и то, что ты сейчас на сайте.</p>' +
-        '<p>Комментарии, заявки на обложки и факты пока остаются в этом браузере.</p>'
+        '<p>Комментарии видят все. Заявки на обложки и факты пока остаются в этом браузере.</p>'
       : '<p>Без входа ник, оценки и комментарии лежат в этом браузере — другие их не видят, а с телефона будет свой кабинет.</p>' +
-        '<p>Войдёшь через Twitch — оценки и сердечки отсюда переедут в твой аккаунт.</p>') + '</aside></div>';
+        '<p>Войдёшь через Twitch — оценки и сердечки отсюда переедут в твой аккаунт.</p>') + '</aside></div>' +
+    (['admin', 'owner'].includes(мояРоль())
+      ? '<section class="pan me-pan" style="margin-top:18px"><h2>команда сайта</h2><div id="meTeam"><p class="me-cnt">загружаю…</p></div></section>' : '');
+  командаНарисовать($('meTeam'));
   $('meSw').addEventListener('click', e => {
     const b = e.target.closest('[data-c]'); if (!b) return;
     цвет = b.dataset.c;
@@ -15227,7 +15310,13 @@ const ВХОД_LS = 'faryma-after-login';
    скрипта, раньше, чем дело дойдёт до этой строки, — и const там
    упал бы с ReferenceError. var к тому времени просто undefined. */
 var ОБЛ = { sb: null, user: null, проф: null, состояние: 'грузится', ошибка: '',
-            онлайн: [], пишем: false, ещё: false, таймер: 0, сказали: false };
+            онлайн: [], пишем: false, ещё: false, таймер: 0, сказали: false,
+            комм: {}, моихКомм: null };
+
+/* Роли раздаёт сервер по логину Twitch (role_grants в schema.sql):
+   композитор входит — и сразу «композитор». Страница только читает. */
+const РОЛИ = { owner: 'композитор', admin: 'админ', moder: 'модер' };
+function мояРоль() { return вошёл() && ОБЛ.проф ? (ОБЛ.проф.role || 'user') : 'guest'; }
 
 /* Снимок того, что лежит на сервере, после последней сверки:
    { владелец: id, rates: { ключ: 'ступень|модификатор' }, favs: [ключи] }.
@@ -15262,6 +15351,7 @@ async function облакоСтарт() {
       flowType: 'pkce', persistSession: true, autoRefreshToken: true,
       detectSessionInUrl: true, storageKey: 'faryma-auth' } });
   } catch { return облакоНет('сеть'); }
+  if (T.r) комментарииЗагрузить(T.r.key);
   /* Внутри этого обработчика нельзя ждать других вызовов Supabase:
      они встанут в очередь за ним самим. Поэтому дела — следующим тиком. */
   ОБЛ.sb.auth.onAuthStateChange((событие, сессия) => { setTimeout(() => облакоСессия(сессия), 0); });
@@ -15332,9 +15422,11 @@ function облакоСбой(e) {
 /* ---------- профиль ---------- */
 async function профильИзБазы() {
   const { data, error } = await ОБЛ.sb.from('profiles')
-    .select('name,login,avatar_url,color,bio,created_at').eq('id', ОБЛ.user.id).maybeSingle();
+    .select('name,login,avatar_url,color,bio,role,banned,created_at').eq('id', ОБЛ.user.id).maybeSingle();
   if (error) return облакоСбой(error);
   ОБЛ.проф = data;
+  const к = await ОБЛ.sb.from('comments').select('id', { count: 'exact', head: true }).eq('user_id', ОБЛ.user.id);
+  ОБЛ.моихКомм = к.error ? null : к.count;
   if (data) {
     // Цвет и пару слов, выбранные до входа, кладём в профиль, если там пусто.
     const нужно = {};
@@ -15521,11 +15613,72 @@ function онлайнЦикл() {
    не печатает. */
 function облакоРисовать(сВкладкой) {
   ава();
+  if (T.r && $('tTalk')._рисовать) $('tTalk')._рисовать();
   if (!$('page').hidden && CAT.length) главная();
   if (!$('mpage').hidden && CAT.length) {
     if (сВкладкой && !$('meTab').contains(document.activeElement)) drawMe();
     else meHero();
   }
+}
+
+/* ---------- общие комментарии ---------- */
+async function комментарииЗагрузить(key) {
+  if (!ОБЛ.sb) return;
+  const { data, error } = await ОБЛ.sb.from('comments')
+    .select('id,body,created_at,user_id,profiles(name,login,avatar_url,role)')
+    .eq('track_key', key).order('created_at').limit(500);
+  if (error) return;
+  ОБЛ.комм[key] = data || [];
+  if (T.r && T.r.key === key && $('tTalk')._рисовать) $('tTalk')._рисовать();
+}
+async function комментарийУдалить(key, id) {
+  const { error } = await ОБЛ.sb.from('comments').delete().eq('id', id);
+  if (error) return toast('Не удалось удалить: ' + error.message);
+  const был = (ОБЛ.комм[key] || []).find(c => c.id === id);
+  if (был && был.user_id === ОБЛ.user.id && ОБЛ.моихКомм) ОБЛ.моихКомм--;
+  await комментарииЗагрузить(key);
+  toast('Комментарий удалён');
+}
+async function закрытьКомментарии(uid, ник) {
+  const { error } = await ОБЛ.sb.rpc('set_ban', { p_user: uid, p_banned: true });
+  toast(error ? 'Не вышло: ' + error.message : ник + ' больше не может писать комментарии');
+}
+
+/* ---------- команда сайта ----------
+   Композитор назначает модеров и админов, админ — модеров. Самого
+   композитора назначают только в SQL Editor: со страницы его не снять
+   и не подделать. Сервер проверяет это сам (grant_role), здесь —
+   только кнопки по силам. */
+async function командаНарисовать(box) {
+  const я = мояРоль();
+  if (!box || !['admin', 'owner'].includes(я)) return;
+  const { data, error } = await ОБЛ.sb.rpc('list_roles');
+  if (error) { box.innerHTML = '<p class="me-cnt">Не удалось загрузить: ' + esc(error.message) + '</p>'; return; }
+  const можноСнять = г => г.role !== 'owner' && (я === 'owner' || г.role === 'moder');
+  box.innerHTML = '<div>' + (data || []).map(г =>
+      '<div class="kv"><span>' + esc(г.name || г.twitch_login) +
+        ' <small style="color:var(--faint)">' + esc(г.twitch_login) + (г.bound ? '' : ' · ещё не входил') + '</small></span>' +
+        '<span><span class="role ' + г.role + '">' + РОЛИ[г.role] + '</span>' +
+        (можноСнять(г) ? ' <button type="button" class="lnk" data-unrole="' + esc(г.twitch_login) + '">снять</button>' : '') +
+        '</span></div>').join('') + '</div>' +
+    '<form class="me-tools" id="roleForm" style="margin-top:14px">' +
+      '<input id="roleLogin" placeholder="логин на Twitch" maxlength="25" autocomplete="off" aria-label="Логин на Twitch">' +
+      '<select id="roleRole" aria-label="Роль"><option value="moder">модер</option>' +
+        (я === 'owner' ? '<option value="admin">админ</option>' : '') + '</select>' +
+      '<button type="submit" class="btn">назначить</button></form>' +
+    '<p class="me-cnt">Логин — как в адресе канала twitch.tv/<b>логин</b>. Если человек уже входил на сайт, роль включится сразу, если нет — при первом входе.</p>';
+  const ставить = async (login, role) => {
+    const { error } = await ОБЛ.sb.rpc('grant_role', { p_login: login, p_role: role });
+    if (error) return toast(/bad twitch login/.test(error.message) ? 'Такого логина на Twitch не бывает' : 'Нельзя: ' + error.message);
+    toast(role === 'user' ? 'Роль снята' : login + ' — ' + РОЛИ[role]);
+    командаНарисовать(box);
+  };
+  box.querySelectorAll('[data-unrole]').forEach(b => b.addEventListener('click', () => ставить(b.dataset.unrole, 'user')));
+  box.querySelector('#roleForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const l = box.querySelector('#roleLogin').value.trim();
+    if (l) ставить(l, box.querySelector('#roleRole').value);
+  });
 }
 
 облакоЗапуск();
