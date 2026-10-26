@@ -20,6 +20,9 @@
 --              «композитор». Через API эту таблицу не видно вовсе.
 --   comments — общие комментарии к трекам. Пишет вошедший, удаляет
 --              автор или команда сайта.
+--   claims   — заявки «это я в таблице»: зритель просит привязать к
+--              себе имя из колонки «Кто», админ или композитор одобряет,
+--              сверив ник на Twitch. Одно имя — одному аккаунту.
 --
 -- «Automatically expose new tables» при создании проекта выключен,
 -- поэтому доступ к каждой таблице ниже выдаётся явно (grant).
@@ -353,6 +356,89 @@ revoke all on public.comments from anon, authenticated;
 grant select on public.comments to anon, authenticated;
 grant insert (track_key, body) on public.comments to authenticated;
 grant delete on public.comments to authenticated;
+
+-- ---------- заявки на свои заказы ----------
+-- В таблице разносов заказчик записан так, как его назвали на стриме, и
+-- это не всегда ник на Twitch. Поэтому привязку не угадываем, а просим:
+-- зритель называет имя из колонки «Кто», админ сверяет его с ником на
+-- Twitch и одобряет. Имя хранится строчными — «AndrLord» и «Andrlord» в
+-- таблице один человек.
+create table if not exists public.claims (
+  id          bigint generated always as identity primary key,
+  user_id     uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  name        text not null check (char_length(name) between 1 and 80 and name = lower(name)),
+  shown       text check (char_length(shown) <= 80),        -- как написано в таблице
+  note        text check (char_length(note) <= 300),        -- чем заявитель подтверждает
+  status      text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  answer      text check (char_length(answer) <= 300),      -- ответ админа
+  decided_by  uuid references public.profiles (id) on delete set null,
+  decided_at  timestamptz,
+  created_at  timestamptz not null default now()
+);
+create unique index if not exists claims_taken on public.claims (name) where status = 'approved';
+create unique index if not exists claims_once on public.claims (user_id, name) where status in ('pending', 'approved');
+alter table public.claims enable row level security;
+
+create or replace function public.claim_guard()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  new.name := lower(btrim(new.name));
+  new.status := 'pending';
+  new.answer := null; new.decided_by := null; new.decided_at := null;
+  new.created_at := now();
+  if (select banned from public.profiles where id = new.user_id) then raise exception 'banned'; end if;
+  if exists (select 1 from public.claims where name = new.name and status = 'approved') then
+    raise exception 'name taken';
+  end if;
+  if (select count(*) from public.claims where user_id = new.user_id and status = 'pending') >= 10 then
+    raise exception 'too many claims';
+  end if;
+  return new;
+end $$;
+revoke execute on function public.claim_guard() from public, anon, authenticated;
+drop trigger if exists claims_guard on public.claims;
+create trigger claims_guard before insert on public.claims
+  for each row execute function public.claim_guard();
+
+-- Одобренные видны всем: «кто заказал» на сайте потом можно будет вести
+-- в профиль. Ждущие и отклонённые — только самому заявителю и тем, кто
+-- их разбирает.
+drop policy if exists claims_read on public.claims;
+create policy claims_read on public.claims
+  for select to anon, authenticated
+  using (status = 'approved' or user_id = (select auth.uid()) or (select public.my_role()) in ('admin', 'owner'));
+drop policy if exists claims_ask on public.claims;
+create policy claims_ask on public.claims
+  for insert to authenticated with check (user_id = (select auth.uid()));
+drop policy if exists claims_cancel on public.claims;
+create policy claims_cancel on public.claims
+  for delete to authenticated using (user_id = (select auth.uid()) and status = 'pending');
+
+revoke all on public.claims from anon, authenticated;
+grant select on public.claims to anon, authenticated;
+grant insert (name, shown, note) on public.claims to authenticated;
+grant delete on public.claims to authenticated;
+
+-- Решение по заявке — админ или композитор. Одобренную можно и снять
+-- (отклонить задним числом), если привязали не того.
+create or replace function public.decide_claim(p_id bigint, p_ok boolean, p_answer text default null)
+returns void language plpgsql security definer set search_path = '' as $$
+declare c record;
+begin
+  if public.my_role() not in ('admin', 'owner') then raise exception 'not allowed'; end if;
+  select * into c from public.claims where id = p_id;
+  if not found then raise exception 'no such claim'; end if;
+  if p_ok and exists (select 1 from public.claims where name = c.name and status = 'approved' and id <> p_id) then
+    raise exception 'name taken';
+  end if;
+  update public.claims
+     set status = case when p_ok then 'approved' else 'rejected' end,
+         answer = left(nullif(btrim(coalesce(p_answer, '')), ''), 300),
+         decided_by = (select auth.uid()), decided_at = now()
+   where id = p_id;
+end $$;
+revoke execute on function public.decide_claim(bigint, boolean, text) from public, anon;
+grant execute on function public.decide_claim(bigint, boolean, text) to authenticated;
 
 -- ---------- кто сейчас на сайте ----------
 create table if not exists public.online (
