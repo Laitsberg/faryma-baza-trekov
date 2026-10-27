@@ -276,7 +276,30 @@ select option{background:var(--card-2);color:var(--ink)}
 .fav:hover{color:var(--brand-hi)}
 .fav[aria-pressed="true"]{color:var(--brand)}
 .fav[aria-pressed="true"] svg{fill:currentColor}
-.strm{right:8px;color:rgba(255,255,255,.92)}
+.strm{right:8px;color:rgba(255,255,255,.92);text-decoration:none}
+/* Число у сердечка и облачка — сколько у трека лайков и комментариев
+   от зрителей. Есть число — плашка шире квадрата, нет — квадрат. */
+/* К комментариям прокручиваем так, чтобы их не закрывала шапка. */
+#tTalk{scroll-margin-top:84px}
+.badge .n{font:600 12px var(--m)}
+.badge .n:empty{display:none}
+.badge.wide{width:auto;min-width:32px;padding:0 8px}
+a.cmt:hover{color:var(--brand-hi)}
+/* Сколько раз разносили — метка в правом верхнем углу. */
+.badge.times{top:8px;bottom:auto;right:8px;width:auto;padding:0 8px;height:24px;
+  background:rgba(242,102,15,.86);color:#140c05;font-weight:700;font-size:11.5px}
+/* Удар оценки: 0,7 секунды карточка чуть растёт и светится цветом
+   ступени. Растёт свойством scale, а не transform: transform у карточки
+   занят подъёмом на наведении. */
+.card.hit{z-index:5;animation:hit .7s ease-out}
+@keyframes hit{
+  0%{scale:1;box-shadow:0 0 0 0 transparent}
+  35%{scale:1.045;box-shadow:0 0 30px 6px color-mix(in srgb,var(--hc) 55%,transparent)}
+  100%{scale:1;box-shadow:0 0 0 0 transparent}}
+.rated-msg{position:absolute;left:0;right:0;top:calc(50% + 24px);text-align:center;pointer-events:none;
+  font-size:12px;font-weight:600;color:#fff;text-shadow:0 1px 6px #000;opacity:0;transition:opacity .2s}
+.rated-msg.on{opacity:1}
+@media(prefers-reduced-motion:reduce){.card.hit{animation:none}}
 
 /* ---------- слой оценки ---------- */
 .rater{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;
@@ -1022,14 +1045,10 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   background:radial-gradient(ellipse at 50% 1%,rgba(242,102,15,.12),transparent 60%)}
 .home[hidden]{display:none}
 .home-h{position:relative;margin:0;font:800 clamp(34px,4.2vw,55px)/1.14 var(--d);letter-spacing:-.052em}
-.home-h span{color:var(--brand-hi)}
+.home-h{color:var(--brand-hi)}
 .home-lead{position:relative;max-width:790px;margin:17px auto 11px;color:#B7B7BE;font-size:15px;line-height:1.6}
 .home-lead:empty{display:none}
-.home-note{position:relative;max-width:850px;margin:12px auto 9px;color:#A5A4AD;
-  font:500 11px/1.7 var(--m);letter-spacing:-.017em}
-.home-note::before{content:'//';color:var(--brand);margin-right:10px;font-weight:600}
 .home-member .home-lead,.home-member .feats{display:none}
-.home-member .home-note{margin-top:18px}
 
 .home-search{position:relative;max-width:756px;margin:0 auto;z-index:5}
 .runway{position:relative;height:72px}
@@ -1038,15 +1057,16 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
    гулять надо по ширине поля. */
 .walker{position:absolute;bottom:-1px;left:var(--x,50%);display:flex;flex-direction:column;
   align-items:center;min-width:44px;margin-left:-22px;color:inherit;text-decoration:none;
-  animation:stroll var(--t,46s) ease-in-out infinite alternate;animation-delay:var(--d0,0s)}
+  animation:stroll calc(var(--t,46s) * 2) ease-in-out infinite;animation-delay:var(--d0,0s)}
 .walker:hover,.walker:focus-visible{animation-play-state:paused;z-index:3}
 .walker .nick{font:600 10px/1.25 var(--b);white-space:nowrap;color:#d8d8df;
   text-shadow:0 1px 6px #111,0 0 3px #111;padding:2px 3px;margin-bottom:3px;letter-spacing:-.012em}
 .walker:hover .nick{color:#fff}
-.walker .spr{position:relative;width:25px;height:32px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.walker .spr{position:relative;width:25px;height:32px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));
+  animation:face calc(var(--t,46s) * 2) linear infinite;animation-delay:var(--d0,0s)}
 .walker .spr i{position:absolute;background:var(--c)}
 .walker .hd0{top:0;left:5px;width:15px;height:15px;border-radius:6px 6px 5px 5px}
-.walker .hd0::after{content:'••';position:absolute;left:3px;top:0;color:#201b22;
+.walker .hd0::after{content:'••';position:absolute;left:5px;top:0;color:#201b22;
   letter-spacing:2px;font:8px/12px var(--b)}
 .walker .bd0{top:15px;left:4px;width:17px;height:13px;border-radius:5px 5px 3px 3px}
 .walker .lg{top:25px;width:5px;height:8px;border-radius:2px;transform-origin:top;
@@ -1055,8 +1075,13 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 .walker .lg.r{right:6px;animation-direction:alternate-reverse}
 .walker.you .nick{color:#ffcc9e}
 .walker.you .spr::after{content:'★';position:absolute;top:-10px;right:-5px;color:#ffd184;font-size:9px}
-.walker:hover .lg,.walker:focus-visible .lg{animation-play-state:paused}
-@keyframes stroll{0%{left:7%}30%{left:38%}55%{left:24%}100%{left:92%}}
+.walker:hover .lg,.walker:focus-visible .lg,.walker:hover .spr,.walker:focus-visible .spr{animation-play-state:paused}
+/* Путь туда и обратно расписан целиком, а не через alternate: так
+   известно, на каких отрезках человечек идёт влево, — там он
+   разворачивается (face). Отрезки у двух анимаций одни и те же. */
+@keyframes stroll{0%{left:7%}15%{left:38%}27.5%{left:24%}50%{left:92%}72.5%{left:24%}85%{left:38%}100%{left:7%}}
+@keyframes face{0%,15%{transform:none}15.01%,27.5%{transform:scaleX(-1)}27.51%,50%{transform:none}
+  50.01%,72.5%{transform:scaleX(-1)}72.51%,85%{transform:none}85.01%,100%{transform:scaleX(-1)}}
 @keyframes step{to{transform:rotate(24deg)}}
 
 .bigsearch{position:relative;display:flex;align-items:center;gap:13px;padding:9px 9px 9px 19px;
@@ -1093,21 +1118,11 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   margin-top:13px;color:var(--faint);font-size:12px}
 .quick button{padding:3px 9px;border:1px solid #3a3a42;border-radius:5px;color:#B9B9C2;font-size:12px}
 .quick button:hover{border-color:var(--brand);color:var(--brand-hi)}
-.online{margin-top:8px;color:#777780;font-size:11px}
-.online a{color:#B6B4BD;text-decoration:none}
-.online a:hover{color:var(--brand-hi)}
 
 .feats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:35px;text-align:left}
 .feat{display:flex;flex-direction:column;min-height:261px;padding:19px 19px 17px;border-radius:9px;
   background:var(--card);border:1px solid #3a3a40;transition:background .15s,border-color .15s}
 .feat:hover{border-color:#5e5550;background:#2e2e33}
-.feat-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
-.feat-i{font:600 10px var(--m);letter-spacing:.07em;color:var(--faint)}
-.feat-ic{width:30px;height:30px;display:grid;place-items:center;border-radius:7px;
-  border:1px solid #484048;background:#322b2a;color:var(--brand-hi)}
-.feat-ic.v{color:#B394F0;background:#322d37;border-color:#494050}
-.feat-ic.r{color:#FF8A89;background:#362b2d;border-color:#503c3e}
-.feat-ic svg{width:16px;height:16px}
 .feat h2{margin:0 0 5px;font:800 20px/1.2 var(--d);letter-spacing:-.035em}
 .feat p{margin:0;min-height:58px;color:#A7A7B0;font-size:12.5px;line-height:1.55}
 .feat-live{min-height:65px;margin:15px 0 12px;padding:10px 11px;border-radius:7px;
@@ -1143,10 +1158,6 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 .prev-chat i{display:block;height:5px;width:80%;border-radius:4px;background:#8E6CBE;opacity:.65}
 .prev-chat i:nth-child(2){background:#DB6664;width:100%}
 .prev-chat i:nth-child(3){background:#B57547;width:60%}
-.nudge{display:flex;justify-content:center;align-items:center;gap:9px;padding:24px 0 18px;
-  color:#9797a1;font-size:12px;text-decoration:none;border-bottom:1px solid #33333A}
-.nudge:hover{color:var(--ink)}
-.nudge svg{width:16px;height:16px;color:var(--brand-hi)}
 
 /* Пока приветствие на экране, поиск в шапке прячем: второе поле
    рядом с большим только путает. На телефоне не прячем — поле там
@@ -1222,7 +1233,24 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
 .cl-act .btn{min-height:37px}
 
 /* ---------- профиль: ответы, уведомления, активность, приватность ---------- */
-.ava.dot{outline:2px solid var(--brand);outline-offset:2px}
+/* Колокольчик в шапке, слева от аватара. Точка — есть новое. */
+.bell-wrap{position:relative;flex:none;margin-right:-14px}
+.tb-ic.bell{width:34px;height:34px;color:var(--dim)}
+.tb-ic.bell:hover,.tb-ic.bell[aria-expanded="true"]{color:var(--ink)}
+.tb-ic.bell svg{width:19px;height:19px}
+.n-dot{position:absolute;right:6px;top:5px;width:9px;height:9px;border-radius:50%;
+  background:var(--brand);border:2px solid var(--bar);pointer-events:none}
+.n-dot[hidden]{display:none}
+.bell-pop{position:absolute;right:-45px;top:46px;width:345px;max-height:min(460px,70vh);overflow-y:auto;
+  background:var(--card-2);border:1px solid #4a4a50;box-shadow:0 16px 44px #0008;border-radius:9px;
+  padding:16px 17px;z-index:55;font-size:13px;line-height:1.45}
+.bell-pop[hidden]{display:none}
+.bell-pop > strong{display:block;font-size:14px;margin-bottom:4px}
+.bell-pop .note-row{display:block;padding:10px 0}
+.bell-pop .note-row time{display:block;margin-top:5px;font-size:10px}
+.bell-pop .bell-none{margin:10px 0 0;color:var(--dim)}
+.bell-pop .tw-in{margin-top:12px}
+@media(max-width:600px){.bell-pop{right:-45px;width:min(330px,calc(100vw - 28px))}}
 .msg.reply{margin-left:45px;padding-top:10px}
 .msg .who{color:inherit;text-decoration:none}
 .msg .who:hover b{color:var(--brand-hi)}
@@ -1243,15 +1271,6 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
 .note-row time{flex:none;font:500 11px var(--m);color:var(--faint)}
 .note-row.fresh span::before{content:'';display:inline-block;width:7px;height:7px;margin-right:8px;border-radius:50%;
   background:var(--brand);vertical-align:1px}
-.cal{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:3px;max-width:620px}
-.cal i{aspect-ratio:1;border-radius:3px;background:#2f3033}
-.cal i.off{background:transparent}
-.cal i.l1{background:rgba(242,102,15,.3)}
-.cal i.l2{background:rgba(242,102,15,.5)}
-.cal i.l3{background:rgba(242,102,15,.75)}
-.cal i.l4{background:var(--brand)}
-.near{display:inline-flex;align-items:center;gap:9px}
-.near img{width:24px;height:24px;border-radius:50%;object-fit:cover}
 .tgl{display:flex;gap:11px;align-items:flex-start;padding:10px 0;cursor:pointer}
 .tgl input{margin-top:3px;width:17px;height:17px;accent-color:var(--brand);flex:none}
 .tgl b{display:block;font-size:13.5px;font-weight:600}
@@ -1263,145 +1282,42 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
 .btn.danger-btn{background:var(--like);color:#fff}
 .btn.danger-btn:hover{background:#ff7088}
 .btn.danger-btn:disabled{opacity:.4}
-.u-body{display:grid;gap:18px;margin-top:18px}
 @media(max-width:760px){
   .msg.reply,.re-form{margin-left:22px}
 }
-
-/* ---------- личный кабинет ---------- */
-.me-hero{display:flex;align-items:center;gap:25px;padding:26px 28px;margin-top:14px}
-.me-ava{position:relative;width:89px;height:89px;flex:none;display:grid;place-items:center;
-  border-radius:20px;border:2px solid #78604d;background:linear-gradient(145deg,#494039,#242527);
-  color:#e9c0a0;font:650 32px var(--d);letter-spacing:-.05em}
-.me-ava::after{content:'♫';position:absolute;right:-8px;bottom:-8px;width:28px;height:25px;
-  display:grid;place-items:center;border-radius:8px;border:2px solid var(--card);
-  background:#242628;color:var(--brand);font-size:12px}
-.me-id{flex:1;min-width:0}
-.me-k{font:700 10px var(--b);letter-spacing:.11em;text-transform:uppercase;color:var(--faint)}
-/* .pan h2 сильнее простого класса — ник ему не отдаём. И не .empty:
-   это имя уже занято заглушкой пустой сетки с отступом в 70px. */
-.me-hero .me-nm{display:block;margin:3px 0 5px;font:720 25px/1.25 var(--d);letter-spacing:-.025em;overflow-wrap:anywhere}
-.me-hero .me-nm.none{color:var(--dim)}
-.me-bio{color:var(--dim);font-size:13px}
-.me-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .me-pill{padding:4px 9px;border-radius:6px;border:1px solid var(--line);background:var(--card-2);
   color:#c9cacc;font-size:11.5px;line-height:1.35}
 .me-pill.o{background:rgba(242,102,15,.11);border-color:rgba(242,102,15,.32);color:#e5a17b}
-.me-edit{width:35px;height:35px;flex:none;align-self:flex-start;display:grid;place-items:center;
-  border-radius:9px;border:1px solid var(--line);background:var(--card-2);color:var(--dim)}
-.me-edit:hover{color:#fff;border-color:#5d5e62}
-.me-edit svg{width:18px;height:18px}
-.me-tabs{margin:21px 0 22px}
-.me-cols{display:grid;grid-template-columns:minmax(0,1.64fr) minmax(300px,1fr);gap:18px;align-items:start}
-.me-main,.me-side{display:grid;gap:18px;min-width:0}
-.me-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.me-m{padding:18px 19px 16px;border-radius:var(--r);background:var(--card);min-height:110px}
-.me-m .l{font-size:12px;color:#a8aaad;margin-bottom:6px}
-.me-m .v{font:700 29px/1.2 var(--d);letter-spacing:-.04em;overflow-wrap:anywhere}
-.me-m .v small{font-size:.6em;color:var(--dim);margin-left:2px}
-.me-m .v.w{font-size:23px;padding-top:3px}
-.me-m .s{margin-top:5px;font-size:11px;color:var(--faint)}
-.me-pan{padding:20px 22px}
-.me-pan h2{justify-content:space-between}
-.me-taste{display:grid;grid-template-columns:minmax(0,1.26fr) minmax(0,1fr);gap:23px}
-.me-lab{margin-bottom:12px;font-size:11px;color:#9b9da0;text-transform:uppercase;letter-spacing:.075em}
-.rbar{display:grid;grid-template-columns:110px 1fr 34px;align-items:center;gap:9px;margin-bottom:10px;font-size:12px}
-.rbar .n{color:#d0d0d1}
-.rbar .tr{height:6px;border-radius:4px;background:#353638;overflow:hidden}
-.rbar .tr span{display:block;height:100%;border-radius:4px;background:var(--tc)}
-.rbar .c{text-align:right;color:var(--dim);font:500 11px var(--m)}
-.gchips{display:flex;flex-wrap:wrap;gap:7px}
-.gchip{display:inline-flex;align-items:center;gap:7px;padding:6px 9px;border-radius:7px;
-  background:var(--card-2);color:#d0d0d1;font-size:12px;text-decoration:none}
-.gchip b{color:#c5a086;font-weight:600}
-.gchip:hover{color:var(--brand-hi)}
-.me-note{display:flex;align-items:center;gap:11px;margin-top:20px;padding-top:15px;
-  border-top:1px solid var(--line);color:#a5a7aa;font-size:12.5px}
-.me-note b{color:var(--brand-hi);font-weight:600}
-.me-empty{padding:26px 6px;color:var(--dim);font-size:13.5px;text-align:center}
-.me-empty a{color:var(--brand-hi)}
-.trow{display:grid;grid-template-columns:43px minmax(0,1fr) auto auto;align-items:center;gap:13px;
-  padding:10px 0;border-top:1px solid rgba(255,255,255,.065);color:inherit;text-decoration:none}
-.trow:first-child{border-top:0;padding-top:2px}
-.trow:hover .tn{color:var(--brand-hi)}
-.trow .th{position:relative;width:43px;height:43px;border-radius:5px;overflow:hidden;background:#34343b}
-.trow .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.trow .th .art-fb{font-size:16px}
-.trow .ta{display:block;color:var(--dim);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.trow .tn{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.trow .gr{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font:600 11.5px var(--m);
-  white-space:nowrap;color:var(--tc)}
-.trow .gr small{font:400 10.5px var(--b);color:var(--faint)}
-.trow .gr small i{font-style:normal;color:var(--tc2)}
-.trow .dt{width:66px;text-align:right;color:var(--faint);font:500 11px var(--m)}
 .kv{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;
   border-top:1px solid rgba(255,255,255,.065);font-size:13.5px}
 .kv:first-child{border-top:0;padding-top:2px}
 .kv b{font:500 12px var(--m)}
 .kv .lnk{margin:0}
-.me-more{margin-top:12px;color:var(--brand-hi);font-size:12.5px;font-weight:600}
-.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 11px}
-.bdg{text-align:center}
-.bdg .bv{width:58px;height:58px;margin:0 auto 9px;display:grid;place-items:center;border-radius:12px;
-  background:var(--card-2);border:1px solid rgba(255,255,255,.1);color:#c9b7a5}
-.bdg .bv svg{width:25px;height:25px}
-.bdg b{display:block;font-size:11.5px;font-weight:600;color:#cfd0d1;line-height:1.25}
-.bdg small{display:block;margin-top:2px;font-size:10.5px;color:var(--faint)}
-.bdg.off .bv{opacity:.35;color:var(--dim)}
-.bdg.off b{color:var(--dim)}
-.me-bar{height:3px;max-width:58px;margin:5px auto 0;border-radius:3px;background:#353638;overflow:hidden}
-.me-bar span{display:block;height:100%;background:#c9865e}
-.me-list{display:grid;grid-template-columns:minmax(0,1fr) 284px;gap:18px;align-items:start}
 .me-tools{display:flex;flex-wrap:wrap;gap:9px;margin:4px 0 14px}
 .me-tools input,.me-tools select{height:37px;padding:0 11px;border-radius:8px;border:1px solid var(--line);
   background:#151719;color:var(--ink);font-size:13px}
 .me-tools input{flex:1;min-width:200px}
 .me-tools input:focus,.me-tools select:focus{outline:none;border-color:var(--brand)}
 .me-cnt{margin-top:12px;color:var(--faint);font-size:11.5px}
-.me-tip p{margin:10px 0 0;color:var(--dim);font-size:12.5px;line-height:1.6}
-.me-form{display:grid;gap:16px;max-width:560px}
-.me-form label{display:grid;gap:6px;font-size:12.5px;color:#c9c9c9}
-.me-form input{padding:11px 12px;border-radius:8px;border:1px solid #4a4a52;background:#141618;
-  color:var(--ink);font-size:14px}
-.me-form input:focus{outline:none;border-color:var(--brand)}
-.me-sw{display:flex;gap:8px;flex-wrap:wrap}
-.me-sw button{width:30px;height:30px;border-radius:8px;background:var(--c);border:2px solid transparent}
-.me-sw button[aria-pressed="true"]{border-color:#fff}
-.me-form .btn{justify-self:start}
 
 @media(max-width:1000px){
   .feats{grid-template-columns:1fr;max-width:600px;margin:27px auto 0}
   .feat{min-height:auto}
   .feat p{min-height:0}
-  .me-cols,.me-list{grid-template-columns:1fr}
 }
 @media(max-width:760px){
   .home{padding-top:6px}
   .home-h{font-size:clamp(30px,8.1vw,42px);line-height:1.18}
   .home-lead{margin:14px auto 12px;font-size:13.5px}
-  .home-note{font-size:10px;line-height:1.6}
   .runway{height:63px}
   .bigsearch{min-height:58px;padding:7px 7px 7px 12px;gap:7px}
   .bigsearch input{font-size:14px}
   .bs-ic{width:20px;height:20px}
   .bs-go{min-height:42px;padding:8px 12px;font-size:13px}
   .bs-go svg{display:none}
-  .me-hero{flex-wrap:wrap;padding:20px;gap:17px;align-items:flex-start}
-  .me-ava{width:67px;height:67px;border-radius:15px;font-size:26px}
-  .me-hero .me-nm{font-size:21px}
-  .me-hero .me-edit{margin-left:auto}
-  .me-metrics{gap:7px}
-  .me-m{padding:13px 11px;min-height:96px}
-  .me-m .l{font-size:10.5px}
-  .me-m .v{font-size:23px}
-  .me-m .v.w{font-size:18px}
-  .me-pan{padding:18px 15px}
-  .me-taste{grid-template-columns:1fr;gap:21px}
-  .trow{grid-template-columns:41px minmax(0,1fr) auto;gap:9px}
-  .trow .dt{display:none}
 }
 @media(prefers-reduced-motion:reduce){
-  .walker,.walker .lg{animation:none}
+  .walker,.walker .lg,.walker .spr{animation:none}
   .walker{left:50%}
 }
 /* ============================================================
@@ -1715,6 +1631,319 @@ body.st-air #stAir:hover{opacity:1}
   .st-vinyl i{animation:none}
   .st-cov,.st-cov.in,.st-meta.in,.st-rec.land,.st-stamp,.st-stamp.still,.st-stage.shake,.st-art::before{animation:none}
 }
+/* ============================================================
+   ЛИЧНЫЙ КАБИНЕТ И ПРОФИЛЬ ЗРИТЕЛЯ — по макету заказчика
+   (faryma-cabinet-updated.html). Стили макета перенесены как есть;
+   переименованы только классы, которые на странице уже заняты:
+   .hero → .c-hero, .tabs/.tab → .c-tabs/.c-tab, .empty → .c-empty,
+   .field → .c-field, окно — .c-overlay/.c-dialog. Обложки и карточки
+   треков — наши, из каталога (card()), а не плитки макета.
+   ============================================================ */
+.cab svg.i{width:19px;height:19px;display:block;flex:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.cab h1,.cab h2,.cab h3{letter-spacing:-.035em}
+/* Ссылки кабинета — без подчёркивания и своим цветом. Общим правилом
+   на все a нельзя: внутри лежат карточки каталога со своими ссылками. */
+.cab :is(.c-tab,.text-link,.feed-row,.feed-head-link,.mini-order,.track-identity,.track-grade,.track-actions a,
+  .soft-btn,.main-btn,.twitch-link,.near-row,.claim-info a){text-decoration:none}
+.cab :is(.feed-row,.mini-order,.track-identity,.near-row,.claim-info a,.track-actions a){color:inherit}
+.cab :is(.near-row,.claim-info a):hover{color:var(--brand-hi)}
+.cab .muted{color:var(--dim)}
+.cab .faint{color:var(--faint)}
+.c-hero{background:linear-gradient(109deg,#2d2b2b 0%,#29292d 40%,#2a2a2e 100%);border:1px solid #343439;display:flex;align-items:center;gap:24px;min-height:165px;padding:21px 27px;border-radius:9px;position:relative;overflow:hidden;margin-top:14px}
+.c-hero::before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:linear-gradient(var(--brand),#664535);opacity:.95}
+.hero-avatar{position:relative;flex:none;width:106px;height:106px}
+.hero-avatar img,.hero-avatar .ini{width:100%;height:100%;object-fit:cover;border-radius:18px;border:2px solid #bd9b7d;background:#34302d;display:grid;place-items:center;font:800 30px var(--d);color:#f5b087}
+.music-symbol{position:absolute;right:-7px;bottom:-5px;border:2px solid var(--card);background:#292a2e;border-radius:6px;padding:4px;color:var(--brand);line-height:1;font-size:12px}
+.hero-text{min-width:0;flex:1}
+.hero-kicker{color:var(--faint);font-size:10px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;margin-bottom:4px}
+.hero-name{font-size:25px;font-weight:800;line-height:1.25;margin-bottom:5px;overflow-wrap:anywhere}
+.hero-name.none{color:var(--dim)}
+.hero-bio{font-size:12.5px;color:#bab8b9;margin-bottom:8px;max-width:680px}
+.hero-bio:empty{display:none}
+.hero-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px}
+.role-tag{font-size:10.5px;padding:2px 8px;background:#3a2b22;border:1px solid #7c4424;color:#eea36b;border-radius:5px;font-weight:700}
+.role-tag.admin{background:#2c2840;border-color:#5b4a8f;color:#c2b1f3}
+.role-tag.moder{background:#22343a;border-color:#2f6b74;color:#8fd8e0}
+.hero-since{font-size:11.5px;color:var(--dim)}
+.hero-since::before{content:'·';margin:0 9px 0 2px;color:#616168}
+.hero-meta > :first-child.hero-since::before{display:none}
+.twitch-link{font-size:11.5px;color:#b7a1ef}
+.cab a.twitch-link:hover{color:#d4c6ff}
+.hero-warn{font-size:11.5px;color:#ff9a9a}
+.hero-actions{display:flex;gap:9px;align-self:center}
+.hero-level{max-width:415px;margin-top:17px}
+.level-row{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:7px}
+.level-pill{color:var(--brand-hi);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.025em}
+.level-pill b{font-weight:800;font-size:16px;margin-left:4px}
+.xp-text{color:#b6afb0;font:11px var(--m)}
+.xp-text b{color:var(--ink);font-weight:700}
+.xp-track{height:6px;border-radius:8px;background:#444047;overflow:hidden}
+.xp-track>span{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,#ee6c25,#ffae55)}
+.soft-btn,.main-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 13px;border:1px solid #44444c;border-radius:7px;background:#34343a;font-size:12px;font-weight:600;white-space:nowrap;color:var(--ink)}
+.soft-btn:hover{border-color:#686870;background:#3b3b41;color:var(--ink)}
+.cab a.soft-btn:hover{color:var(--ink)}
+.main-btn{background:var(--brand);border-color:var(--brand);color:#16100d}
+.main-btn:hover,.cab a.main-btn:hover{background:var(--brand-hi);border-color:var(--brand-hi);color:#16100d}
+.soft-btn svg,.main-btn svg{width:15px;height:15px}
+.soft-btn:disabled,.main-btn:disabled{opacity:.5;cursor:not-allowed}
+.soft-btn.bad{color:#ff9a9a}
+.c-tabs{display:flex;gap:34px;align-items:end;border-bottom:1px solid var(--line);margin:19px 0 26px;overflow:auto;scrollbar-width:none}
+.c-tabs::-webkit-scrollbar{display:none}
+.c-tab{padding:10px 0 12px;white-space:nowrap;border-bottom:2px solid transparent;color:#a5a5ae;font-size:13px;font-weight:700;transition:color .14s}
+.cab .c-tab:hover{color:#fff}
+.c-tab[aria-selected="true"]{border-bottom-color:var(--brand);color:#fff}
+.c-tab .tab-n{margin-left:6px;padding:0 6px;border-radius:9px;background:var(--brand);color:#16100d;font-size:10.5px}
+.section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:17px}
+.section-title h2{font-weight:800;font-size:18px;line-height:1.2;margin:0}
+.section-title .section-sub{display:block;color:var(--dim);font-size:12px;margin-top:6px;font-weight:400;letter-spacing:0}
+.text-link{color:#d7a487;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;white-space:nowrap}
+.text-link:hover,.cab a.text-link:hover{color:var(--brand-hi)}
+.text-link svg{height:14px;width:14px}
+.mutedline{font-size:11px;color:var(--faint)}
+.feature-grid{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(345px,.83fr);gap:20px;margin-bottom:31px;align-items:stretch}
+.music-main{background:#29292e;border:1px solid #37373d;border-radius:10px;padding:22px 24px 23px;position:relative;overflow:hidden;margin:0;min-width:0}
+.music-main::after{content:'';position:absolute;width:360px;height:360px;right:-210px;top:-230px;border-radius:50%;background:radial-gradient(circle,#87431517 0%,transparent 68%);pointer-events:none}
+.music-main-top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px;min-height:26px}
+.music-main-top h2{font-size:18px;font-weight:800;margin:0;line-height:1.2}
+.feed-panel{min-width:0;background:#29292e;border:1px solid #37373d;border-radius:10px;padding:21px 19px 12px;overflow:hidden}
+.feed-panel .music-main-top{margin:0 0 12px}
+.feed-head-link{display:grid;place-items:center;color:var(--dim);padding:4px;border-radius:5px}
+.cab .feed-head-link:hover{color:var(--brand-hi);background:#ffffff12}
+.feed-head-link svg{width:16px;height:16px}
+.feed-list{display:flex;flex-direction:column}
+.feed-row{display:flex;align-items:center;gap:11px;width:100%;min-width:0;text-align:left;border-top:1px solid #ffffff12;padding:7px 1px;min-height:51px}
+.cab .feed-row:hover{color:inherit}
+.feed-row:hover .feed-title{color:var(--brand-hi)}
+.feed-art,.track-art{position:relative;flex:none;border-radius:5px;overflow:hidden;background:#37373c}
+.feed-art{width:37px;height:37px}
+.feed-art img,.track-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.feed-art .art-fb,.track-art .art-fb{font-size:13px}
+.feed-copy{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
+.feed-category{font-size:10px;color:var(--faint)}
+.feed-title{font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed-extra{font-size:10px;color:var(--dim);display:flex;gap:8px;align-items:center;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed-extra b{font-size:10.5px;white-space:nowrap}
+.feed-comment{font-size:10.5px;color:#b9b3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic}
+.feed-arrow{color:var(--faint);opacity:0;transition:opacity .14s}
+.feed-arrow svg{width:14px;height:14px}
+.feed-row:hover .feed-arrow{opacity:1}
+.feed-none{padding:14px 1px;border-top:1px solid #ffffff12;font-size:12px;color:var(--dim)}
+.overview-grid{display:grid;grid-template-columns:minmax(0,1.64fr) minmax(330px,.76fr);gap:34px;align-items:start}
+.o-left,.o-right,.o-right > *{min-width:0}
+.o-panel{padding:0 0 27px;border-bottom:1px solid var(--line);margin-bottom:25px}
+.o-panel:last-child{border-bottom:0}
+.taste-split{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(170px,.7fr);gap:36px}
+.taste-split > div{min-width:0}
+.minor-title{font:700 10px var(--d);letter-spacing:.075em;color:#b4b4ba;text-transform:uppercase;margin-bottom:12px}
+.tier-row{display:grid;grid-template-columns:101px 1fr 28px;gap:10px;align-items:center;width:100%;text-align:left;padding:5px 0;color:#bdbdc4;font-size:11px}
+.tier-row:hover .tier-label{color:#fff}
+.tier-track{display:block;height:6px;background:#35363a;border-radius:10px;overflow:hidden}
+.tier-fill{display:block;height:100%;border-radius:10px;background:var(--tier)}
+.tier-count{text-align:right;color:#afb0b9;font:500 10px var(--m)}
+.small-tags{display:flex;flex-wrap:wrap;gap:7px}
+.small-tag{padding:6px 9px;border-radius:5px;background:#303036;font-size:11px;color:#d2d1d5}
+button.small-tag:hover{background:#3e3e45;color:#fff}
+.small-tag b{color:#d89d77;margin-left:4px;font-size:10px}
+.t-note{font-size:11px;color:var(--faint);line-height:1.7;margin-top:12px;max-width:350px}
+.order-inline{background:#29292e;border:1px solid #38383e;border-radius:9px;padding:20px 20px 17px;margin-bottom:25px}
+.order-count{display:flex;align-items:baseline;gap:8px;margin:2px 0 11px}
+.order-count strong{font-size:36px;font-weight:800;line-height:1.1;letter-spacing:-.05em}
+.order-count span{font-size:11.5px;color:var(--dim)}
+.mini-orders{margin-top:10px}
+.mini-order{display:flex;gap:10px;align-items:center;border-top:1px solid #ffffff0e;padding:10px 0;text-align:left;width:100%}
+.cab .mini-order:hover{color:inherit}
+.mini-order:hover .mini-o-title{color:var(--brand-hi)}
+.mini-order .track-art{width:37px;height:37px}
+.mini-o-info{display:block;flex:1;min-width:0}
+.mini-o-info .mini-o-title{display:block;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-o-info .mini-o-artist{display:block;font-size:10.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-order .rating-col{white-space:nowrap;font-size:10.5px;font-weight:700}
+.near-row{display:flex;gap:10px;align-items:center;border-top:1px solid #ffffff0e;padding:9px 0;font-size:12px}
+.near-row:first-child{border-top:0}
+.near-row img,.near-row .ini{width:30px;height:30px;border-radius:8px;object-fit:cover;flex:none;background:#34302d;display:grid;place-items:center;font-weight:800;font-size:11px;color:#f5b087}
+.near-row b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.near-row span{font:10.5px var(--m);color:var(--dim);white-space:nowrap}
+.ach-strip{margin-top:17px;display:flex;align-items:stretch;gap:16px}
+.ach-item{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.ach-icon{display:grid;place-items:center;width:41px;height:41px;flex:none;background:#333339;border:1px solid #494950;border-radius:9px;color:#d9b99b}
+.ach-icon svg{width:21px;height:21px}
+.ach-icon.off{color:#82818b;background:#2a2a2f}
+.ach-item strong{display:block;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ach-item small,.ach-card small{display:block;color:var(--dim);font-size:10.5px;margin-top:2px}
+.micro-track{background:#404046;border-radius:2px;height:3px;margin-top:6px;overflow:hidden;width:86px}
+.micro-track span{display:block;height:100%;background:#d38b61}
+.tab-heading{display:flex;gap:15px;align-items:flex-end;justify-content:space-between;margin:0 0 18px}
+.tab-heading h2{font-size:21px;margin:0 0 4px}
+.tab-heading p{margin:0;font-size:12px;color:var(--dim)}
+.toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.c-field,.dropdown{height:38px;padding:0 12px;border-radius:7px;background:#29292d;border:1px solid #404048;color:#ddd;outline:none;font-size:12px}
+.c-field:focus,.dropdown:focus{border-color:var(--brand)}
+.toolbar .c-field{flex:1 1 240px;min-width:150px}
+.dropdown{flex:0 1 auto;max-width:180px}
+.toolbar-spacer{margin-left:auto}
+.switch-group{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#29292f}
+.switch-group button{padding:8px 11px;color:var(--dim);font-size:11px}
+.switch-group button.active{background:#454046;color:#fff}
+.toggle-line{padding:12px 0;display:flex;gap:10px;align-items:center;color:var(--dim);font-size:12px;cursor:pointer}
+.toggle-line input,.setting-line input{accent-color:var(--brand);width:16px;height:16px;cursor:pointer;flex:none}
+.results-line{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--faint);margin:10px 0 13px}
+.music-list{border-top:1px solid var(--line)}
+.track-row{display:flex;align-items:center;gap:14px;width:100%;padding:11px 3px;border-bottom:1px solid #38383c;min-width:0}
+.track-art{width:52px;height:52px}
+.track-identity{min-width:0;flex:1;cursor:pointer;text-align:left}
+.track-identity strong{font-size:13px;display:block;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+.cab .track-identity:hover{color:inherit}
+.track-identity:hover strong{color:var(--brand-hi)}
+.track-identity small{font-size:11px;display:block;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track-genres{color:var(--faint);font-size:11px;width:155px;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track-grade{text-align:right;flex:none;min-width:96px;font-size:12px;font-weight:700}
+.cab a.track-grade:hover{text-decoration:underline;color:inherit}
+.track-grade small{display:block;font-size:10px;color:var(--faint);font-weight:500;margin-top:2px}
+.track-grade small i{font-style:normal;color:var(--tc2)}
+.track-actions{flex:none;display:flex;gap:4px}
+.track-actions button,.track-actions a{display:grid;place-items:center;width:31px;height:31px;border-radius:6px;color:var(--dim)}
+.track-actions button:hover,.cab .track-actions a:hover{background:var(--card-2);color:var(--ink)}
+.track-actions button[aria-pressed="true"]{color:var(--brand)}
+.track-actions button[aria-pressed="true"] svg{fill:currentColor}
+.track-actions svg{width:17px;height:17px}
+.c-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:19px;margin:19px 0 25px}
+.music-main .c-cards{margin:0;gap:14px}
+/* Оценки композитора в кабинете — по желанию, галочкой «показать рядом»:
+   заказчик просил меньше сравнений с ним. */
+.c-cards:not(.cmp) .card .rt-c{display:none}
+.c-more{display:block;margin:0 auto 10px}
+.c-empty{padding:45px 18px;border:1px dashed #49494f;border-radius:9px;text-align:center;color:var(--dim);font-size:13px}
+.c-empty svg{margin:0 auto 10px;color:var(--faint)}
+.c-empty a,.c-empty .lnk{color:var(--brand-hi)}
+.c-empty .main-btn,.c-empty .tw-in{margin-top:14px}
+.order-hero{display:flex;gap:21px;align-items:center;padding:19px 0 23px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.order-h-num{font-size:46px;line-height:1;font-weight:800;letter-spacing:-.07em}
+.order-h-descr{font-size:12px;color:var(--dim)}
+.order-h-best{margin-left:auto;max-width:300px;border-left:1px solid var(--line);padding-left:20px}
+.order-h-best small{display:block;font-size:10px;color:var(--faint);margin-bottom:3px}
+.order-h-best strong{display:block;font-size:12px;line-height:1.5}
+.order-list .track-art{width:50px;height:50px}
+.order-stream{color:var(--faint);font:10px var(--m);flex:none;min-width:70px;text-align:right}
+.disclosure{margin-top:22px;border-top:1px solid var(--line);padding-top:17px}
+.disclosure summary{cursor:pointer;color:#c6c5ca;font-size:12px;font-weight:700}
+.order-stats{display:grid;grid-template-columns:1fr 1fr;gap:25px;margin-top:19px}
+.order-stats p{font-size:12px;color:var(--dim);margin:0 0 13px}
+.bar-row{display:flex;justify-content:space-between;font-size:11px;margin-top:10px}
+.bar-col{height:6px;background:var(--card-2);border-radius:6px;overflow:hidden;margin-top:5px}
+.bar-col span{height:100%;display:block}
+.stat-line{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--dim);padding:7px 0;border-top:1px solid #ffffff0e}
+.stat-line b{color:var(--ink);font:500 11.5px var(--m);text-align:right}
+.settings-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(270px,.8fr);gap:35px}
+.settings-box{border:1px solid var(--line);background:#27272b;padding:22px;border-radius:9px}
+.settings-box + .settings-box{margin-top:24px}
+.form-label{display:block;font-size:12px;color:#c8c8cd;margin:0 0 8px;font-weight:600}
+.settings-box input[type=text],.settings-box textarea{display:block;width:100%;padding:11px 12px;border:1px solid #46464e;border-radius:7px;color:var(--ink);background:#1e1e21;margin-bottom:17px;resize:vertical;font:inherit;font-size:13px}
+.settings-box input[type=text]:focus,.settings-box textarea:focus{outline:none;border-color:var(--brand)}
+.settings-box input:disabled{color:var(--dim)}
+.settings-box textarea{min-height:76px}
+.setting-hint{font-size:11px;color:var(--dim);margin:-10px 0 14px}
+.setting-line{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--dim);padding:10px 0;cursor:pointer}
+.setting-line b{color:#eee;display:block;font-size:12px}
+.colors-row{display:flex;gap:9px;margin:10px 0 23px}
+.colors-row button{border-radius:7px;width:30px;height:30px;border:2px solid transparent;background:var(--c)}
+.colors-row button[aria-pressed="true"]{border:2px solid #fff;box-shadow:0 0 0 3px #000}
+.setting-help{font-size:12px;color:var(--dim);line-height:1.75}
+.setting-help p{margin:0 0 14px}
+.setting-help strong{color:#ececef}
+.acc-row{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 0;border-top:1px solid #ffffff0e}
+.acc-row:first-of-type{border-top:0;padding-top:0}
+.acc-row b{display:block;font-size:12.5px}
+.acc-row small{display:block;color:var(--dim);font-size:11.5px;margin-top:2px}
+.acc-row.bad b{color:#ff9a9a}
+.claim-row{display:flex;align-items:center;gap:13px;padding:16px 0;border-bottom:1px solid var(--line)}
+.claim-info{flex:1;min-width:0}
+.claim-info strong{font-size:12.5px;display:block}
+.claim-info small{color:var(--dim);display:block}
+.status{padding:4px 8px;border-radius:5px;background:#31443a;color:#9ee2b8;font-size:10px;white-space:nowrap}
+.status.pending{background:#453b2c;color:#e1bc85}
+.status.bad{background:#46292c;color:#f0a3a3}
+.claim-form{display:grid;gap:4px;margin-top:6px}
+.appearance-box{display:flex;gap:14px;align-items:center;background:#27272b;border:1px solid var(--line);border-radius:9px;padding:20px 23px;margin-bottom:24px}
+.appearance-icon{display:grid;place-items:center;width:43px;height:43px;flex:none;border:1px solid #5e4b3a;border-radius:10px;background:#382c28;color:var(--brand-hi);font-size:24px}
+.appearance-content{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.appearance-content strong{font-size:14px;font-weight:700}
+.appearance-content>span{font-size:12px;color:var(--dim)}
+.switch{display:inline-flex;cursor:pointer;align-items:center;flex:none;position:relative}
+.switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:2}
+.switch-track{width:48px;height:26px;border-radius:20px;background:#55545c;border:1px solid #76727a;position:relative;transition:background .2s;pointer-events:none}
+.switch-track::before{content:'';position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#ddd;transition:transform .2s}
+.switch input:checked + .switch-track{background:var(--brand);border-color:var(--brand)}
+.switch input:checked + .switch-track::before{transform:translateX(21px);background:#fff}
+.switch input:focus-visible + .switch-track{outline:2px solid var(--brand-hi);outline-offset:4px}
+.switch input:disabled + .switch-track{opacity:.45}
+.c-overlay{position:fixed;inset:0;background:#0b0b0fc9;display:grid;place-items:center;padding:18px;z-index:80;overflow:auto}
+.c-overlay[hidden]{display:none}
+.c-dialog{background:#29292e;border:1px solid #55555c;border-radius:12px;box-shadow:0 22px 70px #000b;width:min(100%,780px);max-height:min(90vh,850px);overflow-y:auto;position:relative;padding:26px}
+.c-close{position:absolute;top:15px;right:15px;display:grid;place-items:center;width:34px;height:34px;border-radius:7px;background:#38383e;color:var(--dim)}
+.c-close:hover{color:var(--ink)}
+.c-dialog h2{font-size:21px;margin:0 30px 14px 0}
+.achievement-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ach-card{display:flex;align-items:center;gap:10px;border:1px solid #45454c;border-radius:9px;padding:13px;background:#303036}
+.ach-card.off{opacity:.57}
+.ach-card .ach-icon{width:39px;height:39px}
+.ach-card strong{font-size:11.5px;display:block}
+.ach-card .micro-track{width:auto;max-width:95px}
+/* Фон из аватара: тот же приём, что у страницы трека (фон()), только
+   картинка — свой аватар. Плашки кабинета становятся полупрозрачными. */
+.atmo-on .cab .c-hero{background:rgba(34,30,34,.49);border-color:rgba(255,255,255,.105)}
+.atmo-on .cab .music-main,.atmo-on .cab .feed-panel,.atmo-on .cab .order-inline,.atmo-on .cab .settings-box,.atmo-on .cab .appearance-box{background:rgba(34,31,36,.52);border-color:rgba(255,255,255,.11)}
+.atmo-on .cab .ach-card,.atmo-on .c-dialog{background:rgba(32,29,33,.92);border-color:rgba(255,255,255,.11)}
+.atmo-on .cab .hero-level .xp-track{background:rgba(255,255,255,.13)}
+.atmo-on .cab .soft-btn{background:rgba(255,255,255,.065);border-color:rgba(255,255,255,.13)}
+.atmo-on .cab .soft-btn:hover{background:rgba(255,255,255,.12)}
+.atmo-on .cab .small-tag,.atmo-on .cab .ach-icon{background:rgba(255,255,255,.065)}
+.atmo-on .cab .settings-box textarea,.atmo-on .cab .settings-box input[type=text],.atmo-on .cab .dropdown,.atmo-on .cab .toolbar input{background:rgba(22,20,23,.54)}
+.atmo-on .cab .c-tabs{border-color:rgba(255,255,255,.1)}
+@media(max-width:1160px){.feature-grid{grid-template-columns:minmax(0,1.4fr) minmax(310px,.75fr)}.music-main .c-cards{gap:10px}.music-main{padding:19px}.feed-panel{padding:18px 14px}.feed-row{min-height:56px}}
+@media(max-width:1040px){.c-cards{grid-template-columns:repeat(4,minmax(0,1fr))}.taste-split{gap:18px}.track-genres{display:none}.ach-strip{gap:10px}}
+@media(max-width:860px){.feature-grid,.overview-grid{grid-template-columns:1fr}.feed-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}.music-main .c-cards{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:800px){.settings-grid{grid-template-columns:1fr}.o-right{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}.o-right .order-inline,.o-right .o-panel{margin:0}.hero-actions .soft-btn span{display:none}.hero-actions .soft-btn{padding:9px}.c-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){
+  .c-hero{padding:16px 13px;gap:12px;min-height:132px;align-items:flex-start}
+  .hero-avatar{width:75px;height:75px}
+  .hero-name{font-size:19px}
+  .hero-kicker{display:none}
+  .hero-since,.twitch-link{font-size:10px}
+  .hero-bio{font-size:11px}
+  .hero-level{margin-top:12px;max-width:100%}
+  .hero-actions{position:absolute;right:11px;top:11px;gap:3px}
+  .hero-actions .soft-btn{padding:6px}
+  .hero-actions .soft-btn svg{width:16px}
+  .hero-text{padding-right:24px}
+  .c-tabs{gap:22px;margin:12px 0 20px}
+  .c-tab{font-size:12px}
+  .music-main{padding:18px 14px}
+  /* Наши карточки уже 140 пикселей не ужимаются — на телефоне по две. */
+  .music-main .c-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 10px}
+  .music-main .c-cards .card:nth-child(n+5){display:none}
+  .c-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+  .taste-split{grid-template-columns:1fr;gap:20px}
+  .feature-grid{gap:13px}
+  .feed-list{grid-template-columns:1fr}
+  .feed-panel{padding:16px}
+  .o-right{grid-template-columns:minmax(0,1fr)}
+  .ach-strip{flex-wrap:wrap}
+  .ach-item{flex:0 1 calc(50% - 8px)}
+  .order-h-num{font-size:38px}
+  .order-h-best{display:none}
+  .order-stats{grid-template-columns:1fr}
+  .track-row{gap:9px}
+  .track-art{width:44px;height:44px}
+  .track-grade{min-width:68px;font-size:10.5px}
+  .track-actions button,.track-actions a{width:24px}
+  .track-identity strong{font-size:12px}
+  .track-identity small{font-size:10px}
+  .order-stream{min-width:46px;font-size:9px}
+  .achievement-grid{grid-template-columns:repeat(2,1fr)}
+  .c-dialog{padding:20px 14px}
+  .tab-heading{flex-wrap:wrap}
+  .appearance-box{padding:16px}
+}
 </style>
 <meta name="theme-color" content="#1B1B1D">
 </head>
@@ -1742,13 +1971,23 @@ body.st-air #stAir:hover{opacity:1}
 
   <nav class="nav">
    <a href="#" id="navHome" aria-current="page">главная</a>
-   <a href="https://farymastats.info/" target="_blank" rel="noopener noreferrer">стрим-space</a>
+   <a href="https://farymastats.info/" target="_blank" rel="noopener noreferrer">стрим</a>
    <a href="#base" id="navBase">база треков</a>
    <a href="#fun" id="navFun">прикольчики</a>
    <!-- Студию видят композитор и админы: роль приходит с сервера после входа. -->
-   <a href="#studio" id="navStudio" hidden>студия оценок</a>
-   <a href="#">помощь</a>
+   <a href="#studio" id="navStudio" hidden>оценки</a>
+   <a href="#">FAQ</a>
   </nav>
+
+  <!-- Уведомления: ответы на свои комментарии и решения по заявкам.
+       Точка — есть непросмотренные; открыл список — просмотрено. -->
+  <div class="bell-wrap">
+   <button class="tb-ic bell" id="bell" type="button" aria-label="Уведомления" aria-expanded="false" aria-controls="bellPop">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg>
+   </button>
+   <i class="n-dot" id="bellDot" hidden></i>
+   <div class="bell-pop" id="bellPop" role="dialog" aria-label="Уведомления" hidden></div>
+  </div>
 
   <a class="ava" id="ava" href="#me" data-tip="личный кабинет" aria-label="Личный кабинет">🦉</a>
  </div>
@@ -1759,9 +1998,8 @@ body.st-air #stAir:hover{opacity:1}
       отдельной страницей — прячется и показывается вместе с ней, и
       каталог начинается сразу под ним, без смены фона. -->
  <section class="home" id="home" aria-label="Главная">
-  <h1 class="home-h">Здесь мы оцениваем музыку<br><span>Ведь слушать — это лишь начало</span></h1>
+  <h1 class="home-h">Здесь мы оцениваем музыку</h1>
   <p class="home-lead" id="homeLead"></p>
-  <p class="home-note">Каждый трек на сайте оценен композитором (и конечно же чатиком) на стриме. Все записи прямо здесь!</p>
   <div class="home-search">
    <!-- Полоса над поиском: человечки — кто сейчас на сайте. Рисует JS. -->
    <div class="runway" id="runway"></div>
@@ -1773,11 +2011,8 @@ body.st-air #stAir:hover{opacity:1}
    </form>
    <div class="suggest" id="hSuggest" hidden></div>
    <div class="quick" id="hQuick"></div>
-   <div class="online" id="hOnline"></div>
   </div>
   <div class="feats" id="hFeats"></div>
-  <a class="nudge" href="#base">Листай вниз — там весь каталог
-   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m-6-6 6 6 6-6"/></svg></a>
  </section>
  <button class="ftoggle" id="fToggle" type="button" aria-expanded="false" aria-controls="rail">Фильтры<b></b></button>
  <aside class="rail" id="rail" aria-label="Фильтры"></aside>
@@ -1875,26 +2110,31 @@ body.st-air #stAir:hover{opacity:1}
 <!-- Личный кабинет (#me): своя статистика по своим оценкам. Всё
      считается из того, что лежит в этом браузере, — общей базы нет. -->
 <!-- Чужой профиль (#u=логин): только то, что зритель сам открыл. -->
-<div class="tpage" id="upage" hidden>
+<div class="tpage cab" id="upage" hidden>
  <div class="tp-top">
   <nav class="crumbs" aria-label="Где я">
    <a href="#base">база треков</a><span class="sep">›</span><b id="uCrumb">профиль</b>
   </nav>
  </div>
- <section class="pan me-hero" id="uHero"></section>
+ <section class="c-hero" id="uHero" aria-label="Профиль"></section>
  <div id="uBody"></div>
 </div>
 
-<div class="tpage" id="mpage" hidden>
+<div class="tpage cab" id="mpage" hidden>
  <div class="tp-top">
   <nav class="crumbs" aria-label="Где я">
    <a href="#base">база треков</a><span class="sep">›</span><b>личный кабинет</b>
   </nav>
  </div>
  <h1 class="fun-h">личный кабинет</h1>
- <section class="pan me-hero" id="meHero"></section>
- <div class="tabs me-tabs" id="meTabs" role="tablist"></div>
+ <section class="c-hero" id="meHero" aria-label="Профиль"></section>
+ <nav class="c-tabs" id="meTabs" role="tablist" aria-label="Разделы личного кабинета"></nav>
  <div id="meTab" role="tabpanel"></div>
+ <!-- Все достижения — окном, как в макете. -->
+ <div class="c-overlay" id="mAch" hidden><div class="c-dialog" role="dialog" aria-modal="true" aria-label="Достижения">
+  <button type="button" class="c-close" data-ach-close aria-label="Закрыть"><svg class="i" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></svg></button>
+  <div id="mAchBody"></div>
+ </div></div>
 </div>
 
 <!-- Студия оценок: экран для стрима, где композитор раскладывает
@@ -12297,27 +12537,27 @@ function card(r) {
           '<button class="mod" data-d="1" aria-label="Повысить свою оценку">+</button>' +
         '</div>' +
         '<div class="scale"></div>' +
-        '<div class="goto-w"><a class="goto" href="' + trackHref(r) + '">перейти к треку →</a></div>' +
+        '<div class="goto-w"><a class="goto" href="' + trackHref(r) + '">перейти к треку →</a>' +
+          '<span class="rated-msg" aria-live="polite"></span></div>' +
       '</div>' +
       '<button class="badge fav" aria-pressed="' + fav + '" aria-label="В избранное">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.6-4.7-9.6-9.3C.9 8.3 3 4.5 6.9 4.5c2.2 0 3.7 1.2 5.1 3 1.4-1.8 2.9-3 5.1-3 3.9 0 6 3.8 4.5 7.2C19.6 16.3 12 21 12 21z"/></svg>' +
-        '</button>' +
-      /* Значок разноса. Раньше тут стоял номер эфира и значок плеера —
-         номер съедал полкарточки, а плеер обещал запись, которой у
-         части эфиров нет. Облачко честнее: разнос — это то, что
-         композитор про трек сказал. Номер никуда не делся: он в
-         подсказке значка, в шапке страницы трека и во вкладке «Инфо».
-         У повторов число оставлено — это не номер, а «сколько раз». */
+        '<span class="n"></span></button>' +
+      /* Облачко — комментарии зрителей к треку: число рядом, щелчок
+         открывает их на странице трека. Раньше это был значок разноса с
+         номером эфира в подсказке; номер никуда не делся — он в шапке
+         страницы трека и во вкладке «Инфо». У повторов «×2» осталось
+         своей меткой в углу: это не номер, а сколько раз разносили. */
+      (r.студия ? '<span class="badge strm many" data-tip="Оценено в студии. В таблице разносов этой строки пока нет — трек виден только в этом браузере.">новый</span>'
+        : r.mine ? '<span class="badge strm many">твой</span>'
+        : '<a class="badge strm cmt" href="' + trackHref(r) + '" data-talk aria-label="Комментарии">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3v4l5-4h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg><span class="n"></span></a>') +
       (r.разы
-        ? '<span class="badge strm many" data-tip="' +
+        ? '<span class="badge times" data-tip="' +
           esc('Трек разносили ' + r.разы.length + ' раза: ' +
               r.разы.map(x => '№' + x.streamNum + ' — ' + (x.rate ? x.rate.label : 'без оценки')).join(', ')) +
-          '">×' + r.разы.length + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3v4l5-4h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>' + '</span>'
-        : r.streamNum != null
-        ? '<span class="badge strm" data-tip="' + esc('разнос в эфире №' + r.streamNum) + '">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3v4l5-4h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>' + '</span>'
-        : r.студия ? '<span class="badge strm many" data-tip="Оценено в студии. В таблице разносов этой строки пока нет — трек виден только в этом браузере.">новый</span>'
-        : (r.mine ? '<span class="badge strm many">твой</span>' : '')) +
+          '">×' + r.разы.length + '</span>'
+        : '') +
     '</div>' +
     /* Карточка нарочно скупая: имя песни, исполнитель, две оценки. Всё
        остальное — приписка в скобках, год, номер эфира — переехало на
@@ -12375,6 +12615,7 @@ function card(r) {
       const keep = cur && cur.t === t.key && t.mods.includes(cur.m);
       MY[r.key] = { t: t.key, m: keep ? cur.m : '', w: Date.now() };
       save(); paint(); railAfterRate(); учёт('rate');
+      удар(t.key);
     });
     scale.append(b);
     return b;
@@ -12432,6 +12673,21 @@ function card(r) {
     }
   }
 
+  /* Оценку поставили — карточка на 0,7 секунды чуть вырастает и мягко
+     светится цветом ступени, а под «перейти к треку» две секунды
+     висит «оценка поставлена!». */
+  function удар(tier) {
+    el.style.setProperty('--hc', TCOLOR[tier]);
+    el.classList.remove('hit');
+    void el.offsetWidth;
+    el.classList.add('hit');
+    const msg = el.querySelector('.rated-msg');
+    msg.textContent = 'оценка поставлена!';
+    msg.classList.add('on');
+    clearTimeout(el._удар);
+    el._удар = setTimeout(() => { msg.classList.remove('on'); el.classList.remove('hit'); }, 2000);
+  }
+
   // MODS_ALL идёт от «++» к «- -», поэтому «выше» — шаг к началу списка
   mods.addEventListener('click', e => {
     const b = e.target.closest('.mod'); if (!b) return;
@@ -12450,11 +12706,14 @@ function card(r) {
     if (on) учёт('fav');
     favBtn.setAttribute('aria-pressed', String(on));
     save();
+    счётНаКарточке(el);
     if (F.has.has('fav')) { rail(); render(true); }
     else if (GOPEN['отметки'] !== false) rail();
   });
 
   el.querySelector('.play').addEventListener('click', () => играйСКарточки(r));
+  const talk = el.querySelector('[data-talk]');
+  if (talk) talk.addEventListener('click', () => { T.кКомментам = true; });
 
   // Щелчок по самой карточке уводит на страницу трека. Кнопки поверх
   // обложки — шкала, сердечко, «что можно сделать» — остаются собой:
@@ -12465,6 +12724,7 @@ function card(r) {
   });
 
   paint();
+  счётНаКарточке(el);
   return el;
 }
 
@@ -12577,8 +12837,23 @@ function controls() {
      восстановлении вкладки. Раньше в обоих случаях в поле был запрос,
      а в выдаче — весь архив. */
   const искать = () => { F.q = q.value.trim().toLowerCase(); rail(); render(); };
-  q.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(искать, 160); });
-  $('btnSearch').addEventListener('click', () => { искать(); q.focus(); });
+  /* Шапка одна на все страницы, а выдача — только в каталоге. Пока
+     печатаешь на странице трека или в кабинете, отбор тихо копится;
+     лупа и Enter ведут в каталог уже с ним. Раньше они перерисовывали
+     спрятанную сетку, и с виду не происходило ничего. */
+  const вКаталогСПоиском = () => {
+    clearTimeout(timer);
+    вКаталог(() => { F.q = q.value.trim().toLowerCase(); });
+  };
+  q.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (витринаНаЭкране()) искать();
+      else { F.q = q.value.trim().toLowerCase(); T.fresh = true; }
+    }, 160);
+  });
+  q.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); вКаталогСПоиском(); } });
+  $('btnSearch').addEventListener('click', () => { вКаталогСПоиском(); q.focus(); });
   /* На change не подписываемся намеренно: он приходит и когда поле
      теряет фокус, то есть ровно в тот миг, когда по карточке щёлкнули.
      Сетка перерисовывалась под курсором, и щелчок не доезжал до
@@ -12594,6 +12869,13 @@ function controls() {
   $('sort').addEventListener('change', e => { F.sort = e.target.value; render(); });
 
   $('btnLuck').addEventListener('click', () => {
+    // Не в каталоге — сразу открываем выпавший трек: прокручивать к
+    // карточке в спрятанной сетке бесполезно.
+    if (!витринаНаЭкране()) {
+      const пул = VIEW.length ? VIEW : CAT.filter(r => !r.mine);
+      if (пул.length) openTrack(пул[Math.floor(Math.random() * пул.length)]);
+      return;
+    }
     if (!VIEW.length) return;
     const r = VIEW[Math.floor(Math.random() * VIEW.length)];
     // Выпавший трек может лежать на другой странице — тогда сначала
@@ -12759,6 +13041,15 @@ function showTrack(r) {
   document.title = (r.title || '—') + ' — база треков';
   drawTrack();
   window.scrollTo(0, 0);
+  // Пришли облачком с карточки — сразу к комментариям. Ещё раз чуть
+  // позже: плееры и обложка над ними дорисовываются и сдвигают ленту.
+  if (T.кКомментам) {
+    T.кКомментам = false;
+    const к = () => $('tTalk').scrollIntoView({ block: 'start' });
+    к();
+    let y = window.scrollY;
+    [150, 500].forEach(мс => setTimeout(() => { if (Math.abs(window.scrollY - y) < 2 && T.r === r) { к(); y = window.scrollY; } }, мс));
+  }
 }
 
 function showCatalog() {
@@ -15230,7 +15521,7 @@ const saveПроф = () => { try { localStorage.setItem(ПРОФ_LS, JSON.string
 
 /* Цвета человечка — те же, что у команд в макете главной: фирменный
    оранжевый, фиолетовый и красный, плюс три цвета шкалы. */
-const ЦВЕТА = ['#F2660F', '#A478EB', '#E95859', '#3ED9E8', '#4ADE80', '#C6DE4A'];
+const ЦВЕТА = ['#F2660F', '#4CC3C9', '#A282E1', '#4ADE80', '#F26D8B', '#E1B04D'];   // из макета кабинета
 
 const день = (t = Date.now()) => {
   const d = new Date(t);
@@ -15307,10 +15598,13 @@ function кКаталогу() {
                      document.querySelector('.tb').offsetHeight + 6);
 }
 
+const витринаНаЭкране = () => !$('page').hidden &&
+  (location.hash === '' || location.hash === '#' || location.hash === '#base');
+
 /* Отбор с главной: если витрина уже на экране, адрес не меняется и
    hashchange не придёт — перерисовываем сами. */
 function вКаталог(setup) {
-  if (!$('page').hidden && (location.hash === '' || location.hash === '#base')) {
+  if (витринаНаЭкране()) {
     setup(); rail(); render();
     window.scrollTo({ top: кКаталогу(), behavior: 'smooth' });
   } else toCatalog(setup);
@@ -15358,26 +15652,22 @@ function главная() {
   const ступени = TIERS.map(t => '<i style="--tc:' + TCOLOR[t.key] + '"' +
     (пример && пример.rate && пример.rate.tier === t.key ? ' class="on"' : '') + '></i>').join('');
   $('hFeats').innerHTML =
-    '<article class="feat"><div class="feat-top"><span class="feat-i">01 / СВОЙ ВКУС</span>' +
-      '<span class="feat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3 15 9l6 .9-4.4 4.3 1 6.2L12 17.4 6.4 20.4l1-6.2L3 9.9 9 9Z"/></svg></span></div>' +
+    '<article class="feat">' +
       '<h2>Ставь свои оценки</h2><p>Шесть ступеней — от «гениально» до «кринж-контента». У каждого трека есть вердикт композитора и место для твоего.</p>' +
       (пример ? '<div class="feat-live"><a class="mini" href="' + trackHref(пример) + '"><span class="th">' + covHtml(пример) + '</span>' +
         '<span class="tx"><b>' + esc(пример.title) + '</b><small>' + esc(пример.artist) + '</small></span>' +
         '<span class="pips" data-tip="Белым обведено, что поставил композитор">' + ступени + '</span></a></div>' +
         '<a class="feat-go" href="' + trackHref(пример) + '">Попробовать оценить ↗</a>' : '') +
     '</article>' +
-    '<article class="feat"><div class="feat-top"><span class="feat-i">02 / ИССЛЕДОВАНИЕ</span>' +
-      '<span class="feat-ic v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-5 2 2-5z"/></svg></span></div>' +
-      '<h2>Открывай новые жанры</h2><p>' + число(жанры.length) + ' ' + plural(жанры.length, 'жанр', 'жанра', 'жанров') +
-        ' в архиве. Выбирай незнакомый и смотри, что композитор о нём думает.</p>' +
+    '<article class="feat">' +
+      '<h2>Открывай новые жанры</h2><p>Треки всех жанров, форм и языков мира! ТАКОЕ ты точно не слышал...</p>' +
       '<div class="feat-live"><div class="cap"><span>Ты уже оценивал</span><b>' + пробовал + ' / ' + жанры.length + '</b></div>' +
         '<div class="gbars">' + жанры.slice(0, 10).map(g => '<i' + (мои.has(g) ? ' class="on"' : '') + '></i>').join('') + '</div>' +
         '<div class="bar"><span style="width:' + доля + '%"></span></div></div>' +
       '<button type="button" class="feat-go" data-genre-luck>Случайный жанр ↗</button>' +
     '</article>' +
-    '<article class="feat"><div class="feat-top"><span class="feat-i">03 / РАЗНОСЫ НА СТРИМАХ</span>' +
-      '<span class="feat-ic r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg></span></div>' +
-      '<h2>Смотри разнос композитора</h2><p>Запись эфира стоит на минуте разбора, рядом — оригинал трека. Слушай, что он сказал, и решай, согласен ли.</p>' +
+    '<article class="feat">' +
+      '<h2>Смотри разнос композитора</h2><p>Чатик и композер уже слушали и обсуждали твой трек на стриме! Вот они, реакты нового поколения :D</p>' +
       '<div class="feat-live prev"><span class="prev-play"><svg viewBox="0 0 24 24"><path d="M8 5.5 18 12 8 18.5Z" fill="currentColor"/></svg></span>' +
         '<span class="prev-tx"><b>Реакция и музыкальный разбор</b><small>Вердикт композитора и обсуждение с чатом</small></span>' +
         '<span class="prev-chat"><i></i><i></i><i></i></span></div>' +
@@ -15396,7 +15686,7 @@ function шить(box) {
   });
 }
 
-/* Полоса с человечками и строка под поиском. Отдельно от главной:
+/* Полоса с человечками над поиском. Отдельно от главной:
    кто на сайте, база сообщает раз в минуту, и остальное приветствие
    ради этого перерисовывать незачем. Чужой человечек ведёт в его
    профиль (#u=логин). */
@@ -15411,14 +15701,6 @@ function полоса() {
       : '<a class="walker" href="#u=' + encodeURIComponent(ч.логин) + '" ' + стиль + ' data-tip="' + esc(ч.ник) + ' — открыть профиль">' + тело + '</a>';
   }).join('');
   if ($('runway').innerHTML !== html) $('runway').innerHTML = html;
-  const ещё = онлайн().length - 1;
-  const правило = ОБЛ && ОБЛ.sb
-    ? 'Человечки над поиском — кто сейчас на сайте. Видно тех, кто вошёл через Twitch; гостей не считаем.'
-    : 'Человечки над поиском — кто сейчас на сайте. Сервер сейчас недоступен, поэтому видно только тебя.';
-  $('hOnline').innerHTML = 'на сайте сейчас: <a href="#me" data-tip="' + правило + '">' +
-    (ещё ? 'ты и ещё ' + число(ещё) + ' ' + plural(ещё, 'человек', 'человека', 'человек') : 'ты') + '</a>' +
-    (ОБЛ && ОБЛ.состояние === 'гость'
-      ? ' · <button type="button" class="lnk-tw" data-login>войди через Twitch</button>, чтобы тебя видели' : '');
 }
 
 /* Шапка над витриной та же, что везде, — у неё только аватар или ник
@@ -15428,9 +15710,7 @@ function ава() {
   const img = мойАватар();
   const б = буквы(мойНик());
   a.classList.toggle('me', !!(б || img));
-  const новых = ОБЛ ? ОБЛ.новых : 0;
-  a.classList.toggle('dot', !!новых);
-  a.dataset.tip = новых ? 'личный кабинет · новое: ' + новых : 'личный кабинет';
+  колокол();
   if (img) {
     if (a.dataset.img !== img) {
       a.dataset.img = img;
@@ -15565,12 +15845,67 @@ const баллМой = v => {
 const совпалС = x => разы(x.r).some(y => y.rate && y.rate.tier === x.v.t);
 const сравнимые = list => list.filter(x => x.r.rate);
 
-const МЕНЮ = [['', 'обзор'], ['ratings', 'мои оценки'], ['orders', 'мои треки'], ['favs', 'избранное'], ['settings', 'настройки']];
+/* Кабинет по макету заказчика (faryma-cabinet-updated.html): шапка с
+   уровнем, вкладки «обзор», «мои оценки», «избранное», «мои заказы»,
+   «настройки», «заявки». Вид — макета, данные — настоящие, а обложки и
+   карточки треков — наши, те же, что в каталоге (card()). */
+const МЕНЮ = [['', 'обзор'], ['ratings', 'мои оценки'], ['favs', 'избранное'], ['orders', 'мои заказы'],
+              ['settings', 'настройки'], ['claims', 'заявки']];
+
+/* Значки макета. */
+const ИКО = {
+  arrow: '<path d="M5 12h14m-6-6 6 6-6 6"/>',
+  external: '<path d="M13 5h6v6M19 5 10 14"/><path d="M19 13v6H5V5h6"/>',
+  heart: '<path d="M20.8 8.8c0 4.5-8.8 10.5-8.8 10.5S3.2 13.3 3.2 8.8a4.7 4.7 0 0 1 8.8-2.2 4.7 4.7 0 0 1 8.8 2.2Z"/>',
+  eye: '<path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+  edit: '<path d="M12 20h9M16 4a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  download: '<path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"/>',
+  check: '<path d="m5 12 4 4L19 6"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',
+  search: '<circle cx="10.8" cy="10.8" r="6.4"/><path d="m16 16 5 5"/>',
+  close: '<path d="M5 5 19 19M19 5 5 19"/>',
+  star: '<path d="m12 3 2.9 6 6.6.8-4.8 4.6 1.2 6.6L12 17.9l-5.9 3.1 1.2-6.6-4.8-4.6 6.6-.8Z"/>',
+  headphones: '<path d="M4 14v-3a8 8 0 0 1 16 0v3M4 14h4v7H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 1-2ZM20 14h-4v7h3a2 2 0 0 0 2-2v-3a2 2 0 0 0-1-2Z"/>',
+  compass: '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2.2 5-4.8 2 2.2-5Z"/>',
+  wave: '<path d="M2 12c2.2-4 4.2-4 6 0s4 4 6 0 4-4 6 0"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  message: '<path d="M20 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 20l1-4.3A8.5 8.5 0 1 1 20 11.5Z"/>',
+  disc: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.6"/>'
+};
+const ико = n => '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">' + (ИКО[n] || ИКО.star) + '</svg>';
+const датаКороткая = t => new Date(t).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+
+/* ---------- уровень ----------
+   Так попросил заказчик, пока для начала: каждая оценка и каждый
+   комментарий — +10 XP, каждые 100 XP — новый уровень. Правило ещё
+   будут уточнять, поэтому числа — здесь, в одном месте. */
+const ОПЫТ_ЗА = 10, ОПЫТ_НА_УРОВЕНЬ = 100;
+function уровень(оценок, комментариев) {
+  const xp = (оценок + комментариев) * ОПЫТ_ЗА;
+  const lvl = Math.floor(xp / ОПЫТ_НА_УРОВЕНЬ) + 1;
+  return { xp, lvl, next: lvl * ОПЫТ_НА_УРОВЕНЬ };
+}
+/* Своё — то же, что насчитает сервер для профиля: у вошедшего оценки,
+   кроме своих добавленных треков (они в базу не едут), и комментарии в
+   базе; у гостя — то, что лежит в браузере. */
+function мойОпыт() {
+  const оценок = Object.entries(MY).filter(([k, v]) =>
+    TIERS.some(t => t.key === v.t) && !(вошёл() && k.startsWith('my|'))).length;
+  const комм = вошёл() ? (ОБЛ.моихКомм || 0) : Object.values(TALK).reduce((n, л) => n + (л || []).length, 0);
+  return уровень(оценок, комм);
+}
+function уровеньHtml(у) {
+  const доля = у.xp % ОПЫТ_НА_УРОВЕНЬ / ОПЫТ_НА_УРОВЕНЬ * 100;
+  return '<div class="hero-level" role="img" aria-label="Уровень ' + у.lvl + ', опыт ' + у.xp + ' из ' + у.next + '"' +
+      ' data-tip="Каждая оценка и каждый комментарий — +' + ОПЫТ_ЗА + ' XP, каждые ' + ОПЫТ_НА_УРОВЕНЬ + ' XP — новый уровень">' +
+    '<div class="level-row"><span class="level-pill">уровень <b>' + у.lvl + '</b></span>' +
+      '<span class="xp-text"><b>' + число(у.xp) + '</b> / ' + число(у.next) + ' XP</span></div>' +
+    '<div class="xp-track"><span style="width:' + доля.toFixed(1) + '%"></span></div></div>';
+}
 
 function showMe() {
   уходИзИгры();
   уходИзСтудии();
-  фон('');
   if (T.r) уходСТрека();
   T.r = null;
   const тут = !$('mpage').hidden;
@@ -15591,268 +15926,572 @@ function drawMe() {
   const вкладка = (location.hash.match(/^#me\/(\w+)/) || [])[1] || '';
   const list = мойСписок();
   ава();
-
-  meHero(list);
-
-  // Заявки на привязку треков разбирают админ и композитор — им своя вкладка.
-  const меню = МЕНЮ.concat(['admin', 'owner'].includes(мояРоль()) ? [['claims', 'заявки']] : []);
-  $('meTabs').innerHTML = меню.map(([k, name]) =>
-    '<a class="tab" role="tab" href="#me' + (k ? '/' + k : '') + '" aria-selected="' + (k === вкладка) + '"' +
-    ' style="text-decoration:none">' + name +
-    (k === 'claims' && ОБЛ.ждут ? ' <b class="tab-n">' + ОБЛ.ждут + '</b>' : '') + '</a>').join('');
+  meHero();
+  $('mAch').hidden = true;
+  $('meTabs').innerHTML = МЕНЮ.map(([k, name]) =>
+    '<a class="c-tab" role="tab" href="#me' + (k ? '/' + k : '') + '" aria-selected="' + (k === вкладка) + '">' + name +
+    (k === 'claims' && ОБЛ && ОБЛ.ждут ? ' <b class="tab-n">' + ОБЛ.ждут + '</b>' : '') + '</a>').join('');
 
   const box = $('meTab');
   if (вкладка === 'ratings') return meRatings(box, list);
-  if (вкладка === 'orders') return meOrders(box);
   if (вкладка === 'favs') return meFavs(box);
-  if (вкладка === 'claims') return meClaims(box);
+  if (вкладка === 'orders') return meOrders(box);
   if (вкладка === 'settings') return meSettings(box);
+  if (вкладка === 'claims') return meClaims(box);
   meOverview(box, list);
 }
 
 const ЗНАЧОК_TW = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.3 3 3 6.4v13.1h4.5V22h2.5l2.4-2.5h3.7L21 14.6V3H4.3Zm15 10.8-2.8 2.8H12l-2.4 2.4v-2.4H5.8V4.6h13.5v9.2ZM16.5 7.6h-1.7v4.9h1.7V7.6Zm-4.6 0h-1.7v4.9h1.7V7.6Z"/></svg>';
 
+/* Аватар в шапке профиля: картинка с Twitch или буквы ника. */
+function аваHtml(img, ник, цвет) {
+  return '<div class="hero-avatar">' + (img ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(img) + '">'
+      : '<span class="ini">' + esc(буквы(ник) || '🦉') + '</span>') +
+    '<span class="music-symbol" style="color:' + esc(цвет || ЦВЕТА[0]) + '">♫</span></div>';
+}
+function аваЗапас(box, ник) {
+  const im = box.querySelector('.hero-avatar img');
+  if (im) im.addEventListener('error', () => { const s = document.createElement('span'); s.className = 'ini';
+    s.textContent = буквы(ник) || '🦉'; im.replaceWith(s); });
+}
+
 /* Шапка профиля. Отдельно от вкладок: вход и выход перерисовывают
    только её, а поле поиска или формы во вкладке не теряет фокус. */
-function meHero(list = мойСписок()) {
+function meHero() {
   const ник = мойНик();
   const img = мойАватар();
   const п = вошёл() ? ОБЛ.проф : null;
   const с = new Date((п && п.created_at) || ПРОФ.с || Date.now());
+  const логин = п && п.login;
+  // Фон из аватара — своя настройка, лежит в браузере.
+  if (!$('mpage').hidden) фон(ПРОФ.фон && img ? img : '');
+
+  let мета = (п && РОЛИ[п.role] ? '<span class="role-tag ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '') +
+    '<span class="hero-since"' + (п ? '' : ' data-tip="Без входа всё твоё лежит в этом браузере"') + '>' +
+      (п ? 'на сайте с ' : 'здесь с ') + МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span>' +
+    (логин ? '<a class="twitch-link" href="https://www.twitch.tv/' + encodeURIComponent(логин) +
+      '" target="_blank" rel="noopener noreferrer">Twitch · ' + esc(логин) + ' ↗</a>' : '') +
+    (вошёл() && ОБЛ.ошибка ? '<span class="hero-warn" data-tip="' + esc(ОБЛ.ошибка) + '">не сохраняется на сервер</span>' : '');
   let вход = '';
-  if (!ОБЛ || ОБЛ.состояние === 'грузится') вход = '';
-  else if (ОБЛ.состояние === 'вошёл')
-    вход = (п && РОЛИ[п.role] ? '<span class="me-pill role ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '') +
-      '<span class="me-pill tw">' + ЗНАЧОК_TW + 'Twitch' + (п && п.login ? ' · ' + esc(п.login) : '') + '</span>' +
-      (ОБЛ.ошибка ? '<span class="me-pill bad" data-tip="' + esc(ОБЛ.ошибка) + '">не сохраняется на сервер</span>' : '') +
-      (п && п.login ? '<a class="me-pill out" href="#u=' + encodeURIComponent(п.login) + '" style="text-decoration:none">как меня видят</a>' : '') +
-      '<button type="button" class="me-pill out" data-logout>выйти</button>';
-  else if (ОБЛ.состояние === 'гость')
+  if (ОБЛ && ОБЛ.состояние === 'гость')
     вход = '<div class="me-login"><button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' +
       '<span>Оценки и сердечки будут с тобой на любом устройстве, а на главной тебя увидят другие.</span></div>';
-  else
+  else if (ОБЛ && ОБЛ.состояние === 'нет')
     вход = '<div class="me-login"><span>' + (ОБЛ.ошибка === 'файл'
       ? 'Вход через Twitch работает на сайте, а не в файле, открытом с диска.'
       : 'Сервер входа сейчас не отвечает — всё твоё пока сохраняется в этом браузере.') + '</span></div>';
-  $('meHero').innerHTML =
-    '<div class="me-ava">' + (img ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(img) + '">' : esc(буквы(ник) || '🦉')) + '</div>' +
-    '<div class="me-id"><div class="me-k">слушатель архива</div>' +
-      '<h2 class="me-nm' + (ник ? '' : ' none') + '">' + esc(ник || 'без ника') + '</h2>' +
-      '<div class="me-bio">' + esc(ПРОФ.о || (ник ? '' : 'Войди через Twitch или впиши ник в настройках.')) + '</div>' +
-      '<div class="me-pills"><span class="me-pill o">' + число(list.length) + ' ' +
-        plural(list.length, 'оценка', 'оценки', 'оценок') + '</span>' +
-        '<span class="me-pill"' + (п ? '' : ' data-tip="Без входа всё твоё лежит в этом браузере"') + '>' +
-        (п ? 'на сайте с ' : 'здесь с ') + МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span>' +
-        вход + '</div></div>' +
-    '<a class="me-edit" href="#me/settings" data-tip="Настроить профиль" aria-label="Настроить профиль">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></a>';
-  const im = $('meHero').querySelector('.me-ava img');
-  if (im) im.addEventListener('error', () => { im.parentNode.textContent = буквы(ник) || '🦉'; });
+
+  $('meHero').innerHTML = аваHtml(img, ник, ПРОФ.цвет) +
+    '<div class="hero-text"><div class="hero-kicker">Мой профиль</div>' +
+      '<div class="hero-name' + (ник ? '' : ' none') + '">' + esc(ник || 'без ника') + '</div>' +
+      '<div class="hero-bio">' + esc(ПРОФ.о || (ник ? '' : 'Войди через Twitch или впиши ник в настройках.')) + '</div>' +
+      '<div class="hero-meta">' + мета + '</div>' + вход + уровеньHtml(мойОпыт()) + '</div>' +
+    '<div class="hero-actions">' +
+      (логин ? '<a class="soft-btn" href="#u=' + encodeURIComponent(логин) + '" data-tip="Посмотреть публичный профиль">' +
+        ико('eye') + '<span>Как меня видят</span></a>' : '') +
+      '<a class="soft-btn" href="#me/settings" data-tip="Настройки" aria-label="Настройки">' + ико('edit') + '</a></div>';
+  аваЗапас($('meHero'), ник);
 }
 
-function строкаМоя(x) {
-  const r = x.r, v = x.v;
-  return '<a class="trow" href="' + trackHref(r) + '"><span class="th">' + covHtml(r) + '</span>' +
-    '<span style="min-width:0"><span class="ta">' + esc(r.artist || '—') + '</span>' +
-      '<span class="tn">' + esc(r.title || '—') + '</span></span>' +
-    '<span class="gr" style="--tc:' + TCOLOR[v.t] + ';--tc2:' + tColor(r.rate) + '">' +
-      esc(v.t + modLabel(v.m)) +
-      '<small>композитор: <i>' + esc(r.rate ? r.rate.label : '—') + '</i></small></span>' +
-    '<span class="dt">' + (v.w ? датаКор(v.w) : '') + '</span></a>';
+/* Наши карточки каталога — в сетку кабинета, кусками по 60. */
+function сеткаКарточек(el, list, по = 60) {
+  if (!el) return;
+  let n = 0;
+  const ещё = () => {
+    el.querySelectorAll('.c-more').forEach(b => b.remove());
+    const frag = document.createDocumentFragment();
+    list.slice(n, n + по).forEach(r => frag.append(card(r)));
+    n += по;
+    el.append(frag);
+    if (n < list.length) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'soft-btn c-more';
+      b.style.gridColumn = '1/-1';
+      b.textContent = 'показать ещё ' + число(Math.min(по, list.length - n)) + ' из ' + число(list.length - n);
+      b.addEventListener('click', ещё);
+      el.append(b);
+    }
+    счётчикиНаКарточках(el);
+  };
+  ещё();
 }
 
-/* Достижения — только из того, что на самом деле сделано. Ноты и
-   уровни макета сюда не входят: см. шапку раздела. */
-const ЗНАЧКИ = {
-  star: '<path d="M12 3 15 9l6 .9-4.4 4.3 1 6.2L12 17.4 6.4 20.4l1-6.2L3 9.9 9 9Z"/>',
-  head: '<path d="M3 14v-3a9 9 0 0 1 18 0v3"/><rect x="2" y="13" width="5" height="8" rx="2"/><rect x="17" y="13" width="5" height="8" rx="2"/>',
-  comp: '<circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-5 2 2-5z"/>',
-  wave: '<path d="M2 12c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/>',
-  aim:  '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
-  talk: '<path d="M20 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 20l1-4.3A8.5 8.5 0 1 1 20 11.5Z"/>',
-  disc: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3a9 9 0 0 1 9 9"/>'
-};
+/* Сердечко в строке списка — то же, что на карточке. */
+const сердце = r => '<button type="button" data-fav="' + esc(r.key) + '" aria-pressed="' + FAV.has(r.key) + '"' +
+  ' aria-label="' + (FAV.has(r.key) ? 'Убрать из избранного' : 'В избранное') + '">' + ико('heart') + '</button>';
+function сердцеЩёлк(b) {
+  const k = b.dataset.fav;
+  const on = !FAV.has(k);
+  on ? FAV.add(k) : FAV.delete(k);
+  if (on) учёт('fav');
+  save();
+  b.setAttribute('aria-pressed', String(on));
+  b.setAttribute('aria-label', on ? 'Убрать из избранного' : 'В избранное');
+}
+
+/* ---------- достижения ----------
+   Только из того, что на самом деле сделано. */
 function достижения(list) {
   const жанры = new Set(list.flatMap(x => x.r.genres)).size;
   const совпало = сравнимые(list).filter(совпалС).length;
   const игра = играСчёт();
   const слов = Object.values(TALK).reduce((n, л) => n + (л || []).length, 0) + (вошёл() && ОБЛ.моихКомм || 0);
   return [
-    ['star', 'первая оценка', 'одна оценка', list.length, 1],
-    ['head', 'первые 100', '100 оценок', list.length, 100],
-    ['comp', 'исследователь', '10 жанров', жанры, 10],
-    ['wave', 'на одной волне', '25 совпадений', совпало, 25],
-    ['aim', 'угадайка', '10 угаданных', игра.hits, 10],
-    ['talk', 'голос', '10 комментариев', слов, 10]
-  ].concat(заказДостижения());
+    ['star', 'первая оценка', 'Одна оценка', list.length, 1],
+    ['headphones', 'первые 100', 'Оценить 100 треков', list.length, 100],
+    ['compass', 'исследователь', 'Треки 10 жанров', жанры, 10],
+    ['wave', 'на одной волне', '25 совпадений с композитором', совпало, 25],
+    ['target', 'угадайка', 'Угадать 10 оценок', игра.hits, 10],
+    ['message', 'голос', '10 комментариев', слов, 10]
+  ].concat(заказДостижения()).map(([ic, name, how, n, need]) => ({ ic, name, how, n: Math.min(n, need), need }));
 }
+/* За заказы — только у тех, к кому они привязаны: без привязки это
+   были бы нули у всех подряд. */
+function заказДостижения() {
+  const з = мойЗаказы();
+  if (!з) return [];
+  const ген = з.filter(o => o.x.rate && o.x.rate.tier === 'гениально').length;
+  const жанров = new Set(з.flatMap(o => o.r.genres)).size;
+  return [
+    ['disc', 'заказчик', 'Принести 10 треков', з.length, 10],
+    ['clock', 'завсегдатай', 'Принести 100 треков', з.length, 100],
+    ['target', 'в точку', '5 «гениально» в заказах', ген, 5],
+    ['compass', 'разносторонний', 'Заказы в 10 жанрах', жанров, 10]
+  ];
+}
+const получено = a => a.n >= a.need;
+function достижениеHtml(a) {
+  return '<div class="ach-item"><span class="ach-icon' + (получено(a) ? '' : ' off') + '">' + ико(a.ic) + '</span>' +
+    '<div style="min-width:0"><strong>' + esc(a.name) + '</strong><small>' + (получено(a) ? 'получено' : a.n + ' / ' + a.need) + '</small>' +
+    (получено(a) ? '' : '<div class="micro-track"><span style="width:' + (a.n / a.need * 100).toFixed(1) + '%"></span></div>') + '</div></div>';
+}
+function достиженияОкно(фильтр = 'all') {
+  const зн = достижения(мойСписок());
+  const arr = зн.filter(a => фильтр === 'all' || (фильтр === 'done' ? получено(a) : !получено(a)));
+  $('mAchBody').innerHTML = '<h2>достижения</h2><div class="switch-group" style="margin-bottom:19px">' +
+    [['all', 'Все', зн.length], ['done', 'Получены', зн.filter(получено).length], ['todo', 'В процессе', зн.filter(a => !получено(a)).length]]
+      .map(([k, имя, n]) => '<button type="button" data-ach-f="' + k + '" class="' + (k === фильтр ? 'active' : '') + '">' + имя + ' (' + n + ')</button>').join('') +
+    '</div><div class="achievement-grid">' + arr.map(a => '<div class="ach-card' + (получено(a) ? '' : ' off') + '">' +
+      '<span class="ach-icon">' + ико(a.ic) + '</span><div><strong>' + esc(a.name) + '</strong>' +
+      '<small>' + (получено(a) ? 'Получено' : esc(a.how)) + '</small>' +
+      (получено(a) ? '' : '<div class="micro-track"><span style="width:' + (a.n / a.need * 100).toFixed(1) + '%"></span></div>' +
+        '<small>' + a.n + ' / ' + a.need + '</small>') + '</div></div>').join('') + '</div>';
+  $('mAch').hidden = false;
+  $('mAch').querySelector('.c-close').focus();
+}
+$('mAch').addEventListener('click', e => {
+  const f = e.target.closest('[data-ach-f]');
+  if (f) return достиженияОкно(f.dataset.achF);
+  if (e.target === $('mAch') || e.target.closest('[data-ach-close]')) $('mAch').hidden = true;
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('mAch').hidden) $('mAch').hidden = true; });
+
+/* Свои заказы — по одобренным заявкам; null, если ничего не привязано. */
+function мойЗаказы() {
+  const имена = new Set(((ОБЛ && ОБЛ.заявки) || []).filter(c => c.status === 'approved').map(c => c.name));
+  return имена.size ? заказыПо(имена) : null;
+}
+const миниЗаказ = o => '<a class="mini-order" href="' + trackHref(o.r) + '"><span class="track-art">' + covHtml(o.r) + '</span>' +
+  '<span class="mini-o-info"><span class="mini-o-title">' + esc(o.r.title || '—') + '</span>' +
+    '<span class="mini-o-artist">' + esc(o.r.artist || '—') + '</span></span>' +
+  '<span class="rating-col" style="color:' + tColor(o.x.rate) + '">' + esc(o.x.rate ? o.x.rate.label : '—') + '</span></a>';
+function заказыКратко(з, свои) {
+  return '<section class="order-inline"><div class="section-title" style="margin-bottom:12px"><h2>' + (свои ? 'мои заказы' : 'заказы') + '</h2>' +
+      (з && свои ? '<a class="text-link" href="#me/orders">вся история ' + ико('arrow') + '</a>' : '') + '</div>' +
+    (з ? '<div class="order-count"><strong>' + число(з.length) + '</strong><span>' + plural(з.length, 'трек', 'трека', 'треков') +
+        ' на разносах</span></div><div class="mini-orders">' + з.slice(0, 3).map(миниЗаказ).join('') + '</div>'
+      : '<p class="mutedline" style="margin:0">' + (!свои ? 'Заказы из таблицы разносов к профилю пока не привязаны.'
+        : вошёл() ? 'Заказы из таблицы разносов к профилю пока не привязаны. <a class="text-link" href="#me/claims">привязать ' + ико('arrow') + '</a>'
+        : 'Свои заказы можно привязать после входа через Twitch.') + '</p>') + '</section>';
+}
+
+/* ---------- обзор ---------- */
+const КБ = { q: '', tier: '', genre: '', sort: 'new', view: 'grid', cmp: false };
 
 function meOverview(box, list) {
-  const архив = CAT.filter(r => !r.mine).length;
-  const ср = сравнимые(list);
-  const совп = ср.filter(совпалС);
-  const жанр = new Map();
-  list.forEach(x => x.r.genres.forEach(g => жанр.set(g, (жанр.get(g) || 0) + 1)));
-  const жанры = [...жанр].sort((a, b) => b[1] - a[1]);
-  const упоминаний = жанры.reduce((n, [, c]) => n + c, 0);
+  const по = new Map(CAT.map(r => [r.key, r]));
+  const любимые = [...FAV].reverse().map(k => по.get(k)).filter(Boolean);
 
-  const metrics = '<div class="me-metrics">' +
-    '<div class="me-m"><div class="l">оценено треков</div><div class="v">' + число(list.length) + '</div>' +
-      '<div class="s">из ' + число(архив) + ' в архиве</div></div>' +
-    '<div class="me-m"><div class="l">совпало с композитором</div><div class="v">' +
-      (ср.length ? Math.round(совп.length / ср.length * 100) + '<small>%</small>' : '—') + '</div>' +
-      '<div class="s">' + (ср.length ? 'по ступени · ' + число(совп.length) + ' из ' + число(ср.length) : 'нужна хоть одна оценка') + '</div></div>' +
-    '<div class="me-m"><div class="l">любимый жанр</div><div class="v w">' + esc(жанры.length ? жанры[0][0] : '—') + '</div>' +
-      '<div class="s">чаще всего среди оценённых</div></div></div>';
-
-  let taste;
+  let вкус;
   if (!list.length) {
-    taste = '<section class="pan me-pan"><h2>мой музыкальный вкус</h2><div class="me-empty">Оценок пока нет. ' +
-      'Наведи на обложку в <a href="#base">каталоге</a> — шкала там же, — и здесь появится твой вкус рядом со вкусом композитора.</div></section>';
+    вкус = '<section class="o-panel"><div class="section-title"><h2>мой музыкальный вкус</h2></div>' +
+      '<div class="c-empty">Оценок пока нет. Наведи на обложку в <a href="#base">каталоге</a> — шкала там же, — и здесь появится твой вкус.</div></section>';
   } else {
-    const по = TIERS.map(t => list.filter(x => x.v.t === t.key).length);
-    const макс = Math.max(...по, 1);
+    const сч = TIERS.map(t => list.filter(x => x.v.t === t.key).length);
+    const макс = Math.max(1, ...сч);
+    const жанр = new Map();
+    list.forEach(x => x.r.genres.forEach(g => жанр.set(g, (жанр.get(g) || 0) + 1)));
+    const жанры = [...жанр].sort((a, b) => b[1] - a[1]);
+    const всего = жанры.reduce((n, [, c]) => n + c, 0);
     const топ = жанры.slice(0, 5);
-    const прочее = упоминаний - топ.reduce((n, [, c]) => n + c, 0);
-    const пр = c => Math.max(1, Math.round(c / упоминаний * 100));
-    // На какой ступени чаще всего совпадаете — и в какую сторону расходитесь.
-    const где = TIERS.map(t => [t.key, совп.filter(x => x.v.t === t.key).length]).sort((a, b) => b[1] - a[1])[0];
-    const разница = ср.length ? ср.reduce((s, x) => s + баллМой(x.v) - x.r.rate.score, 0) / ср.length / 2 : 0;
-    const сторона = Math.abs(разница) < .15 ? 'В среднем оцениваешь вровень с ним.'
-      : 'В среднем ты ' + (разница > 0 ? 'мягче' : 'строже') + ' на ' +
-        Math.abs(разница).toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + ' ступени.';
-    taste = '<section class="pan me-pan"><h2>мой музыкальный вкус <small>по ' + число(list.length) + ' ' +
-        plural(list.length, 'оценке', 'оценкам', 'оценкам') + '</small></h2>' +
-      '<div class="me-taste"><div><div class="me-lab">как я оцениваю</div>' +
-        TIERS.map((t, i) => '<div class="rbar" style="--tc:' + TCOLOR[t.key] + '"><span class="n">' + t.key + '</span>' +
-          '<span class="tr"><span style="width:' + (по[i] / макс * 100).toFixed(1) + '%"></span></span>' +
-          '<span class="c">' + по[i] + '</span></div>').join('') + '</div>' +
-        '<div><div class="me-lab">что оцениваю чаще</div><div class="gchips">' +
-          (топ.length ? топ.map(([g, c]) => '<button type="button" class="gchip" data-g="' + esc(g) + '">' + esc(g) + ' <b>' + пр(c) + '%</b></button>').join('') +
-            (прочее > 0 ? '<span class="gchip">другое <b>' + пр(прочее) + '%</b></span>' : '')
-            : '<span class="me-cnt">у оценённых треков жанр не указан</span>') +
-        '</div></div></div>' +
-      (ср.length ? '<div class="me-note"><span>' + (где && где[1]
-          ? 'С композитором чаще всего совпадаете на <b>«' + esc(где[0]) + '»</b>. '
-          : 'Пока ни разу не совпали по ступени. ') + сторона + '</span></div>' : '') +
-      '</section>';
+    const прочее = всего - топ.reduce((n, [, c]) => n + c, 0);
+    const доля = c => Math.max(1, Math.round(c / всего * 100));
+    вкус = '<section class="o-panel"><div class="section-title"><h2>мой музыкальный вкус</h2>' +
+        '<a class="text-link" href="#me/ratings" data-clear>все оценки (' + число(list.length) + ') ' + ико('arrow') + '</a></div>' +
+      '<div class="taste-split"><div><div class="minor-title">Как я оцениваю</div>' +
+        TIERS.map((t, i) => '<button type="button" class="tier-row" data-tier="' + esc(t.key) + '" data-tip="Показать эти оценки">' +
+          '<span class="tier-label">' + t.key + '</span><span class="tier-track"><span class="tier-fill" style="--tier:' + TCOLOR[t.key] +
+          ';width:' + (сч[i] / макс * 100).toFixed(1) + '%"></span></span><span class="tier-count">' + сч[i] + '</span></button>').join('') +
+      '</div><div><div class="minor-title">Что оцениваю чаще</div><div class="small-tags">' +
+        (топ.length ? топ.map(([g, c]) => '<button type="button" class="small-tag" data-genre="' + esc(g) + '">' + esc(g) +
+            ' <b>' + доля(c) + '%</b></button>').join('') +
+          (прочее > 0 ? '<span class="small-tag" style="color:var(--dim)">другое <b>' + доля(прочее) + '%</b></span>' : '')
+          : '<span class="mutedline">у оценённых треков жанр не указан</span>') +
+      '</div></div></div></section>';
   }
 
-  const свежие = list.slice().sort((a, b) => (b.v.w || 0) - (a.v.w || 0)).slice(0, 5);
-  const recent = list.length ? '<section class="pan me-pan"><h2>последние оценки ' +
-      '<a class="lnk" href="#me/ratings" style="margin:0">смотреть все →</a></h2>' +
-      '<div>' + свежие.map(строкаМоя).join('') + '</div></section>' : '';
-
+  // В полосе три достижения: сначала полученные, остальное — те, до
+  // которых ближе всего.
   const зн = достижения(list);
-  const получено = зн.filter(x => x[3] >= x[4]).length;
-  const badges = '<section class="pan me-pan"><h2>достижения <small>' + получено + ' из ' + зн.length + '</small></h2>' +
-    '<div class="badges">' + зн.map(([ic, name, how, n, need]) => {
-      const есть = n >= need;
-      return '<div class="bdg' + (есть ? '' : ' off') + '"><div class="bv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round">' +
-        ЗНАЧКИ[ic] + '</svg></div><b>' + name + '</b><small>' + (есть ? how : Math.min(n, need) + ' / ' + need) + '</small>' +
-        (есть ? '' : '<div class="me-bar"><span style="width:' + Math.min(100, n / need * 100) + '%"></span></div>') + '</div>';
-    }).join('') + '</div></section>';
+  const есть = зн.filter(получено);
+  const нет = зн.filter(a => !получено(a)).sort((a, b) => b.n / b.need - a.n / a.need);
+  const три = есть.slice(0, нет.length ? 2 : 3).concat(нет).slice(0, 3);
+  const достиж = '<section class="o-panel"><div class="section-title"><h2>достижения</h2>' +
+    '<button type="button" class="text-link" data-ach-all>все достижения ' + ико('arrow') + '</button></div>' +
+    '<div class="ach-strip">' + три.map(достижениеHtml).join('') + '</div></section>';
 
-  const игра = играСчёт();
-  const слов = Object.values(TALK).reduce((n, л) => n + (л || []).length, 0) + (вошёл() && ОБЛ.моихКомм || 0);
-  const своё = '<section class="pan me-pan"><h2>моё на сайте</h2><div>' +
-    [['в избранном', FAV.size, FAV.size ? 'fav' : ''],
-     ['комментариев', слов, ''],
-     ['угадано оценок', игра.total ? игра.hits + ' из ' + игра.total : 0, ''],
-     ['предложено треков', MINE.length, '']].map(([k, v, go]) =>
-      '<div class="kv"><span>' + k + '</span>' +
-        (go ? '<button type="button" class="lnk" data-has="' + go + '">' + v + ' →</button>'
-            : '<b>' + v + '</b>') + '</div>').join('') +
-    '</div></section>';
-
-  box.innerHTML = '<div class="me-cols"><div class="me-main">' + уведомленияHtml() + metrics + taste +
-      расхожденияHtml(list) + календарьHtml(list) + recent + '</div>' +
-    '<aside class="me-side">' + (вошёл() ? '<section class="pan me-pan" data-near><h2>близкие по вкусу</h2><p class="me-cnt">считаю…</p></section>' : '') +
-      badges + своё + '</aside></div>';
+  box.innerHTML = '<div class="feature-grid">' +
+      '<section class="music-main"><div class="music-main-top"><h2>избранные треки</h2>' +
+        '<a class="text-link" href="#me/favs">всё избранное (' + число(любимые.length) + ') ' + ико('arrow') + '</a></div>' +
+        (любимые.length ? '<div class="c-cards cmp" data-cards></div>'
+          : '<div class="c-empty">В избранном пока нет треков. Добавь понравившиеся сердечком на обложке в <a href="#base">каталоге</a>.</div>') +
+      '</section>' +
+      '<aside class="feed-panel"><div class="music-main-top"><h2>последние действия</h2>' +
+        '<a class="feed-head-link" href="#me/ratings" data-clear aria-label="Все мои оценки">' + ико('arrow') + '</a></div>' +
+        '<div class="feed-list" data-feed></div></aside></div>' +
+    '<div class="overview-grid"><div class="o-left">' + вкус + достиж + '</div>' +
+      '<aside class="o-right">' + заказыКратко(вошёл() ? мойЗаказы() : null, true) +
+        (вошёл() ? '<section class="o-panel" data-near><div class="section-title"><h2>близкие по вкусу</h2></div>' +
+          '<p class="mutedline">считаю…</p></section>' : '') + '</aside></div>';
   шить(box);
+  сеткаКарточек(box.querySelector('[data-cards]'), любимые.slice(0, 5), 5);
+  лентаНарисовать(box.querySelector('[data-feed]'), list);
   близкиеНарисовать(box.querySelector('[data-near]'));
-  уведомленияПросмотрены();
-  box.querySelectorAll('.gchip[data-g]').forEach(b => b.addEventListener('click', () => поЖанру(b.dataset.g)));
-  box.querySelectorAll('[data-has]').forEach(b => b.addEventListener('click', () =>
-    toCatalog(() => { reset_soft(); F.q = ''; $('q').value = ''; F.has.set(b.dataset.has, 1); })));
 }
 
-function meRatings(box, list) {
-  if (!list.length) {
-    box.innerHTML = '<section class="pan me-pan"><div class="me-empty">Оценок пока нет. Их ставят в ' +
-      '<a href="#base">каталоге</a>, на обложке, или на странице трека.</div></section>';
+/* Последние действия: свои оценки (у которых есть время) и комментарии. */
+async function лентаНарисовать(el, list) {
+  const по = new Map(CAT.map(r => [r.key, r]));
+  const рис = комм => {
+    const все = list.filter(x => x.v.w).map(x => ({ тип: 'rate', ts: x.v.w, r: x.r, v: x.v }))
+      .concat(комм).sort((a, b) => b.ts - a.ts).slice(0, 5);
+    el.innerHTML = все.length ? все.map(строкаЛенты).join('')
+      : '<div class="feed-none">Здесь появятся твои оценки и комментарии.</div>';
+    шить(el);
+  };
+  const здесь = [];
+  Object.entries(TALK).forEach(([k, л]) => (л || []).forEach(c => {
+    const r = по.get(k);
+    if (r && c.when) здесь.push({ тип: 'talk', ts: c.when, r, текст: c.text });
+  }));
+  рис(здесь);
+  if (!вошёл()) return;
+  const { data, error } = await ОБЛ.sb.from('comments').select('track_key,body,created_at')
+    .eq('user_id', ОБЛ.user.id).order('created_at', { ascending: false }).limit(5);
+  if (error || !el.isConnected) return;
+  рис(здесь.concat((data || []).map(c => ({ тип: 'talk', ts: Date.parse(c.created_at), r: по.get(c.track_key), текст: c.body }))
+    .filter(x => x.r)));
+}
+function строкаЛенты(a) {
+  return '<a class="feed-row" href="' + trackHref(a.r) + '"><span class="feed-art">' + covHtml(a.r) + '</span>' +
+    '<span class="feed-copy"><span class="feed-category">' + (a.тип === 'rate' ? 'Оценка' : 'Комментарий') + ' · ' +
+      датаКороткая(a.ts) + '</span><span class="feed-title">' + esc(a.r.title || '—') + '</span>' +
+      (a.тип === 'rate'
+        ? '<span class="feed-extra">' + esc(a.r.artist || '—') + ' <b style="color:' + TCOLOR[a.v.t] + '">' + esc(a.v.t + modLabel(a.v.m)) + '</b></span>'
+        : '<span class="feed-comment">«' + esc(обрезать(a.текст, 120)) + '»</span>') +
+    '</span><span class="feed-arrow">' + ико('arrow') + '</span></a>';
+}
+
+/* ---------- близкие по вкусу ----------
+   Считает сервер (taste_neighbors): среди тех, кто открыл оценки, у кого
+   больше всего совпадений со мной, от пяти общих треков. */
+async function близкиеНарисовать(el) {
+  if (!el || !вошёл()) return;
+  const { data, error } = await ОБЛ.sb.rpc('taste_neighbors');
+  if (!el.isConnected) return;
+  const p = el.querySelector('.mutedline');
+  if (error) { p.textContent = 'Не удалось посчитать.'; return; }
+  if (!(data || []).length) {
+    p.textContent = 'Пока никого. Сравнение — с теми, кто открыл свои оценки, и от пяти общих треков.';
     return;
   }
-  box.innerHTML = '<div class="me-list"><section class="pan me-pan"><h2>все мои оценки</h2>' +
-    '<div class="me-tools"><input id="meQ" type="search" placeholder="Найти трек или исполнителя" aria-label="Найти трек или исполнителя">' +
-    '<select id="meT" aria-label="Моя оценка"><option value="">все оценки</option>' +
-      TIERS.map(t => '<option value="' + t.key + '">' + t.key + '</option>').join('') + '</select>' +
-    '<select id="meC" aria-label="Сравнение с композитором"><option value="">с композитором — любое</option>' +
-      '<option value="eq">совпало</option><option value="up">я выше</option><option value="down">я ниже</option></select></div>' +
-    '<div id="meRows"></div><div class="me-cnt" id="meCnt"></div></section>' +
-    '<aside class="pan me-pan me-tip"><h2>о моих оценках</h2>' +
-      '<p>«Совпало» — твоя ступень та же, что у композитора хоть в одном из разносов трека. «Выше» и «ниже» сравнивают со свежим разносом, вместе с плюсами и минусами.</p>' +
-      (вошёл() ? '<p>Оценки лежат в базе сайта и видны с любого устройства, где ты вошёл. Другим — только если открыть их в настройках.</p>'
-               : '<p>Без входа оценки лежат в этом браузере, и с другого устройства их не видно.</p>') +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">' +
-        '<button type="button" class="btn ghost" id="meCsv">скачать CSV</button>' +
-        '<a class="btn ghost" href="#base" style="text-decoration:none">в каталог →</a></div></aside></div>';
+  p.outerHTML = '<div>' + data.map(x => '<a class="near-row" href="#u=' + encodeURIComponent(x.login) + '">' +
+      (x.avatar_url ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(x.avatar_url) + '">' : '<span class="ini">' + esc(буквы(x.name || x.login)) + '</span>') +
+      '<b>' + esc(x.name || x.login) + '</b><span>' + Math.round(x.same / x.common * 100) + '% · ' + x.common + ' общих</span></a>').join('') +
+    '</div><p class="t-note">Процент — сколько общих треков вы оценили одной ступенью.</p>';
+  el.querySelectorAll('img').forEach(im => im.addEventListener('error', () => im.remove()));
+}
+
+/* Щелчки обзора и других вкладок — одним обработчиком на весь кабинет. */
+$('meTab').addEventListener('click', e => {
+  const t = e.target.closest('[data-tier],[data-genre],[data-clear],[data-ach-all],[data-fav],[data-csv]');
+  if (!t) return;
+  if (t.hasAttribute('data-ach-all')) return достиженияОкно();
+  if (t.hasAttribute('data-csv')) return оценкиВCsv(мойСписок());
+  if (t.hasAttribute('data-fav')) return сердцеЩёлк(t);
+  if (t.dataset.tier || t.dataset.genre || t.hasAttribute('data-clear')) {
+    Object.assign(КБ, { q: '', tier: t.dataset.tier || '', genre: t.dataset.genre || '' });
+    if (location.hash === '#me/ratings') { e.preventDefault(); drawMe(); }
+    else if (t.tagName === 'BUTTON') location.hash = '#me/ratings';
+  }
+});
+/* Сняли сердечко в «избранном» — карточка уходит из списка сразу. */
+$('meTab').addEventListener('click', e => {
+  if (!e.target.closest('.card .fav')) return;
+  if (/^#me(\/favs)?$/.test(location.hash)) setTimeout(drawMe, 0);
+});
+
+/* ---------- мои оценки ---------- */
+function отобратьОценки(list) {
+  const w = слова(КБ.q);
+  const out = list.filter(x => {
+    if (КБ.tier && x.v.t !== КБ.tier) return false;
+    if (КБ.genre && !x.r.genres.includes(КБ.genre)) return false;
+    return !w.length || w.every(q => совпало(x.r, q, x.r.слова) || x.r.genres.some(g => g.toLowerCase().startsWith(q)));
+  });
+  const балл = x => баллМой(x.v);
+  const по = {
+    new: (a, b) => (b.v.w || 0) - (a.v.w || 0) || (a.r.title || '').localeCompare(b.r.title || '', 'ru'),
+    best: (a, b) => балл(b) - балл(a),
+    worst: (a, b) => балл(a) - балл(b),
+    artist: (a, b) => (a.r.artist || '').localeCompare(b.r.artist || '', 'ru'),
+    title: (a, b) => (a.r.title || '').localeCompare(b.r.title || '', 'ru')
+  };
+  return out.sort(по[КБ.sort] || по.new);
+}
+function рядОценки(x, cmp) {
+  const r = x.r, v = x.v, к = trackHref(r);
+  return '<div class="track-row"><a class="track-art" href="' + к + '" tabindex="-1" aria-hidden="true">' + covHtml(r) + '</a>' +
+    '<a class="track-identity" href="' + к + '"><strong>' + esc(r.title || '—') + '</strong><small>' + esc(r.artist || '—') +
+      (r.genres.length ? ' · ' + esc(r.genres.slice(0, 2).join(', ')) : '') + '</small></a>' +
+    '<span class="track-genres">' + esc(r.genres.join(' · ')) + '</span>' +
+    '<a class="track-grade" href="' + к + '" style="color:' + TCOLOR[v.t] + ';--tc2:' + tColor(r.rate) + '">' + esc(v.t + modLabel(v.m)) +
+      (cmp ? '<small>композитор: <i>' + esc(r.rate ? r.rate.label : '—') + '</i></small>' : '') + '</a>' +
+    '<div class="track-actions">' + сердце(r) + '</div></div>';
+}
+function meRatings(box, list) {
+  const шапка = '<div class="tab-heading"><div><h2>мои оценки</h2><p>Твоя музыкальная коллекция: искать, пересматривать и переоценивать.</p></div>' +
+    (list.length ? '<button type="button" class="soft-btn" data-csv>' + ико('download') + ' Скачать CSV</button>' : '') + '</div>';
+  if (!list.length) {
+    box.innerHTML = шапка + '<div class="c-empty">' + ико('search') + 'Оценок пока нет. Их ставят в <a href="#base">каталоге</a>, ' +
+      'на обложке, или на странице трека.</div>';
+    return;
+  }
+  const жанры = [...new Set(list.flatMap(x => x.r.genres))].sort((a, b) => a.localeCompare(b, 'ru'));
+  if (КБ.genre && !жанры.includes(КБ.genre)) КБ.genre = '';
+  const опции = (пары, выбор, пусто) => '<option value="">' + esc(пусто) + '</option>' +
+    пары.map(([v, n]) => '<option value="' + esc(v) + '"' + (v === выбор ? ' selected' : '') + '>' + esc(n) + '</option>').join('');
+  box.innerHTML = шапка +
+    '<div class="toolbar"><input id="kbQ" class="c-field" type="search" placeholder="Название, исполнитель или жанр" aria-label="Найти оценённый трек" value="' + esc(КБ.q) + '">' +
+      '<select id="kbT" class="dropdown" aria-label="Фильтр по оценке">' + опции(TIERS.map(t => [t.key, t.key]), КБ.tier, 'Любая оценка') + '</select>' +
+      '<select id="kbG" class="dropdown" aria-label="Фильтр по жанру">' + опции(жанры.map(g => [g, g]), КБ.genre, 'Все жанры') + '</select>' +
+      '<select id="kbS" class="dropdown" aria-label="Сортировка">' + [['new', 'Сначала последние'], ['best', 'Высокие оценки'], ['worst', 'Низкие оценки'],
+        ['artist', 'По исполнителю'], ['title', 'По названию']].map(([v, n]) => '<option value="' + v + '"' + (v === КБ.sort ? ' selected' : '') + '>' + n + '</option>').join('') + '</select>' +
+      '<div class="switch-group toolbar-spacer" role="group" aria-label="Вид">' +
+        [['grid', 'Плитки'], ['list', 'Список']].map(([v, n]) => '<button type="button" data-view="' + v + '" class="' + (КБ.view === v ? 'active' : '') +
+          '" aria-pressed="' + (КБ.view === v) + '">' + n + '</button>').join('') + '</div></div>' +
+    '<label class="toggle-line"><input type="checkbox" id="kbC"' + (КБ.cmp ? ' checked' : '') + '><span>Показать рядом оценки композитора</span></label>' +
+    '<div class="results-line"><span id="kbN"></span></div><div id="kbOut"></div>';
   const рисовать = () => {
-    const w = слова($('meQ').value);
-    const t = $('meT').value, c = $('meC').value;
-    const out = list.filter(x => {
-      if (t && x.v.t !== t) return false;
-      if (c) {
-        if (!x.r.rate) return false;
-        if (c === 'eq' && !совпалС(x)) return false;
-        const d = баллМой(x.v) - x.r.rate.score;
-        if (c === 'up' && !(d > 0)) return false;
-        if (c === 'down' && !(d < 0)) return false;
-      }
-      return !w.length || w.every(q => совпало(x.r, q, x.r.слова));
-    }).sort((a, b) => (b.v.w || 0) - (a.v.w || 0) || (a.r.title || '').localeCompare(b.r.title || '', 'ru'));
-    const показ = out.slice(0, 300);
-    $('meRows').innerHTML = показ.length ? показ.map(строкаМоя).join('')
-      : '<div class="me-empty">По такому отбору ничего не нашлось.</div>';
-    шить($('meRows'));
-    $('meCnt').textContent = 'Показано ' + число(показ.length) + ' из ' + число(out.length) +
-      (out.length !== list.length ? ' · всего оценок ' + число(list.length) : '');
+    const out = отобратьОценки(list);
+    $('kbN').textContent = 'Найдено ' + число(out.length) + ' из ' + число(list.length) + ' ' + plural(list.length, 'оценки', 'оценок', 'оценок');
+    const el = $('kbOut');
+    el.textContent = '';
+    if (!out.length) {
+      el.innerHTML = '<div class="c-empty">' + ико('search') + 'По заданным условиям ничего не нашлось.<br>' +
+        '<button type="button" class="text-link" data-clear style="margin-top:10px">Сбросить фильтры ' + ико('arrow') + '</button></div>';
+      return;
+    }
+    if (КБ.view === 'grid') {
+      const g = document.createElement('div');
+      g.className = 'c-cards' + (КБ.cmp ? ' cmp' : '');
+      el.append(g);
+      сеткаКарточек(g, out.map(x => x.r));
+    } else {
+      // Список длинный — кусками, как и сетка.
+      const m = document.createElement('div');
+      m.className = 'music-list';
+      el.append(m);
+      let n = 0;
+      const ещё = () => {
+        m.insertAdjacentHTML('beforeend', out.slice(n, n + 100).map(x => рядОценки(x, КБ.cmp)).join(''));
+        n += 100;
+        шить(m);
+        const b = el.querySelector('.c-more'); if (b) b.remove();
+        if (n < out.length) {
+          el.insertAdjacentHTML('beforeend', '<button type="button" class="soft-btn c-more" style="margin-top:14px">показать ещё ' +
+            число(Math.min(100, out.length - n)) + ' из ' + число(out.length - n) + '</button>');
+          el.querySelector('.c-more').addEventListener('click', ещё);
+        }
+      };
+      ещё();
+    }
   };
   let timer;
-  $('meQ').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(рисовать, 120); });
-  $('meT').addEventListener('change', рисовать);
-  $('meC').addEventListener('change', рисовать);
-  $('meCsv').addEventListener('click', () => оценкиВCsv(list));
+  $('kbQ').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { КБ.q = $('kbQ').value; рисовать(); }, 120); });
+  $('kbT').addEventListener('change', e => { КБ.tier = e.target.value; рисовать(); });
+  $('kbG').addEventListener('change', e => { КБ.genre = e.target.value; рисовать(); });
+  $('kbS').addEventListener('change', e => { КБ.sort = e.target.value; рисовать(); });
+  $('kbC').addEventListener('change', e => { КБ.cmp = e.target.checked; рисовать(); });
+  box.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
+    КБ.view = b.dataset.view;
+    box.querySelectorAll('[data-view]').forEach(x => { x.classList.toggle('active', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+    рисовать();
+  }));
   рисовать();
 }
 
+/* ---------- избранное ---------- */
+function meFavs(box) {
+  const по = new Map(CAT.map(r => [r.key, r]));
+  const list = [...FAV].reverse().map(k => по.get(k)).filter(Boolean);
+  box.innerHTML = '<div class="tab-heading"><div><h2>избранное</h2><p>' + число(list.length) + ' ' + plural(list.length, 'трек', 'трека', 'треков') +
+      (list.length > 1 ? ', сначала новые' : '') + '</p></div>' +
+      '<a class="soft-btn" href="#me/ratings" data-clear>' + ико('arrow') + ' Мои оценки</a></div>' +
+    (list.length ? '<div class="c-cards cmp" data-cards></div>'
+      : '<div class="c-empty">' + ико('heart') + 'Здесь пока пусто. Добавь трек сердечком на обложке в <a href="#base">каталоге</a>.</div>');
+  сеткаКарточек(box.querySelector('[data-cards]'), list);
+}
+
+/* ---------- мои заказы ---------- */
+const КЗ = { sort: 'new' };
+function рядЗаказа(o) {
+  const r = o.r, x = o.x, к = trackHref(r);
+  return '<div class="track-row"><a class="track-art" href="' + к + '" tabindex="-1" aria-hidden="true">' + covHtml(r) + '</a>' +
+    '<a class="track-identity" href="' + к + '"><strong>' + esc(r.title || '—') + '</strong><small>' + esc(r.artist || '—') +
+      (r.genres.length ? ' · ' + esc(r.genres.slice(0, 2).join(', ')) : '') + '</small></a>' +
+    '<span class="order-stream">' + (x.streamNum != null ? '№' + x.streamNum : '') + '</span>' +
+    '<a class="track-grade" href="' + к + '" style="color:' + tColor(x.rate) + '">' + esc(x.rate ? x.rate.label : '—') + '</a>' +
+    '<div class="track-actions">' + сердце(r) + '<a href="' + к + '" aria-label="Открыть трек">' + ико('arrow') + '</a></div></div>';
+}
+function статЗаказов(з) {
+  const с = з.filter(o => o.x.rate);
+  const по = TIERS.map(t => [t, с.filter(o => o.x.rate.tier === t.key).length]).filter(([, n]) => n);
+  const макс = Math.max(1, ...по.map(([, n]) => n));
+  const пути = new Map();
+  з.forEach(o => { const w = (o.x.way || '').replace(/\s*[xх]\s*\d+.*$/i, '').trim() || 'не указано';
+    пути.set(w, (пути.get(w) || 0) + 1); });
+  // Место среди заказчиков — по числу заказов, против каждого имени таблицы.
+  const имена = именаТаблицы();
+  const мои = new Set(з.flatMap(o => заказчики(o.x).map(u => u.toLowerCase())));
+  const выше = [...имена].filter(([k, e]) => !мои.has(k) && e.n > з.length).length;
+  let сумма = 0, всего = 0;
+  CAT.forEach(r => { if (!r.mine) разы(r).forEach(x => { if (x.rate) { сумма += x.rate.score; всего++; } }); });
+  const ср = с.length ? с.reduce((a, o) => a + o.x.rate.score, 0) / с.length : null;
+  const срАрхив = всего ? сумма / всего : null;
+  const жанр = new Map();
+  с.forEach(o => o.r.genres.forEach(g => { const e = жанр.get(g) || [0, 0]; e[0] += o.x.rate.score; e[1]++; жанр.set(g, e); }));
+  const лучЖанр = [...жанр].filter(([, e]) => e[1] >= 3).sort((a, b) => b[1][0] / b[1][1] - a[1][0] / a[1][1])[0];
+  const дробь = v => v.toLocaleString('ru-RU', { maximumFractionDigits: 1 });
+  return '<div class="order-stats"><div><p>Распределение заказов по оценкам:</p>' +
+      по.map(([t, n]) => '<div class="bar-row"><span>' + t.key + '</span><span>' + n + '</span></div>' +
+        '<div class="bar-col"><span style="width:' + (n / макс * 100).toFixed(1) + '%;background:' + TCOLOR[t.key] + '"></span></div>').join('') +
+    '</div><div><p>Как треки были принесены:</p><div class="small-tags">' +
+      [...пути].sort((a, b) => b[1] - a[1]).map(([w, n]) => '<span class="small-tag">' + esc(w) + ' <b>' + n + '</b></span>').join('') + '</div>' +
+      '<div style="margin-top:18px">' +
+        '<div class="stat-line"><span>место по числу заказов</span><b>' + (выше + 1) + ' из ' + число(имена.size) + '</b></div>' +
+        (ср != null && срАрхив != null ? '<div class="stat-line"><span>оценка заказов против средней по архиву</span><b>' +
+          (ср >= срАрхив ? '+' : '−') + дробь(Math.abs(ср - срАрхив)) + '</b></div>' : '') +
+        (лучЖанр ? '<div class="stat-line"><span>жанр, в котором заказы удаются лучше всего</span><b>' + esc(лучЖанр[0]) + '</b></div>' : '') +
+    '</div></div></div>';
+}
+function meOrders(box) {
+  const шапка = '<div class="tab-heading"><div><h2>мои заказы</h2><p>Все треки, принесённые на разнос</p></div>' +
+    '<a class="soft-btn" href="#base">' + ико('external') + ' Перейти к базе треков</a></div>';
+  if (!вошёл()) {
+    box.innerHTML = шапка + '<div class="c-empty">Свои заказы можно привязать к профилю после входа через Twitch.' +
+      (ОБЛ && ОБЛ.sb ? '<br><button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '') + '</div>';
+    return;
+  }
+  const з = мойЗаказы();
+  if (!з) {
+    box.innerHTML = шапка + '<div class="c-empty">Заказы из таблицы разносов к профилю пока не привязаны.<br>' +
+      'В таблице заказчик записан так, как его назвали на стриме, — найди себя во вкладке <a href="#me/claims">«заявки»</a>, ' +
+      'и админ привяжет заказы, сверив ник на Twitch.</div>';
+    return;
+  }
+  const номера = з.map(o => o.x.streamNum).filter(n => n != null);
+  const лучш = з.filter(o => o.x.rate).sort((a, b) => b.x.rate.score - a.x.rate.score)[0];
+  box.innerHTML = шапка +
+    '<div class="order-hero"><div class="order-h-num">' + число(з.length) + '</div>' +
+      '<div class="order-h-descr">' + plural(з.length, 'заказанный трек', 'заказанных трека', 'заказанных треков') +
+        (номера.length ? '<br><span class="faint">эфиры №' + Math.min(...номера) + '–' + Math.max(...номера) + '</span>' : '') + '</div>' +
+      (лучш ? '<div class="order-h-best"><small>Один из заказов, получивших высокую оценку</small><strong>«' + esc(лучш.r.title || '—') +
+        '» — ' + esc(лучш.x.rate.label) + '</strong></div>' : '') + '</div>' +
+    '<div class="section-title"><h2 style="font-size:16px">история заказов</h2>' +
+      '<select id="kzS" class="dropdown" aria-label="Сортировка заказов"><option value="new">Сначала свежие</option>' +
+      '<option value="grade"' + (КЗ.sort === 'grade' ? ' selected' : '') + '>По оценке</option></select></div>' +
+    '<div class="music-list order-list" data-rows></div>' +
+    '<details class="disclosure"><summary>Дополнительная статистика заказов</summary>' + статЗаказов(з) + '</details>';
+  const ряды = box.querySelector('[data-rows]');
+  const рисовать = () => {
+    const list = КЗ.sort === 'grade'
+      ? з.slice().sort((a, b) => (b.x.rate ? b.x.rate.score : -1) - (a.x.rate ? a.x.rate.score : -1)) : з;
+    const показать = n => {
+      ряды.innerHTML = list.slice(0, n).map(рядЗаказа).join('');
+      шить(ряды);
+      box.querySelectorAll('.c-more').forEach(b => b.remove());
+      if (n < list.length) {
+        ряды.insertAdjacentHTML('afterend', '<button type="button" class="soft-btn c-more" style="margin-top:14px">показать все ' +
+          число(list.length) + '</button>');
+        box.querySelector('.c-more').addEventListener('click', () => показать(list.length));
+      }
+    };
+    показать(60);
+  };
+  $('kzS').addEventListener('change', e => { КЗ.sort = e.target.value; рисовать(); });
+  рисовать();
+}
+
+/* ---------- настройки ---------- */
 function meSettings(box) {
   let цвет = ПРОФ.цвет || ЦВЕТА[0];
-  box.innerHTML = '<div class="me-list"><section class="pan me-pan"><h2>настройки профиля</h2>' +
-    '<form class="me-form" id="meForm">' +
-      (вошёл()
-        ? '<label>ник<input id="meNick" disabled value="' + esc(мойНик()) + '"><small style="color:var(--faint)">берётся с Twitch — поменяешь там, поменяется и здесь</small></label>'
-        : '<label>ник<input id="meNick" maxlength="28" autocomplete="nickname" value="' + esc(ПРОФ.ник || '') + '"></label>') +
-      '<label>немного о себе<input id="meBio" maxlength="90" value="' + esc(ПРОФ.о || '') + '"></label>' +
-      '<div><div style="font-size:12.5px;color:#c9c9c9;margin-bottom:6px">цвет человечка на главной</div>' +
-        '<div class="me-sw" id="meSw">' + ЦВЕТА.map(c => '<button type="button" style="--c:' + c + '" data-c="' + c + '"' +
-          ' aria-label="Цвет ' + c + '" aria-pressed="' + (c === цвет) + '"></button>').join('') + '</div></div>' +
-      '<button type="submit" class="btn">сохранить</button></form></section>' +
-    '<aside class="pan me-pan me-tip"><h2>где это хранится</h2>' + (вошёл()
-      ? '<p>Оценки, сердечки, цвет и пара слов о себе лежат в базе сайта и приезжают на любое устройство, где ты вошёл через Twitch. Свои оценки видишь только ты.</p>' +
-        '<p>Другим видны твой ник и аватар с Twitch, цвет и пара слов, привязанные заказы и то, что ты сейчас на сайте. Оценки — только если откроешь их ниже.</p>' +
-        '<p>Комментарии видят все. Заявки на обложки и факты пока остаются в этом браузере.</p>'
-      : '<p>Без входа ник, оценки и комментарии лежат в этом браузере — другие их не видят, а с телефона будет свой кабинет.</p>' +
-        '<p>Войдёшь через Twitch — оценки и сердечки отсюда переедут в твой аккаунт.</p>') + '</aside></div>' +
-    (вошёл() ? приватностьHtml() : '') +
+  const п = вошёл() ? (ОБЛ.проф || {}) : null;
+  const img = мойАватар();
+  const флажок = (id, вкл, имя, что) => '<label class="setting-line"><input id="' + id + '" type="checkbox"' + (вкл ? ' checked' : '') + '>' +
+    '<span><b>' + имя + '</b>' + что + '</span></label>';
+  box.innerHTML = '<div class="tab-heading"><div><h2>настройки</h2><p>Личные данные, внешний вид и что видят другие пользователи.</p></div></div>' +
+    '<div class="appearance-box"><div class="appearance-icon">♫</div><div class="appearance-content"><strong>Фон из аватара</strong>' +
+      '<span>' + (img ? 'Размытые цвета аватара на фоне страницы и в шапке' : 'Размытые цвета аватара на фоне страницы и в шапке — появится вместе с аватаром с Twitch') + '</span></div>' +
+      '<label class="switch"><input id="stBg" type="checkbox" aria-label="Фон из аватара"' + (ПРОФ.фон ? ' checked' : '') + (img ? '' : ' disabled') + '>' +
+        '<span class="switch-track"></span></label></div>' +
+    '<div class="settings-grid"><section class="settings-box"><form id="meForm">' +
+      '<label class="form-label" for="meNick">Имя пользователя</label>' +
+      (п ? '<input type="text" id="meNick" value="' + esc(мойНик()) + '" disabled><p class="setting-hint">Имя синхронизируется с Twitch.</p>'
+         : '<input type="text" id="meNick" maxlength="28" autocomplete="nickname" value="' + esc(ПРОФ.ник || '') + '">' +
+           '<p class="setting-hint">Войдёшь через Twitch — имя возьмётся оттуда.</p>') +
+      '<label class="form-label" for="meBio">Немного о себе</label>' +
+      '<textarea id="meBio" maxlength="90" placeholder="Например, люблю электронную музыку, джаз и саундтреки">' + esc(ПРОФ.о || '') + '</textarea>' +
+      '<span class="form-label">Цвет моего человечка на главной</span>' +
+      '<div class="colors-row" id="meSw">' + ЦВЕТА.map(c => '<button type="button" style="--c:' + c + '" data-c="' + c + '"' +
+        ' aria-label="Цвет ' + c + '" aria-pressed="' + (c === цвет) + '"></button>').join('') + '</div>' +
+      '<button class="main-btn" type="submit">' + ико('check') + ' Сохранить изменения</button></form></section>' +
+    '<aside><div class="section-title"><h2>публичный профиль</h2></div>' + (п
+      ? флажок('prRates', п.ratings_public !== false, 'Показывать мои оценки',
+          'Другие пользователи увидят мои оценки треков — в профиле, в «оценках зрителей» и в «близких по вкусу». По умолчанию они открыты.') +
+        флажок('prFavs', п.favs_public !== false, 'Показывать избранное', 'Выбранные тобой треки будут видны в публичном профиле.') +
+        флажок('prHide', !!п.hide_online, 'Не показывать меня в человечках', 'На главной тебя не будет видно, даже когда ты на сайте.') +
+        (п.login ? '<a class="soft-btn" href="#u=' + encodeURIComponent(п.login) + '" style="margin-top:14px">' + ико('external') + ' Предпросмотр профиля</a>' : '')
+      : '<div class="setting-help"><p>Публичный профиль появляется после входа через Twitch: ник и аватар оттуда, пара слов о себе, ' +
+          'оценки и избранное — если их не скрыть.</p><p>Без входа ник, оценки и комментарии лежат в этом браузере, и другие их не видят.</p></div>' +
+        (ОБЛ && ОБЛ.sb ? '<button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '')) +
+    '</aside></div>' +
+    (п ? '<section class="settings-box" style="margin-top:24px"><div class="section-title"><h2>аккаунт</h2></div>' +
+        '<div class="acc-row"><div><b>Twitch' + (п.login ? ' · ' + esc(п.login) : '') + '</b><small>Оценки, сердечки, цвет и пара слов о себе лежат в базе сайта ' +
+          'и приезжают на любое устройство, где ты вошёл.</small></div><button type="button" class="soft-btn" data-logout>Выйти</button></div>' +
+        '<div class="acc-row bad"><div><b>Удалить аккаунт</b><small>Сотрёт из базы профиль, оценки, сердечки, комментарии и заявки. Вернуть будет нельзя.</small></div>' +
+          '<button type="button" class="soft-btn bad" id="prDel">Удалить…</button></div></section>' : '') +
     (['admin', 'owner'].includes(мояРоль())
-      ? '<section class="pan me-pan" style="margin-top:18px"><h2>команда сайта</h2><div id="meTeam"><p class="me-cnt">загружаю…</p></div></section>' : '');
+      ? '<section class="settings-box" style="margin-top:24px"><div class="section-title"><h2>команда сайта</h2></div><div id="meTeam"><p class="me-cnt">загружаю…</p></div></section>' : '');
   командаНарисовать($('meTeam'));
   приватностьПодключить(box);
+  $('stBg').addEventListener('change', e => { ПРОФ.фон = e.target.checked; saveПроф(); meHero(); });
   $('meSw').addEventListener('click', e => {
     const b = e.target.closest('[data-c]'); if (!b) return;
     цвет = b.dataset.c;
     $('meSw').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    const знак = $('meHero').querySelector('.music-symbol');
+    if (знак) знак.style.color = цвет;
   });
   $('meForm').addEventListener('submit', e => {
     e.preventDefault();
@@ -15863,11 +16502,12 @@ function meSettings(box) {
     if (вошёл()) профильВБазу();
     else toast('Профиль сохранён');
     главная();
-    location.hash = '#me';
+    meHero();
   });
 }
 
 главнаяПульт();
+колоколПульт();
 главная();
 
 /* ============================================================
@@ -15955,6 +16595,7 @@ async function облакоСтарт() {
   try { сессия = (await ОБЛ.sb.auth.getSession()).data.session; } catch {}
   await облакоСессия(сессия);
   онлайнЦикл();
+  setInterval(счётчикиЗагрузить, 5 * 60000);
 }
 
 async function облакоСессия(сессия) {
@@ -15979,6 +16620,7 @@ async function облакоСессия(сессия) {
   уведомленияЗагрузить();
   await сверитьВсё();
   отметиться();
+  счётчикиЗагрузить();
 }
 
 function облакоВышел() {
@@ -15990,6 +16632,7 @@ function облакоВышел() {
   ОБЛ.ошибка = '';
   if (ПРОФ.twitch) { delete ПРОФ.twitch; saveПроф(); }
   облакоРисовать(true);
+  счётчикиЗагрузить();
   if (был) toast('Ты вышел. Оценки остаются в этом браузере');
 }
 
@@ -16035,8 +16678,8 @@ function облакоСбой(e) {
 
 /* ---------- профиль ---------- */
 async function профильИзБазы() {
-  const { data, error } = await ОБЛ.sb.from('profiles')
-    .select('name,login,avatar_url,color,bio,role,banned,ratings_public,hide_online,created_at').eq('id', ОБЛ.user.id).maybeSingle();
+  const { data, error } = await профильПо('id', ОБЛ.user.id,
+    'name,login,avatar_url,color,bio,role,banned,ratings_public,favs_public,hide_online,created_at');
   if (error) return облакоСбой(error);
   ОБЛ.проф = data;
   const к = await ОБЛ.sb.from('comments').select('id', { count: 'exact', head: true }).eq('user_id', ОБЛ.user.id);
@@ -16260,6 +16903,12 @@ async function комментарииЗагрузить(key) {
     .eq('track_key', key).order('created_at').limit(500);
   if (error) return;
   ОБЛ.комм[key] = data || [];
+  // Комментарии трека только что пришли целиком — заодно и число на карточке.
+  if (ОБЛ.счёт) {
+    const s = ОБЛ.счёт.get(key) || { f: 0, c: 0 };
+    s.c = ОБЛ.комм[key].length;
+    ОБЛ.счёт.set(key, s);
+  }
   if (T.r && T.r.key === key && $('tTalk')._рисовать) $('tTalk')._рисовать();
 }
 async function комментарийУдалить(key, id) {
@@ -16356,126 +17005,61 @@ async function заявкиМои() {
   }
 }
 
-/* Строка заказа: трек, что поставил композитор, номер и дата эфира. */
-function строкаЗаказа(o) {
-  const r = o.r, x = o.x;
-  return '<a class="trow" href="' + trackHref(r) + '"><span class="th">' + covHtml(r) + '</span>' +
-    '<span style="min-width:0"><span class="ta">' + esc(r.artist || '—') + '</span>' +
-      '<span class="tn">' + esc(r.title || '—') + '</span></span>' +
-    '<span class="gr" style="--tc:' + tColor(x.rate) + '">' + esc(x.rate ? x.rate.label : '—') +
-      '<small>' + esc(x.way || '') + '</small></span>' +
-    '<span class="dt">' + (x.streamNum != null ? '№' + x.streamNum : '') + '</span></a>';
-}
-
-/* Статистика заказов — одна на кабинет и на чужой профиль. */
-function заказыHtml(заказы, заголовок, кому) {
-  const с = заказы.filter(o => o.x.rate);
-  const ср = с.length ? с.reduce((a, o) => a + o.x.rate.score, 0) / с.length : null;
-  const ярлык = v => v == null ? null : SCALE_ORDER.map(l => parseRate(l)).filter(Boolean)
-    .sort((a, b) => Math.abs(a.score - v) - Math.abs(b.score - v))[0];
-  const ближ = ярлык(ср);
-  const лучш = с.slice().sort((a, b) => b.x.rate.score - a.x.rate.score)[0];
-  const по = TIERS.map(t => с.filter(o => o.x.rate.tier === t.key).length);
-  const макс = Math.max(...по, 1);
-  const пути = new Map();
-  заказы.forEach(o => { const w = (o.x.way || '').replace(/\s*[xх]\s*\d+.*$/i, '').trim() || 'не указано';
-    пути.set(w, (пути.get(w) || 0) + 1); });
-  const номера = заказы.map(o => o.x.streamNum).filter(n => n != null);
-
-  // Место среди заказчиков: по числу заказов, против каждого имени таблицы.
-  const имена = именаТаблицы();
-  const мои = new Set(заказы.flatMap(o => заказчики(o.x).map(u => u.toLowerCase())));
-  const выше = [...имена].filter(([k, e]) => !мои.has(k) && e.n > заказы.length).length;
-  // Средняя оценка по всему архиву — с чем сравнивать свою.
-  let сумма = 0, всего = 0;
-  CAT.forEach(r => { if (!r.mine) разы(r).forEach(x => { if (x.rate) { сумма += x.rate.score; всего++; } }); });
-  const срАрхив = всего ? сумма / всего : null;
-  // Жанр, который композитору нравится в этих заказах больше всего (от трёх оценок).
-  const жанр = new Map();
-  с.forEach(o => o.r.genres.forEach(g => { const e = жанр.get(g) || [0, 0]; e[0] += o.x.rate.score; e[1]++; жанр.set(g, e); }));
-  const лучЖанр = [...жанр].filter(([, e]) => e[1] >= 3).sort((a, b) => b[1][0] / b[1][1] - a[1][0] / a[1][1])[0];
-  const дробь = v => v.toLocaleString('ru-RU', { maximumFractionDigits: 1 });
-
-  return '<div class="me-metrics">' +
-      '<div class="me-m"><div class="l">заказано треков</div><div class="v">' + число(заказы.length) + '</div>' +
-        '<div class="s">' + (номера.length ? 'эфиры №' + Math.min(...номера) + '–' + Math.max(...номера) : '') + '</div></div>' +
-      '<div class="me-m"><div class="l">в среднем у композитора</div><div class="v w" style="color:' + (ближ ? TCOLOR[ближ.tier] : 'inherit') + '">' +
-        esc(ближ ? ближ.label : '—') + '</div><div class="s">' + (ср != null ? дробь(ср) + ' из 10' +
-          (срАрхив != null ? ' · по архиву ' + дробь(срАрхив) : '') : '') + '</div></div>' +
-      '<div class="me-m"><div class="l">лучший заказ</div><div class="v w" style="font-size:17px">' + (лучш ? esc(лучш.r.title) : '—') + '</div>' +
-        '<div class="s">' + (лучш ? esc(лучш.r.artist) + ' · ' + esc(лучш.x.rate.label) : '') + '</div></div></div>' +
-    '<section class="pan me-pan"><h2>среди заказчиков</h2><div>' +
-      '<div class="kv"><span>место по числу заказов</span><b>' + (выше + 1) + ' из ' + число(имена.size) + '</b></div>' +
-      (ср != null && срАрхив != null ? '<div class="kv"><span>оценка заказов против средней по архиву</span><b>' +
-        (ср >= срАрхив ? '+' : '−') + дробь(Math.abs(ср - срАрхив)) + '</b></div>' : '') +
-      (лучЖанр ? '<div class="kv"><span>в каком жанре заказы удаются лучше всего</span><b>' + esc(лучЖанр[0]) + ' · ' +
-        дробь(лучЖанр[1][0] / лучЖанр[1][1]) + '</b></div>' : '') + '</div></section>' +
-    '<section class="pan me-pan"><h2>что композитор поставил ' + кому + ' <small>по ' + число(с.length) + ' ' + plural(с.length, 'оценке', 'оценкам', 'оценкам') + '</small></h2>' +
-      '<div class="me-taste"><div>' + TIERS.map((t, i) => '<div class="rbar" style="--tc:' + TCOLOR[t.key] + '"><span class="n">' + t.key + '</span>' +
-        '<span class="tr"><span style="width:' + (по[i] / макс * 100).toFixed(1) + '%"></span></span><span class="c">' + по[i] + '</span></div>').join('') + '</div>' +
-      '<div><div class="me-lab">как приносил</div><div class="gchips">' +
-        [...пути].sort((a, b) => b[1] - a[1]).map(([w, n]) => '<span class="gchip">' + esc(w) + ' <b>' + n + '</b></span>').join('') +
-      '</div></div></div></section>' +
-    '<section class="pan me-pan"><h2>' + заголовок + ' <small>сначала свежие</small></h2><div data-ord-rows></div>' +
-      (заказы.length > 60 ? '<button type="button" class="me-more" data-ord-more>показать все ' + число(заказы.length) + '</button>' : '') + '</section>';
-}
-function заказыДорисовать(box, заказы) {
-  const ряды = box.querySelector('[data-ord-rows]');
-  if (!ряды) return;
-  const рисовать = n => { ряды.innerHTML = заказы.slice(0, n).map(строкаЗаказа).join(''); шить(ряды); };
-  рисовать(60);
-  const ещё = box.querySelector('[data-ord-more]');
-  if (ещё) ещё.addEventListener('click', () => { рисовать(заказы.length); ещё.remove(); });
-}
-
-function meOrders(box) {
+/* ---------- заявки ----------
+   Своя история заявок и форма новой — у всех вошедших. У админа и
+   композитора выше — заявки зрителей на разбор. */
+async function meClaims(box) {
+  const staff = ['admin', 'owner'].includes(мояРоль());
+  const шапка = '<div class="tab-heading"><div><h2>заявки</h2><p>' + (staff
+    ? 'Заявки зрителей на привязку заказов и твоя история заявок' : 'История заявок на привязку своих заказов') + '</p></div></div>';
   if (!вошёл()) {
-    box.innerHTML = '<section class="pan me-pan"><div class="me-empty">Свои заказы можно привязать к профилю после входа через Twitch.' +
-      (ОБЛ && ОБЛ.sb ? '<div style="margin-top:14px"><button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button></div>' : '') +
-      '</div></section>';
+    box.innerHTML = шапка + '<div class="c-empty">Заявку на привязку своих заказов подают после входа через Twitch.' +
+      (ОБЛ && ОБЛ.sb ? '<br><button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '') + '</div>';
     return;
   }
+  box.innerHTML = шапка + (staff ? '<div data-review></div>' : '') + '<div data-mine' + (staff ? ' style="margin-top:34px"' : '') + '></div>';
+  моиЗаявки(box.querySelector('[data-mine]'));
+  if (staff) await разборЗаявок(box.querySelector('[data-review]'));
+}
+
+const СТАТУС = { approved: ['одобрено', '', 'check'], pending: ['ждёт', ' pending', 'clock'], rejected: ['отклонена', ' bad', 'close'] };
+function моиЗаявки(el) {
   const все = ОБЛ.заявки || [];
-  const мои = new Set(все.filter(c => c.status === 'approved').map(c => c.name));
-  const заказы = заказыПо(мои);
   const имена = именаТаблицы();
-  let html = '';
-
-  if (мои.size) html += заказыHtml(заказы, 'мои заказы', 'моим трекам');
-
-  // Заявки и форма
-  const подпись = c => '<b>' + esc(c.shown || c.name) + '</b> <small style="color:var(--faint)">' +
-    число((имена.get(c.name) || { n: 0 }).n) + ' ' + plural((имена.get(c.name) || { n: 0 }).n, 'заказ', 'заказа', 'заказов') + '</small>';
-  const ждут = все.filter(c => c.status === 'pending');
-  const нет = все.filter(c => c.status === 'rejected').slice(-5);
+  const сколько = c => (имена.get(c.name) || { n: 0 }).n;
   const логин = ОБЛ.проф && ОБЛ.проф.login ? ОБЛ.проф.login.toLowerCase() : '';
   const заявлено = new Set(все.filter(c => c.status !== 'rejected').map(c => c.name));
   const мойЛогин = логин && имена.has(логин) && !заявлено.has(логин) ? имена.get(логин) : null;
-  html += '<div class="me-list"><section class="pan me-pan"><h2>' + (мои.size ? 'привязать ещё имя' : 'привязать свои заказы') + '</h2>' +
-    '<p class="me-cnt" style="margin:0 0 12px">В таблице разносов заказчик записан так, как его назвали на стриме, — это не всегда ник на Twitch. ' +
-      'Найди себя в колонке «Кто», и админ привяжет эти заказы к профилю, сверив твой ник на Twitch.</p>' +
-    (мойЛогин ? '<div class="cl-hint">В таблице есть <b>' + esc(мойЛогин.shown) + '</b> — ' + число(мойЛогин.n) + ' ' +
-      plural(мойЛогин.n, 'заказ', 'заказа', 'заказов') + ', как твой логин на Twitch. ' +
-      '<button type="button" class="lnk" data-claim-me="' + esc(логин) + '">это я →</button></div>' : '') +
-    '<form id="clForm" class="me-form" style="max-width:none">' +
-      '<label>как тебя записали в таблице<input id="clName" maxlength="80" autocomplete="off" placeholder="начни вводить имя"></label>' +
-      '<div class="cl-sug" id="clSug"></div>' +
-      '<label>чем подтвердить <small style="color:var(--faint)">— необязательно: «спросите в чате», «это мой второй ник»</small>' +
-        '<input id="clNote" maxlength="300" autocomplete="off"></label>' +
-      '<button type="submit" class="btn">отправить заявку</button></form></section>' +
-    '<aside class="pan me-pan me-tip"><h2>мои заявки</h2>' +
-      (мои.size ? '<p>Привязано: ' + все.filter(c => c.status === 'approved').map(подпись).join(', ') + '</p>' : '') +
-      (ждут.length ? ждут.map(c => '<div class="kv"><span>' + подпись(c) + '</span><span><span class="me-pill">ждёт</span> ' +
-        '<button type="button" class="lnk" data-uncl="' + c.id + '">отменить</button></span></div>').join('') : '') +
-      (нет.length ? нет.map(c => '<div class="kv"><span>' + подпись(c) + (c.answer ? '<br><small style="color:var(--faint)">' + esc(c.answer) + '</small>' : '') +
-        '</span><span class="me-pill bad">отклонена</span></div>').join('') : '') +
-      (!все.length ? '<p>Пока ни одной.</p>' : '') + '</aside></div>';
-  box.innerHTML = html;
-  шить(box);
+  el.innerHTML = '<div class="section-title"><h2>мои заявки</h2></div>' +
+    (все.length ? все.slice().reverse().map(c => {
+      const [слово, класс, знак] = СТАТУС[c.status] || СТАТУС.pending;
+      const n = сколько(c);
+      return '<div class="claim-row"><span class="ach-icon' + (c.status === 'approved' ? '' : ' off') + '">' + ико(знак) + '</span>' +
+        '<div class="claim-info"><strong>Привязка заказов ' + esc(c.shown || c.name) + '</strong><small>' + число(n) + ' ' +
+          plural(n, 'заказ', 'заказа', 'заказов') + ' · ' + (c.status === 'pending' ? 'ждёт решения админа'
+            : c.status === 'approved' ? 'запрос обработан' : 'запрос отклонён') +
+          (c.answer ? ' · «' + esc(c.answer) + '»' : '') + '</small></div>' +
+        (c.status === 'pending' ? '<button type="button" class="text-link" data-uncl="' + c.id + '">отменить</button>' : '') +
+        '<span class="status' + класс + '">' + слово + '</span></div>';
+    }).join('')
+    : '<div class="claim-row"><span class="ach-icon off">' + ико('clock') + '</span><div class="claim-info"><strong>Заявок пока нет</strong>' +
+      '<small>Найди себя в таблице ниже — админ сверит ник на Twitch и привяжет заказы.</small></div></div>') +
+    '<section class="settings-box" style="margin-top:24px"><div class="section-title"><h2>' +
+      (все.some(c => c.status === 'approved') ? 'привязать ещё имя' : 'привязать свои заказы') + '</h2></div>' +
+      '<p class="setting-hint" style="margin:0 0 16px">В таблице разносов заказчик записан так, как его назвали на стриме, — это не всегда ник на Twitch. ' +
+        'Найди себя в колонке «Кто», и админ привяжет эти заказы к профилю, сверив твой ник на Twitch.</p>' +
+      (мойЛогин ? '<div class="cl-hint">В таблице есть <b>' + esc(мойЛогин.shown) + '</b> — ' + число(мойЛогин.n) + ' ' +
+        plural(мойЛогин.n, 'заказ', 'заказа', 'заказов') + ', как твой логин на Twitch. ' +
+        '<button type="button" class="lnk" data-claim-me="' + esc(логин) + '">это я →</button></div>' : '') +
+      '<form id="clForm"><label class="form-label" for="clName">Как тебя записали в таблице</label>' +
+        '<input type="text" id="clName" maxlength="80" autocomplete="off" placeholder="начни вводить имя">' +
+        '<div class="cl-sug" id="clSug"></div>' +
+        '<label class="form-label" for="clNote">Чем подтвердить <small style="color:var(--faint);font-weight:400">— необязательно: ' +
+          '«спросите в чате», «это мой второй ник»</small></label>' +
+        '<input type="text" id="clNote" maxlength="300" autocomplete="off">' +
+        '<button type="submit" class="main-btn">' + ико('check') + ' Отправить заявку</button></form></section>';
 
-  заказыДорисовать(box, заказы);
-
-  const поле = $('clName'), сп = $('clSug');
+  const поле = el.querySelector('#clName'), сп = el.querySelector('#clSug');
   const подобрать = () => {
     const q = поле.value.trim().toLowerCase();
     if (!q) { сп.innerHTML = ''; return; }
@@ -16489,6 +17073,14 @@ function meOrders(box) {
   поле.addEventListener('input', подобрать);
   сп.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return;
     поле.value = имена.get(b.dataset.k).shown; сп.innerHTML = ''; });
+  // Своя заявка у админа сразу попадает и в разбор над историей.
+  const снова = async () => {
+    await заявкиМои();
+    if (!el.isConnected) return;
+    моиЗаявки(el);
+    const р = el.parentNode.querySelector('[data-review]');
+    if (р) разборЗаявок(р); else meHeroTabs();
+  };
   const подать = async (k, note) => {
     const e = имена.get(k);
     if (!e) return toast('Такого имени в таблице нет — выбери из подсказок');
@@ -16497,28 +17089,28 @@ function meOrders(box) {
       : /too many/.test(error.message) ? 'Слишком много заявок ждут ответа'
       : error.code === '23505' ? 'Такая заявка уже есть' : 'Не удалось: ' + error.message);
     toast('Заявка отправлена — админ сверит ник и ответит');
-    await заявкиМои(); meOrders(box); meHeroTabs();
+    снова();
   };
-  $('clForm').addEventListener('submit', e => { e.preventDefault(); подать(поле.value.trim().toLowerCase(), $('clNote').value.trim()); });
-  box.querySelectorAll('[data-claim-me]').forEach(b => b.addEventListener('click', () => подать(b.dataset.claimMe, 'совпадает с логином на Twitch')));
-  box.querySelectorAll('[data-uncl]').forEach(b => b.addEventListener('click', async () => {
+  el.querySelector('#clForm').addEventListener('submit', e => { e.preventDefault(); подать(поле.value.trim().toLowerCase(), el.querySelector('#clNote').value.trim()); });
+  el.querySelectorAll('[data-claim-me]').forEach(b => b.addEventListener('click', () => подать(b.dataset.claimMe, 'совпадает с логином на Twitch')));
+  el.querySelectorAll('[data-uncl]').forEach(b => b.addEventListener('click', async () => {
     const { error } = await ОБЛ.sb.from('claims').delete().eq('id', Number(b.dataset.uncl));
     if (error) return toast('Не удалось: ' + error.message);
-    await заявкиМои(); meOrders(box); meHeroTabs();
+    снова();
   }));
 }
 
-/* ---------- заявки: разбор у админа ----------
-   Рядом с заявкой — всё, чтобы решить: ник и логин на Twitch со ссылкой
-   на канал, когда человек впервые зашёл на сайт, сколько заказов у
-   имени и какие последние, совпадает ли имя с логином и не занято ли. */
-async function meClaims(box) {
-  if (!['admin', 'owner'].includes(мояРоль())) { box.innerHTML = ''; return; }
-  box.innerHTML = '<section class="pan me-pan"><p class="me-cnt">загружаю…</p></section>';
+/* Разбор у админа. Рядом с заявкой — всё, чтобы решить: ник и логин на
+   Twitch со ссылкой на канал, когда человек впервые зашёл на сайт,
+   сколько заказов у имени и какие последние, совпадает ли имя с
+   логином и не занято ли. */
+async function разборЗаявок(el) {
+  el.innerHTML = '<p class="mutedline">загружаю…</p>';
   const { data, error } = await ОБЛ.sb.from('claims')
     .select('id,name,shown,note,status,answer,created_at,decided_at,user_id,profiles!claims_user_id_fkey(name,login,avatar_url,created_at)')
     .order('created_at', { ascending: false }).limit(200);
-  if (error) { box.innerHTML = '<section class="pan me-pan"><p class="me-cnt">Не удалось загрузить: ' + esc(error.message) + '</p></section>'; return; }
+  if (!el.isConnected) return;
+  if (error) { el.innerHTML = '<p class="mutedline">Не удалось загрузить: ' + esc(error.message) + '</p>'; return; }
   const имена = именаТаблицы();
   const занято = new Map(data.filter(c => c.status === 'approved').map(c => [c.name, c]));
   const ждут = data.filter(c => c.status === 'pending').reverse();
@@ -16542,23 +17134,28 @@ async function meClaims(box) {
       '<div class="cl-act"><input placeholder="ответ — необязательно" maxlength="300">' +
         '<button type="button" class="btn" data-ok="1">одобрить</button><button type="button" class="btn ghost" data-ok="0">отклонить</button></div></article>';
   };
-  box.innerHTML = '<section class="pan me-pan"><h2>ждут решения <small>' + ждут.length + '</small></h2>' +
-      (ждут.length ? ждут.map(карточка).join('') : '<p class="me-cnt">Новых заявок нет.</p>') + '</section>' +
-    '<section class="pan me-pan" style="margin-top:18px"><h2>решённые <small>последние ' + решены.length + '</small></h2>' +
-      (решены.length ? решены.map(c => '<div class="kv"><span>' + esc((c.profiles || {}).name || '—') + ' → <b>' + esc(c.shown || c.name) + '</b>' +
-        (c.answer ? ' <small style="color:var(--faint)">' + esc(c.answer) + '</small>' : '') + '</span><span>' +
-        (c.status === 'approved' ? '<span class="me-pill tw">привязано</span> <button type="button" class="lnk" data-undo="' + c.id + '">снять</button>'
-                                 : '<span class="me-pill bad">отклонена</span>') + '</span></div>').join('') : '<p class="me-cnt">Пока пусто.</p>') + '</section>';
-  box.querySelectorAll('.cl-who img').forEach(im => im.addEventListener('error', () => im.remove()));
+  el.innerHTML = '<div class="section-title"><h2>ждут решения <span class="mutedline">' + ждут.length + '</span></h2></div>' +
+      (ждут.length ? ждут.map(карточка).join('') : '<p class="mutedline">Новых заявок нет.</p>') +
+    '<div class="section-title" style="margin-top:30px"><h2>решённые <span class="mutedline">последние ' + решены.length + '</span></h2></div>' +
+      (решены.length ? решены.map(c => {
+        const [слово, класс] = СТАТУС[c.status] || СТАТУС.pending;
+        return '<div class="claim-row"><div class="claim-info"><strong>' + esc((c.profiles || {}).name || '—') + ' → ' + esc(c.shown || c.name) + '</strong>' +
+          '<small>' + (c.decided_at ? датаКор(Date.parse(c.decided_at)) : '') + (c.answer ? ' · ' + esc(c.answer) : '') + '</small></div>' +
+          (c.status === 'approved' ? '<button type="button" class="text-link" data-undo="' + c.id + '">снять</button>' : '') +
+          '<span class="status' + класс + '">' + (c.status === 'approved' ? 'привязано' : слово) + '</span></div>';
+      }).join('') : '<p class="mutedline">Пока пусто.</p>');
+  el.querySelectorAll('.cl-who img').forEach(im => im.addEventListener('error', () => im.remove()));
   const решить = async (id, ok, ответ) => {
     const { error } = await ОБЛ.sb.rpc('decide_claim', { p_id: id, p_ok: ok, p_answer: ответ || null });
     if (error) return toast(/name taken/.test(error.message) ? 'Это имя уже привязано к другому — сначала сними ту привязку' : 'Не вышло: ' + error.message);
     toast(ok ? 'Привязано' : 'Отклонено');
-    await заявкиМои(); meClaims(box); meHeroTabs();
+    await заявкиМои();
+    if (el.isConnected) { разборЗаявок(el); const м = el.parentNode.querySelector('[data-mine]'); if (м) моиЗаявки(м); }
+    meHeroTabs();
   };
-  box.querySelectorAll('.cl-card').forEach(к => к.querySelectorAll('[data-ok]').forEach(b => b.addEventListener('click', () =>
+  el.querySelectorAll('.cl-card').forEach(к => к.querySelectorAll('[data-ok]').forEach(b => b.addEventListener('click', () =>
     решить(Number(к.dataset.id), b.dataset.ok === '1', к.querySelector('input').value.trim()))));
-  box.querySelectorAll('[data-undo]').forEach(b => b.addEventListener('click', () => решить(Number(b.dataset.undo), false, 'привязка снята')));
+  el.querySelectorAll('[data-undo]').forEach(b => b.addEventListener('click', () => решить(Number(b.dataset.undo), false, 'привязка снята')));
   meHeroTabs();
 }
 /* Число ждущих на вкладке — без перерисовки самой вкладки. */
@@ -16614,11 +17211,9 @@ async function уведомленияЗагрузить() {
   ава();
 }
 const обрезать = (t, n) => { t = String(t || ''); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
-function уведомленияHtml() {
-  const u = вошёл() && ОБЛ.увед;
-  if (!u || !u.length) return '';
+function уведомленияСтроки(u, сколько) {
   const по = new Map(CAT.map(r => [r.key, r]));
-  return '<section class="pan me-pan"><h2>новое <small>за месяц</small></h2><div>' + u.slice(0, 8).map(n => {
+  return u.slice(0, сколько).map(n => {
     const t = n.kind === 'reply' ? по.get(n.track_key) : null;
     const текст = n.kind === 'claim'
       ? (n.status === 'approved' ? 'Заявку на <b>' + esc(n.claim) + '</b> одобрили — заказы привязаны'
@@ -16627,7 +17222,7 @@ function уведомленияHtml() {
     const куда = n.kind === 'claim' ? '#me/orders' : (t ? trackHref(t) : '#me');
     return '<a class="note-row' + (n.fresh ? ' fresh' : '') + '" href="' + куда + '"><span>' + текст + '</span><time>' +
       когда(Date.parse(n.at)) + '</time></a>';
-  }).join('') + '</div></section>';
+  }).join('');
 }
 async function уведомленияПросмотрены() {
   if (!вошёл() || !ОБЛ.новых) return;
@@ -16635,102 +17230,43 @@ async function уведомленияПросмотрены() {
   if (error) return;
   ОБЛ.новых = 0;
   (ОБЛ.увед || []).forEach(n => { n.fresh = false; });
-  ава();
+  колокол();
 }
 
-/* ---------- где расходишься с композитором ----------
-   Расхождение — от двух ступеней: «атлична» против «хорошечно» — это
-   оттенок, а «гениально» против «нормас» — уже другое мнение. Согласие
-   по жанрам — от пяти общих оценок в жанре, иначе процент случайный. */
-function расхожденияHtml(list) {
-  const ср = сравнимые(list);
-  if (ср.length < 5) return '';
-  const разн = ср.map(x => ({ x, d: баллМой(x.v) - x.r.rate.score })).filter(o => Math.abs(o.d) >= 4)
-    .sort((a, b) => Math.abs(b.d) - Math.abs(a.d)).slice(0, 5);
-  const жанры = new Map();
-  ср.forEach(x => x.r.genres.forEach(g => { const e = жанры.get(g) || [0, 0]; e[1]++; if (совпалС(x)) e[0]++; жанры.set(g, e); }));
-  const сог = [...жанры].filter(([, e]) => e[1] >= 5).map(([g, e]) => [g, Math.round(e[0] / e[1] * 100), e[1]])
-    .sort((a, b) => b[1] - a[1]);
-  if (!разн.length && !сог.length) return '';
-  return '<section class="pan me-pan"><h2>где расходишься с композитором</h2>' +
-    (разн.length ? '<div>' + разн.map(o => '<a class="trow" href="' + trackHref(o.x.r) + '"><span class="th">' + covHtml(o.x.r) + '</span>' +
-        '<span style="min-width:0"><span class="ta">' + esc(o.x.r.artist || '—') + '</span><span class="tn">' + esc(o.x.r.title || '—') + '</span></span>' +
-        '<span class="gr" style="--tc:' + TCOLOR[o.x.v.t] + ';--tc2:' + tColor(o.x.r.rate) + '">ты: ' + esc(o.x.v.t + modLabel(o.x.v.m)) +
-          '<small>он: <i>' + esc(o.x.r.rate.label) + '</i></small></span>' +
-        '<span class="dt">' + (o.d > 0 ? 'мягче' : 'строже') + '</span></a>').join('') + '</div>'
-      : '<p class="me-cnt">Сильных расхождений нет — разница ни разу не дотянула до двух ступеней.</p>') +
-    (сог.length ? '<div class="me-lab" style="margin-top:16px">совпадение по жанрам</div><div class="gchips">' +
-      сог.slice(0, 8).map(([g, p, n]) => '<span class="gchip" data-tip="' + n + ' ' + plural(n, 'оценка', 'оценки', 'оценок') + ' в жанре">' +
-        esc(g) + ' <b>' + p + '%</b></span>').join('') + '</div>' : '') + '</section>';
+/* Колокольчик в шапке. Точка — есть непросмотренное; открыл список —
+   просмотрено, но пометки «новое» в открытом списке остаются до
+   следующего раза: иначе не видно, что именно пришло. */
+function колокол() {
+  const новых = ОБЛ ? ОБЛ.новых : 0;
+  $('bellDot').hidden = !новых;
+  $('bell').setAttribute('aria-label', новых ? 'Уведомления, новых: ' + новых : 'Уведомления');
+  if (!$('bellPop').hidden) колоколСписок();
 }
-
-/* ---------- активность ----------
-   Клетка — день, столбец — неделя, полгода. Считаются только оценки со
-   временем: у поставленных до кабинета его нет. */
-function календарьHtml(list) {
-  const недель = 26;
-  const сег = new Date(); сег.setHours(0, 0, 0, 0);
-  const пн = d => { const x = new Date(d); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; };
-  const старт = пн(сег); старт.setDate(старт.getDate() - (недель - 1) * 7);
-  const счёт = new Map();
-  list.forEach(x => { if (x.v.w && x.v.w >= старт) { const k = день(x.v.w); счёт.set(k, (счёт.get(k) || 0) + 1); } });
-  if (!счёт.size) return '';
-  const всего = [...счёт.values()].reduce((a, b) => a + b, 0);
-  const ур = n => !n ? 0 : n === 1 ? 1 : n <= 3 ? 2 : n <= 6 ? 3 : 4;
-  let клетки = '';
-  for (let w = 0; w < недель; w++) for (let d = 0; d < 7; d++) {
-    const t = new Date(старт); t.setDate(t.getDate() + w * 7 + d);
-    if (t > сег) { клетки += '<i class="off"></i>'; continue; }
-    const n = счёт.get(день(t)) || 0;
-    клетки += '<i class="l' + ур(n) + '" data-tip="' + String(t.getDate()).padStart(2, '0') + '.' + String(t.getMonth() + 1).padStart(2, '0') +
-      ': ' + (n ? n + ' ' + plural(n, 'оценка', 'оценки', 'оценок') : 'ничего') + '"></i>';
-  }
-  return '<section class="pan me-pan"><h2>активность <small>за полгода · ' + число(всего) + ' ' + plural(всего, 'оценка', 'оценки', 'оценок') +
-    ' за ' + счёт.size + ' ' + plural(счёт.size, 'день', 'дня', 'дней') + '</small></h2><div class="cal" style="--w:' + недель + '">' + клетки + '</div></section>';
+function колоколСписок() {
+  const u = вошёл() ? ОБЛ.увед : null;
+  let html = '<strong>Уведомления</strong>';
+  if (!вошёл()) {
+    html += '<p class="bell-none">Сюда приходят ответы на твои комментарии и решения по заявкам на заказы. ' +
+      'Видны тем, кто вошёл через Twitch.</p>' +
+      (ОБЛ && ОБЛ.sb ? '<button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '');
+  } else if (!u) html += '<p class="bell-none">Загружаем…</p>';
+  else if (!u.length) html += '<p class="bell-none">За месяц ничего нового: ни ответов на твои комментарии, ни решений по заявкам.</p>';
+  else html += уведомленияСтроки(u, 20);
+  $('bellPop').innerHTML = html;
 }
-
-/* ---------- близкие по вкусу ----------
-   Считает сервер (taste_neighbors): среди тех, кто открыл оценки, у кого
-   больше всего совпадений со мной, от пяти общих треков. */
-async function близкиеНарисовать(el) {
-  if (!el || !вошёл()) return;
-  const { data, error } = await ОБЛ.sb.rpc('taste_neighbors');
-  if (error) { el.querySelector('.me-cnt').textContent = 'Не удалось посчитать.'; return; }
-  el.innerHTML = '<h2>близкие по вкусу</h2>' + ((data || []).length
-    ? '<div>' + data.map(x => '<a class="kv" href="#u=' + encodeURIComponent(x.login) + '" style="text-decoration:none;color:inherit">' +
-        '<span class="near">' + (x.avatar_url ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(x.avatar_url) + '">' : '') + esc(x.name || x.login) + '</span>' +
-        '<b>' + Math.round(x.same / x.common * 100) + '% · ' + x.common + ' общих</b></a>').join('') + '</div>' +
-      '<p class="me-cnt">Процент — сколько общих треков вы оценили одной ступенью.</p>'
-    : '<p class="me-cnt">Пока никого. Сравнение — с теми, кто открыл свои оценки, и от пяти общих треков.</p>');
-  el.querySelectorAll('img').forEach(im => im.addEventListener('error', () => im.remove()));
-}
-
-/* ---------- достижения за заказы ----------
-   Только у тех, к кому заказы привязаны: без привязки это были бы нули
-   у всех подряд. */
-function заказДостижения() {
-  const имена = new Set(((ОБЛ && ОБЛ.заявки) || []).filter(c => c.status === 'approved').map(c => c.name));
-  if (!имена.size) return [];
-  const з = заказыПо(имена);
-  const ген = з.filter(o => o.x.rate && o.x.rate.tier === 'гениально').length;
-  const жанров = new Set(з.flatMap(o => o.r.genres)).size;
-  return [
-    ['disc', 'заказчик', '10 заказов', з.length, 10],
-    ['disc', 'завсегдатай', '100 заказов', з.length, 100],
-    ['star', 'в точку', '5 «гениально» в заказах', ген, 5],
-    ['comp', 'разносторонний', 'заказы в 10 жанрах', жанров, 10]
-  ];
-}
-
-/* ---------- избранное ---------- */
-function meFavs(box) {
-  const по = new Map(CAT.map(r => [r.key, r]));
-  const list = [...FAV].map(k => по.get(k)).filter(Boolean).reverse();
-  box.innerHTML = list.length
-    ? '<section class="pan me-pan"><h2>избранное <small>' + число(list.length) + ' ' + plural(list.length, 'трек', 'трека', 'треков') +
-        ', сначала новые</small></h2><div>' + list.map(r => строкаЗаказа({ r, x: r })).join('') + '</div></section>'
-    : '<section class="pan me-pan"><div class="me-empty">Сердечек пока нет. Нажми ♡ на обложке в <a href="#base">каталоге</a>.</div></section>';
-  шить(box);
+function колоколПульт() {
+  const b = $('bell'), pop = $('bellPop');
+  const закрыть = () => { pop.hidden = true; b.setAttribute('aria-expanded', 'false'); };
+  b.addEventListener('click', () => {
+    if (!pop.hidden) return закрыть();
+    pop.hidden = false; b.setAttribute('aria-expanded', 'true');
+    колоколСписок();
+    уведомленияПросмотрены();
+  });
+  pop.addEventListener('click', e => { if (e.target.closest('a')) закрыть(); });
+  document.addEventListener('click', e => { if (!pop.hidden && !e.target.closest('.bell-wrap')) закрыть(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pop.hidden) { закрыть(); b.focus(); } });
+  window.addEventListener('hashchange', закрыть);
 }
 
 /* ---------- выгрузить мои оценки ---------- */
@@ -16750,20 +17286,8 @@ function оценкиВCsv(list) {
   toast('Выгружено ' + число(list.length) + ' ' + plural(list.length, 'оценка', 'оценки', 'оценок'));
 }
 
-/* ---------- приватность и удаление аккаунта ---------- */
-function приватностьHtml() {
-  const п = ОБЛ.проф || {};
-  return '<section class="pan me-pan" style="margin-top:18px"><h2>приватность</h2>' +
-    '<label class="tgl"><input type="checkbox" id="prRates"' + (п.ratings_public ? ' checked' : '') + '><span><b>показывать мои оценки другим</b>' +
-      '<small>Они появятся в «оценках зрителей» на страницах треков и в твоём профиле, а ты — в «близких по вкусу» у других.</small></span></label>' +
-    '<label class="tgl"><input type="checkbox" id="prHide"' + (п.hide_online ? ' checked' : '') + '><span><b>не показывать меня в человечках</b>' +
-      '<small>На главной тебя не будет видно, даже когда ты на сайте.</small></span></label>' +
-    '<div class="danger"><div><b>удалить аккаунт</b><small>Сотрёт из базы профиль, оценки, сердечки, комментарии и заявки. Вернуть будет нельзя.</small></div>' +
-      '<button type="button" class="btn ghost" id="prDel">удалить…</button></div></section>';
-}
+/* ---------- публичный профиль и удаление аккаунта ---------- */
 function приватностьПодключить(box) {
-  const оц = box.querySelector('#prRates'), пр = box.querySelector('#prHide');
-  if (!оц) return;
   const сохранить = async (поле, el, да, нет) => {
     el.disabled = true;
     const { error } = await ОБЛ.sb.from('profiles').update({ [поле]: el.checked }).eq('id', ОБЛ.user.id);
@@ -16773,9 +17297,14 @@ function приватностьПодключить(box) {
     toast(el.checked ? да : нет);
     if (поле === 'hide_online') { if (!el.checked) отметиться(); ктоНаСайте(); }
   };
-  оц.addEventListener('change', () => сохранить('ratings_public', оц, 'Оценки теперь видны другим', 'Оценки снова видишь только ты'));
-  пр.addEventListener('change', () => сохранить('hide_online', пр, 'На главной тебя больше не видно', 'Тебя снова видно на главной'));
-  box.querySelector('#prDel').addEventListener('click', () => {
+  [['#prRates', 'ratings_public', 'Оценки теперь видны другим', 'Оценки снова видишь только ты'],
+   ['#prFavs', 'favs_public', 'Избранное теперь видно в профиле', 'Избранное больше никому не видно'],
+   ['#prHide', 'hide_online', 'На главной тебя больше не видно', 'Тебя снова видно на главной']].forEach(([sel, поле, да, нет]) => {
+    const el = box.querySelector(sel);
+    if (el) el.addEventListener('change', () => сохранить(поле, el, да, нет));
+  });
+  const del = box.querySelector('#prDel');
+  if (del) del.addEventListener('click', () => {
     $('delWord').value = ''; $('delGo').disabled = true; $('mDel').hidden = false; $('delWord').focus();
   });
 }
@@ -16799,9 +17328,9 @@ $('delGo').addEventListener('click', async () => {
 });
 
 /* ---------- чужой профиль (#u=логин) ----------
-   Только то, что зритель сам открыл: ник и аватар с Twitch, роль, пара
-   слов о себе, привязанные заказы, комментарии. Оценки — если он их
-   открыл, и тогда же «совпадение с тобой». */
+   Тот же вид, что у кабинета: шапка с уровнем, избранное, оценки,
+   заказы, комментарии. Только то, что зритель сам открыл: оценки и
+   избранное можно скрыть в настройках. */
 function showUser(login) {
   уходИзСтудии();
   уходИзИгры();
@@ -16816,95 +17345,123 @@ function showUser(login) {
   drawUser(login);
 }
 
+/* Поля профиля. favs_public появилось позже остальных: пока схему не
+   перезапустили, база про него не знает — тогда спрашиваем без него. */
+const ПОЛЯ_ПРОФИЛЯ = 'id,name,login,avatar_url,color,bio,role,ratings_public,favs_public,created_at';
+async function профильПо(поле, значение, поля = ПОЛЯ_ПРОФИЛЯ) {
+  const r = await ОБЛ.sb.from('profiles').select(поля).eq(поле, значение).maybeSingle();
+  if (r.error && r.error.code === '42703' && /favs_public/.test(поля))
+    return профильПо(поле, значение, поля.replace(',favs_public', ''));
+  return r;
+}
+
 async function drawUser(login) {
   const l = String(login || '').trim().toLowerCase();
   const адрес = location.hash;
+  const пусто = текст => {
+    $('uHero').innerHTML = '<div class="hero-text"><div class="hero-kicker">Профиль зрителя</div>' +
+      '<div class="hero-name none">' + esc(l || 'профиль') + '</div><div class="hero-bio">' + текст + '</div></div>';
+  };
   $('uCrumb').textContent = l || 'профиль';
   $('uBody').innerHTML = '';
-  if (!ОБЛ.sb) {
-    $('uHero').innerHTML = '<p class="me-cnt">' + (ОБЛ.состояние === 'грузится' ? 'загружаю…'
-      : 'Профили зрителей видны только на сайте, когда есть связь с сервером.') + '</p>';
-    return;
-  }
-  $('uHero').innerHTML = '<p class="me-cnt">загружаю…</p>';
-  const { data: п, error } = await ОБЛ.sb.from('profiles')
-    .select('id,name,login,avatar_url,color,bio,role,ratings_public,created_at').eq('login', l).maybeSingle();
+  if (!ОБЛ.sb) return пусто(ОБЛ.состояние === 'грузится' ? 'загружаю…'
+    : 'Профили зрителей видны только на сайте, когда есть связь с сервером.');
+  пусто('загружаю…');
+  const { data: п, error } = await профильПо('login', l);
   if (location.hash !== адрес) return;
-  if (error || !п) {
-    $('uHero').innerHTML = '<div class="me-id"><div class="me-k">профиль</div><h2 class="me-nm none">' + esc(l) + '</h2>' +
-      '<div class="me-bio">Такой зритель на сайт ещё не входил.</div></div>';
-    return;
-  }
+  if (error || !п) return пусто('Такой зритель на сайт ещё не входил.');
   const это = вошёл() && ОБЛ.user.id === п.id;
-  document.title = (п.name || п.login) + ' — база треков';
-  $('uCrumb').textContent = п.name || п.login;
+  const ник = п.name || п.login;
+  document.title = ник + ' — база треков';
+  $('uCrumb').textContent = ник;
   const с = new Date(п.created_at);
-  $('uHero').innerHTML =
-    '<div class="me-ava">' + (п.avatar_url ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(п.avatar_url) + '">' : esc(буквы(п.name || п.login))) + '</div>' +
-    '<div class="me-id"><div class="me-k">' + (это ? 'так тебя видят другие' : 'зритель') + '</div>' +
-      '<h2 class="me-nm">' + esc(п.name || п.login) + '</h2>' +
-      (п.bio ? '<div class="me-bio">' + esc(п.bio) + '</div>' : '') +
-      '<div class="me-pills">' + (РОЛИ[п.role] ? '<span class="me-pill role ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '') +
-        '<span class="me-pill">на сайте с ' + МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span>' +
-        '<a class="me-pill tw" href="https://www.twitch.tv/' + encodeURIComponent(п.login) + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none">' +
-          ЗНАЧОК_TW + 'twitch.tv/' + esc(п.login) + '</a>' +
-        (это ? '<a class="me-pill out" href="#me/settings" style="text-decoration:none">настройки</a>' : '') + '</div></div>';
-  const im = $('uHero').querySelector('.me-ava img');
-  if (im) im.addEventListener('error', () => { im.parentNode.textContent = буквы(п.name || п.login); });
+  $('uHero').innerHTML = аваHtml(п.avatar_url, ник, п.color) +
+    '<div class="hero-text"><div class="hero-kicker">' + (это ? 'Так тебя видят другие' : 'Профиль зрителя') + '</div>' +
+      '<div class="hero-name">' + esc(ник) + '</div><div class="hero-bio">' + esc(п.bio || '') + '</div>' +
+      '<div class="hero-meta">' + (РОЛИ[п.role] ? '<span class="role-tag ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '') +
+        '<span class="hero-since">на сайте с ' + МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span>' +
+        '<a class="twitch-link" href="https://www.twitch.tv/' + encodeURIComponent(п.login) + '" target="_blank" rel="noopener noreferrer">Twitch · ' +
+          esc(п.login) + ' ↗</a></div><div data-lvl></div></div>' +
+    (это ? '<div class="hero-actions"><a class="soft-btn" href="#me/settings">' + ико('edit') + '<span>Настройки</span></a></div>' : '');
+  аваЗапас($('uHero'), ник);
 
-  const [cl, cm, rt] = await Promise.all([
+  const открытоИзбранное = п.favs_public !== false && 'favs_public' in п;
+  const [cl, cm, rt, fv, xp] = await Promise.all([
     ОБЛ.sb.from('claims').select('name,shown').eq('user_id', п.id).eq('status', 'approved'),
     ОБЛ.sb.from('comments').select('id,track_key,body,created_at').eq('user_id', п.id).order('created_at', { ascending: false }).limit(5),
-    п.ratings_public ? оценкиЗрителя(п.id) : Promise.resolve(null)
+    п.ratings_public ? оценкиЗрителя(п.id) : Promise.resolve(null),
+    открытоИзбранное ? ОБЛ.sb.from('favs').select('track_key,created_at').eq('user_id', п.id).order('created_at', { ascending: false }).limit(200)
+      : Promise.resolve(null),
+    ОБЛ.sb.rpc('user_xp', { p_user: п.id })
   ]);
   if (location.hash !== адрес) return;
   const по = new Map(CAT.map(r => [r.key, r]));
-  let html = '';
+  // Уровень считает сервер — по тем же правилам, что кабинет.
+  const опыт = xp && !xp.error && (Array.isArray(xp.data) ? xp.data[0] : xp.data);
+  if (опыт) $('uHero').querySelector('[data-lvl]').outerHTML = уровеньHtml(уровень(опыт.ratings || 0, опыт.comments || 0));
 
-  // Оценки: только если зритель их открыл.
+  // Избранное — если не скрыто.
+  const любимые = fv && !fv.error ? (fv.data || []).map(x => по.get(x.track_key)).filter(Boolean) : null;
+  let левое = '<section class="music-main" style="margin-bottom:31px"><div class="music-main-top"><h2>избранное</h2>' +
+      (любимые && любимые.length ? '<span class="mutedline">' + число(любимые.length) + ' ' + plural(любимые.length, 'трек', 'трека', 'треков') + '</span>' : '') + '</div>' +
+    (любимые && любимые.length ? '<div class="c-cards cmp" data-cards></div>'
+      : '<p class="mutedline" style="margin:0">' + (любимые ? 'В избранном пока пусто.' : 'Избранное скрыто настройками профиля.' +
+        (это ? ' Открыть можно в <a class="text-link" href="#me/settings">настройках</a>.' : '')) + '</p>') + '</section>';
+
+  // Оценки — если зритель их открыл.
+  левое += '<section class="o-panel"><div class="section-title"><h2>оценки</h2>' +
+    (rt ? '<span class="mutedline">' + число(rt.length) + ' ' + plural(rt.length, 'оценка', 'оценки', 'оценок') + '</span>' : '') + '</div>';
   if (rt) {
     const list = rt.map(x => ({ r: по.get(x.track_key), v: { t: x.tier, m: x.mod, w: Date.parse(x.rated_at) || 0 } })).filter(x => x.r);
-    const ср = сравнимые(list), совп = ср.filter(совпалС);
-    const жанр = new Map(); list.forEach(x => x.r.genres.forEach(g => жанр.set(g, (жанр.get(g) || 0) + 1)));
-    const любимый = [...жанр].sort((a, b) => b[1] - a[1])[0];
     let сТобой = '';
     if (вошёл() && !это) {
       const общие = list.filter(x => MY[x.r.key]);
       if (общие.length) {
         const одна = общие.filter(x => MY[x.r.key].t === x.v.t).length;
-        const разница = общие.reduce((a, x) => a + Math.abs(баллМой(MY[x.r.key]) - баллМой(x.v)), 0) / общие.length / 2;
-        сТобой = '<div class="me-m"><div class="l">совпадение с тобой</div><div class="v">' + Math.round(одна / общие.length * 100) +
-          '<small>%</small></div><div class="s">' + число(общие.length) + ' ' + plural(общие.length, 'общий трек', 'общих трека', 'общих треков') +
-          ' · в среднем ' + разница.toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + ' ступени разницы</div></div>';
+        сТобой = '<p class="t-note" style="margin:0 0 14px;max-width:none">Совпадение с тобой — <b style="color:var(--ink)">' +
+          Math.round(одна / общие.length * 100) + '%</b>: столько из ' + число(общие.length) + ' ' +
+          plural(общие.length, 'общего трека', 'общих треков', 'общих треков') + ' вы оценили одной ступенью.</p>';
       }
     }
+    const сч = TIERS.map(t => list.filter(x => x.v.t === t.key).length), макс = Math.max(1, ...сч);
+    const жанр = new Map();
+    list.forEach(x => x.r.genres.forEach(g => жанр.set(g, (жанр.get(g) || 0) + 1)));
+    const жанры = [...жанр].sort((a, b) => b[1] - a[1]);
+    const всего = жанры.reduce((n, [, c]) => n + c, 0);
     const свежие = list.slice().sort((a, b) => (b.v.w || 0) - (a.v.w || 0)).slice(0, 8);
-    html += '<div class="me-metrics">' +
-        '<div class="me-m"><div class="l">оценено треков</div><div class="v">' + число(list.length) + '</div></div>' +
-        '<div class="me-m"><div class="l">совпало с композитором</div><div class="v">' + (ср.length ? Math.round(совп.length / ср.length * 100) + '<small>%</small>' : '—') + '</div>' +
-          '<div class="s">' + (любимый ? 'чаще всего оценивает ' + esc(любимый[0]) : '') + '</div></div>' +
-        (сТобой || '<div class="me-m"><div class="l">совпадение с тобой</div><div class="v">—</div><div class="s">' +
-          (это ? 'это ты' : вошёл() ? 'общих оценок нет' : 'войди, чтобы сравнить') + '</div></div>') + '</div>' +
-      (свежие.length ? '<section class="pan me-pan"><h2>последние оценки</h2><div>' + свежие.map(строкаМоя).join('') + '</div></section>' : '');
-  } else html += '<section class="pan me-pan"><p class="me-cnt" style="margin:0">Оценки скрыты: зритель их не открывал.' +
-    (это ? ' Открыть можно в <a href="#me/settings">настройках</a>.' : '') + '</p></section>';
-
-  // Заказы — по одобренным заявкам.
-  const имена = new Set(((cl && cl.data) || []).map(c => c.name));
-  if (имена.size) html += заказыHtml(заказыПо(имена), 'заказы', 'трекам этого зрителя');
-  else html += '<section class="pan me-pan"><p class="me-cnt" style="margin:0">Заказы из таблицы разносов к профилю пока не привязаны.</p></section>';
+    левое += сТобой + (list.length ? '<div class="taste-split"><div><div class="minor-title">Как оценивает</div>' +
+        TIERS.map((t, i) => '<div class="tier-row"><span class="tier-label">' + t.key + '</span><span class="tier-track"><span class="tier-fill" style="--tier:' +
+          TCOLOR[t.key] + ';width:' + (сч[i] / макс * 100).toFixed(1) + '%"></span></span><span class="tier-count">' + сч[i] + '</span></div>').join('') +
+        '</div><div><div class="minor-title">Что оценивает чаще</div><div class="small-tags">' +
+          (жанры.length ? жанры.slice(0, 5).map(([g, c]) => '<span class="small-tag">' + esc(g) + ' <b>' + Math.max(1, Math.round(c / всего * 100)) + '%</b></span>').join('')
+            : '<span class="mutedline">жанр не указан</span>') + '</div></div></div>' +
+        '<div class="minor-title" style="margin-top:24px">Последние оценки</div><div class="music-list">' +
+          свежие.map(x => рядОценки(x, false)).join('') + '</div>'
+      : '<p class="mutedline" style="margin:0">Оценок пока нет.</p>');
+  } else левое += '<p class="mutedline" style="margin:0">Оценки скрыты: зритель их не открывал.' +
+    (это ? ' Открыть можно в <a class="text-link" href="#me/settings">настройках</a>.' : '') + '</p>';
+  левое += '</section>';
 
   // Комментарии.
   const кс = ((cm && cm.data) || []).filter(c => по.get(c.track_key));
-  if (кс.length) html += '<section class="pan me-pan"><h2>комментарии <small>последние</small></h2><div>' + кс.map(c => {
-    const r = по.get(c.track_key);
-    return '<a class="note-row" href="' + trackHref(r) + '"><span><b>' + esc(r.title) + '</b> — ' + esc(обрезать(c.body, 120)) + '</span><time>' + когда(Date.parse(c.created_at)) + '</time></a>';
-  }).join('') + '</div></section>';
+  левое += '<section class="o-panel"><div class="section-title"><h2>комментарии</h2><span class="mutedline">последние</span></div>' +
+    (кс.length ? '<div>' + кс.map(c => {
+      const r = по.get(c.track_key);
+      return '<a class="note-row" href="' + trackHref(r) + '"><span><b>' + esc(r.title) + '</b> — ' + esc(обрезать(c.body, 120)) + '</span>' +
+        '<time>' + когда(Date.parse(c.created_at)) + '</time></a>';
+    }).join('') + '</div>' : '<p class="mutedline" style="margin:0">Пока ни одного.</p>') + '</section>';
 
-  $('uBody').innerHTML = '<div class="u-body">' + html + '</div>';
+  // Заказы — по одобренным заявкам.
+  const имена = new Set(((cl && cl.data) || []).map(c => c.name));
+  const з = имена.size ? заказыПо(имена) : null;
+
+  $('uBody').innerHTML = '<div class="overview-grid" style="margin-top:26px"><div class="o-left">' + левое + '</div>' +
+    '<aside class="o-right">' + заказыКратко(з, false) + '</aside></div>';
   шить($('uBody'));
-  заказыДорисовать($('uBody'), заказыПо(имена));
+  сеткаКарточек($('uBody').querySelector('[data-cards]'), любимые || [], 10);
 }
+$('uBody').addEventListener('click', e => { const b = e.target.closest('[data-fav]'); if (b) сердцеЩёлк(b); });
+
 async function оценкиЗрителя(uid) {
   const все = [];
   for (let от = 0; ; от += 1000) {
@@ -16914,6 +17471,34 @@ async function оценкиЗрителя(uid) {
     все.push(...data);
     if (data.length < 1000) return все;
   }
+}
+
+/* ---------- счётчики на карточках ----------
+   Сколько у трека сердечек и комментариев от зрителей. Считает сервер
+   (track_counts): поштучно чужие сердечки не видны, а число — да. Своё
+   сердечко сервер не считает, его прибавляем отсюда — тогда число
+   меняется сразу по щелчку, и у гостя тоже. К комментариям так же
+   прибавляются свои, оставленные в браузере. */
+async function счётчикиЗагрузить() {
+  if (!ОБЛ.sb) return;
+  const { data, error } = await ОБЛ.sb.rpc('track_counts');
+  if (error) return;
+  ОБЛ.счёт = new Map((data || []).map(x => [x.track_key, { f: x.favs || 0, c: x.comments || 0 }]));
+  счётчикиНаКарточках(document);
+}
+function счётТрека(key) {
+  const s = ОБЛ && ОБЛ.счёт ? ОБЛ.счёт.get(key) : null;
+  return { f: (s ? s.f : 0) + (FAV.has(key) ? 1 : 0), c: (s ? s.c : 0) + (TALK[key] || []).length };
+}
+function счётНаКарточке(el) {
+  const n = счётТрека(el.dataset.key);
+  const f = el.querySelector('.fav .n'), c = el.querySelector('.cmt .n');
+  if (f) { f.textContent = n.f ? число(n.f) : ''; f.parentNode.classList.toggle('wide', !!n.f); }
+  if (c) { c.textContent = n.c ? число(n.c) : ''; c.parentNode.classList.toggle('wide', !!n.c);
+    c.parentNode.setAttribute('aria-label', n.c ? 'Комментарии: ' + n.c : 'Комментарии'); }
+}
+function счётчикиНаКарточках(root) {
+  if (root) root.querySelectorAll('.card[data-key]').forEach(счётНаКарточке);
 }
 
 облакоЗапуск();

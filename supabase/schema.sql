@@ -10,8 +10,9 @@
 --              Twitch (триггер на auth.users), сам зритель может
 --              менять только цвет человечка и пару слов о себе:
 --              иначе на главной можно было бы назваться кем угодно.
---   ratings  — свои оценки. Видит и меняет только владелец.
---   favs     — сердечки. Так же.
+--   ratings  — свои оценки. Меняет только владелец; видят все, пока
+--              он сам не закрыл их в настройках (ratings_public).
+--   favs     — сердечки. Так же, со своей галочкой (favs_public).
 --   online   — кто сейчас на сайте: вошедший раз в минуту отмечается,
 --              время ставит сервер. Читать могут все — это и есть
 --              человечки на главной (через представление online_now).
@@ -25,6 +26,8 @@
 --              сверив ник на Twitch. Одно имя — одному аккаунту.
 --   my_notifications, delete_me, taste_neighbors — уведомления, удаление
 --              своего аккаунта и «близкие по вкусу».
+--   track_counts, user_xp — числа на карточках (сердечки и комментарии
+--              трека) и опыт зрителя для уровня в профиле.
 --
 -- «Automatically expose new tables» при создании проекта выключен,
 -- поэтому доступ к каждой таблице ниже выдаётся явно (grant).
@@ -47,10 +50,24 @@ create table if not exists public.profiles (
 alter table public.profiles add column if not exists role text not null default 'user'
   check (role in ('user', 'moder', 'admin', 'owner'));
 alter table public.profiles add column if not exists banned boolean not null default false;
--- Согласие показывать свои оценки другим и желание не мелькать в
--- человечках — решает сам зритель, по умолчанию закрыто.
+-- Показывать ли свои оценки и избранное другим и не мелькать ли в
+-- человечках — решает сам зритель. Оценки и избранное по умолчанию
+-- открыты: так попросил заказчик (ниже, после таблиц).
 alter table public.profiles add column if not exists ratings_public boolean not null default false;
+alter table public.profiles add column if not exists favs_public boolean not null default true;
 alter table public.profiles add column if not exists hide_online boolean not null default false;
+-- Оценки сначала были закрыты по умолчанию, и галочку «показывать» за
+-- день до перемены почти никто не трогал. Поэтому один раз, пока
+-- умолчание старое, открываем их всем, кто уже входил, — дальше
+-- умолчание новое, и повторный запуск этого файла ничьё решение не
+-- перепишет: закрыл — останется закрытым.
+do $$ begin
+  if (select column_default from information_schema.columns
+       where table_schema = 'public' and table_name = 'profiles' and column_name = 'ratings_public') = 'false' then
+    update public.profiles set ratings_public = true;
+    alter table public.profiles alter column ratings_public set default true;
+  end if;
+end $$;
 -- Когда зритель последний раз смотрел уведомления.
 alter table public.profiles add column if not exists notes_seen_at timestamptz;
 alter table public.profiles enable row level security;
@@ -65,7 +82,7 @@ create policy profiles_update_own on public.profiles
 
 revoke all on public.profiles from anon, authenticated;
 grant select on public.profiles to anon, authenticated;
-grant update (color, bio, ratings_public, hide_online) on public.profiles to authenticated;
+grant update (color, bio, ratings_public, favs_public, hide_online) on public.profiles to authenticated;
 
 -- Twitch отдаёт: name — логин, nickname — отображаемое имя,
 -- avatar_url / picture — аватар, provider_id — id на Twitch.
@@ -315,17 +332,22 @@ create policy favs_own on public.favs
   for all to authenticated
   using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
 
--- Чужие оценки видны, только если их хозяин сам включил «показывать мои
--- оценки». Сердечки — всегда только свои.
+-- Чужие оценки и сердечки видны, пока их хозяин не снял «показывать
+-- мои оценки» / «показывать избранное» (по умолчанию стоят).
 drop policy if exists ratings_public_read on public.ratings;
 create policy ratings_public_read on public.ratings
   for select to anon, authenticated
   using (exists (select 1 from public.profiles p where p.id = ratings.user_id and p.ratings_public));
 create index if not exists ratings_track on public.ratings (track_key);
+drop policy if exists favs_public_read on public.favs;
+create policy favs_public_read on public.favs
+  for select to anon, authenticated
+  using (exists (select 1 from public.profiles p where p.id = favs.user_id and p.favs_public));
+create index if not exists favs_track on public.favs (track_key);
 
 revoke all on public.ratings, public.favs from anon, authenticated;
 grant select, insert, update, delete on public.ratings, public.favs to authenticated;
-grant select on public.ratings to anon;
+grant select on public.ratings, public.favs to anon;
 
 -- ---------- комментарии ----------
 create table if not exists public.comments (
@@ -537,6 +559,35 @@ language sql stable security definer set search_path = '' as $$
 $$;
 revoke execute on function public.taste_neighbors() from public, anon;
 grant execute on function public.taste_neighbors() to authenticated;
+
+-- ---------- числа на карточках ----------
+-- Сколько у трека сердечек и комментариев. Считаются все, в том числе
+-- у тех, кто скрыл избранное: кто именно лайкнул, отсюда не узнать.
+-- Свои сердечки спрашивающего не считаются — страница прибавляет их
+-- сама, чтобы число менялось сразу по щелчку.
+create or replace function public.track_counts()
+returns table (track_key text, favs int, comments int)
+language sql stable security definer set search_path = '' as $$
+  select k, sum(f)::int, sum(c)::int from (
+    select f.track_key k, 1 f, 0 c from public.favs f where f.user_id is distinct from (select auth.uid())
+    union all
+    select c.track_key, 0, 1 from public.comments c
+  ) x group by k
+$$;
+revoke execute on function public.track_counts() from public;
+grant execute on function public.track_counts() to anon, authenticated;
+
+-- Опыт для уровня в профиле: каждая оценка и каждый комментарий — +10,
+-- считает страница. Сюда — только сколько их; сами оценки этим не
+-- открываются.
+create or replace function public.user_xp(p_user uuid)
+returns table (ratings int, comments int)
+language sql stable security definer set search_path = '' as $$
+  select (select count(*)::int from public.ratings where user_id = p_user),
+         (select count(*)::int from public.comments where user_id = p_user)
+$$;
+revoke execute on function public.user_xp(uuid) from public;
+grant execute on function public.user_xp(uuid) to anon, authenticated;
 
 -- ---------- кто сейчас на сайте ----------
 create table if not exists public.online (
