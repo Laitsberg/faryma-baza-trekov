@@ -12799,7 +12799,7 @@ function страницы(всего) {
     return b;
   };
 
-  кнопка('◀', F.page - 1, 'nav').disabled = F.page === 0;
+  кнопка('◀', F.page - 1, 'pg-arr').disabled = F.page === 0;
   // Всегда видны края, текущая и по две соседних; между ними — многоточие.
   const нужны = [...new Set([0, 1, F.page - 2, F.page - 1, F.page,
                              F.page + 1, F.page + 2, всего - 2, всего - 1])]
@@ -12808,7 +12808,7 @@ function страницы(всего) {
     if (i && x - нужны[i - 1] > 1) кнопка('…', null, 'gap');
     кнопка(число(x + 1), x);
   });
-  кнопка('▶', F.page + 1, 'nav').disabled = F.page >= всего - 1;
+  кнопка('▶', F.page + 1, 'pg-arr').disabled = F.page >= всего - 1;
 }
 
 function наСтраницу(page) {
