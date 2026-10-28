@@ -611,6 +611,13 @@ create trigger online_stamp before insert or update on public.online
 drop policy if exists online_read on public.online;
 create policy online_read on public.online
   for select to anon, authenticated using (seen_at > now() - interval '10 minutes');
+-- Свою строку видно всегда. Отметка — upsert, а у ON CONFLICT DO UPDATE
+-- обновляемая строка обязана проходить и правило чтения: без этого тот,
+-- кто ушёл дольше чем на 10 минут, падал на каждой отметке с ошибкой RLS
+-- и больше не появлялся в человечках вовсе.
+drop policy if exists online_read_own on public.online;
+create policy online_read_own on public.online
+  for select to authenticated using (user_id = (select auth.uid()));
 drop policy if exists online_mark_insert on public.online;
 create policy online_mark_insert on public.online
   for insert to authenticated with check (user_id = (select auth.uid()));
