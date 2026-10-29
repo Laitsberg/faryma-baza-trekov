@@ -8,8 +8,10 @@
 -- Устройство:
 --   profiles — кто вошёл. Ник и аватар пишет сервер из данных
 --              Twitch (триггер на auth.users), сам зритель может
---              менять только цвет человечка и пару слов о себе:
---              иначе на главной можно было бы назваться кем угодно.
+--              менять цвет человечка, пару слов о себе и галочки, а
+--              ник — только через set_name: чужой ник или логин она
+--              не даст, иначе на главной можно было бы назваться
+--              кем угодно.
 --   ratings  — свои оценки. Меняет только владелец; видят все, пока
 --              он сам не закрыл их в настройках (ratings_public).
 --   favs     — сердечки. Так же, со своей галочкой (favs_public).
@@ -19,15 +21,17 @@
 --   role_grants — кто кем назначен, по логину Twitch. Роль в профиле
 --              ставит сервер при входе: композитор входит — и сразу
 --              «композитор». Через API эту таблицу не видно вовсе.
---   comments — общие комментарии к трекам. Пишет вошедший, удаляет
---              автор или команда сайта.
+--   comments — общие комментарии и рецензии (kind) к трекам. Пишет
+--              вошедший, удаляет автор или команда сайта.
 --   claims   — заявки «это я в таблице»: зритель просит привязать к
 --              себе имя из колонки «Кто», админ или композитор одобряет,
 --              сверив ник на Twitch. Одно имя — одному аккаунту.
 --   my_notifications, delete_me, taste_neighbors — уведомления, удаление
 --              своего аккаунта и «близкие по вкусу».
---   track_counts, user_xp — числа на карточках (сердечки и комментарии
---              трека) и опыт зрителя для уровня в профиле.
+--   track_counts, user_xp, top_xp — числа на карточках (сердечки и
+--              комментарии трека), опыт зрителя для уровня в профиле и
+--              десятка по опыту на главной.
+--   set_name — свой ник на сайте вместо ника с Twitch.
 --
 -- «Automatically expose new tables» при создании проекта выключен,
 -- поэтому доступ к каждой таблице ниже выдаётся явно (grant).
@@ -70,6 +74,12 @@ do $$ begin
 end $$;
 -- Когда зритель последний раз смотрел уведомления.
 alter table public.profiles add column if not exists notes_seen_at timestamptz;
+-- Фон кабинета из аватара — виден и тем, кто открыл чужой профиль.
+alter table public.profiles add column if not exists bg_avatar boolean not null default false;
+-- Не показывать ссылку на свой канал Twitch в кабинете и профиле.
+alter table public.profiles add column if not exists twitch_hidden boolean not null default false;
+-- Ник сменён на сайте: вход через Twitch его больше не переписывает.
+alter table public.profiles add column if not exists name_custom boolean not null default false;
 alter table public.profiles enable row level security;
 
 drop policy if exists profiles_read on public.profiles;
@@ -82,7 +92,7 @@ create policy profiles_update_own on public.profiles
 
 revoke all on public.profiles from anon, authenticated;
 grant select on public.profiles to anon, authenticated;
-grant update (color, bio, ratings_public, favs_public, hide_online) on public.profiles to authenticated;
+grant update (color, bio, ratings_public, favs_public, hide_online, bg_avatar, twitch_hidden) on public.profiles to authenticated;
 
 -- Twitch отдаёт: name — логин, nickname — отображаемое имя,
 -- avatar_url / picture — аватар, provider_id — id на Twitch.
@@ -99,12 +109,43 @@ begin
   on conflict (id) do update
     set twitch_id  = excluded.twitch_id,
         login      = excluded.login,
-        name       = excluded.name,
+        name       = case when public.profiles.name_custom then public.profiles.name else excluded.name end,
         avatar_url = excluded.avatar_url;
   perform public.apply_role(new.id);
   return new;
 end $$;
 revoke execute on function public.profile_from_auth() from public, anon, authenticated;
+
+-- Свой ник на сайте. Сам столбец name клиенту не отдан: назваться можно
+-- только через эту функцию, а она не даёт взять чужой ник или логин —
+-- иначе на главной можно было бы назваться композитором. Пустой ник
+-- возвращает тот, что на Twitch.
+create or replace function public.set_name(p_name text)
+returns text language plpgsql security definer set search_path = '' as $$
+declare me uuid := (select auth.uid()); n text := btrim(regexp_replace(coalesce(p_name, ''), '\s+', ' ', 'g'));
+        tw text;
+begin
+  if me is null then raise exception 'not signed in'; end if;
+  if n = '' then
+    select left(coalesce(raw_user_meta_data->>'nickname', raw_user_meta_data->>'name'), 60) into tw
+      from auth.users where id = me;
+    update public.profiles set name = tw, name_custom = false where id = me;
+    return tw;
+  end if;
+  if char_length(n) < 2 or char_length(n) > 30 then raise exception 'bad name length'; end if;
+  if n ~ '[[:cntrl:]]' then raise exception 'bad name'; end if;
+  if exists (select 1 from public.profiles
+              where id <> me and (lower(name) = lower(n) or lower(login) = lower(n)))
+     or exists (select 1 from public.role_grants g
+              where g.twitch_login = lower(n)
+                and not exists (select 1 from public.profiles p where p.id = me and lower(p.login) = g.twitch_login)) then
+    raise exception 'name taken';
+  end if;
+  update public.profiles set name = n, name_custom = true where id = me;
+  return n;
+end $$;
+revoke execute on function public.set_name(text) from public, anon;
+grant execute on function public.set_name(text) to authenticated;
 
 -- ---------- роли ----------
 -- owner — композитор, всё; admin — команда сайта; moder — может
@@ -359,6 +400,15 @@ create table if not exists public.comments (
   created_at  timestamptz not null default now()
 );
 alter table public.comments add column if not exists parent_id bigint references public.comments (id) on delete cascade;
+-- Рецензия — тот же комментарий, но отдельной сущностью: у неё своя
+-- ссылка (#r=id), и она длиннее. Ответом рецензия не бывает.
+alter table public.comments add column if not exists kind text not null default 'comment';
+alter table public.comments drop constraint if exists comments_kind_check;
+alter table public.comments add constraint comments_kind_check check (kind in ('comment', 'review'));
+alter table public.comments drop constraint if exists comments_body_check;
+alter table public.comments add constraint comments_body_check
+  check (char_length(btrim(body)) between 1 and (case when kind = 'review' then 6000 else 1500 end));
+create index if not exists comments_reviews on public.comments (created_at desc) where kind = 'review';
 create index if not exists comments_track on public.comments (track_key, created_at);
 create index if not exists comments_parent on public.comments (parent_id);
 alter table public.comments enable row level security;
@@ -380,6 +430,7 @@ begin
   -- Ответ — к комментарию того же трека, и ветка одна: ответ на ответ
   -- встаёт под тот же исходный комментарий.
   if new.parent_id is not null then
+    new.kind := 'comment';
     select coalesce(parent_id, id), track_key into new.parent_id, new.track_key
       from public.comments where id = new.parent_id;
     if new.parent_id is null then raise exception 'no such comment'; end if;
@@ -403,7 +454,7 @@ create policy comments_delete on public.comments
 
 revoke all on public.comments from anon, authenticated;
 grant select on public.comments to anon, authenticated;
-grant insert (track_key, body, parent_id) on public.comments to authenticated;
+grant insert (track_key, body, parent_id, kind) on public.comments to authenticated;
 grant delete on public.comments to authenticated;
 
 -- ---------- заявки на свои заказы ----------
@@ -588,6 +639,23 @@ language sql stable security definer set search_path = '' as $$
 $$;
 revoke execute on function public.user_xp(uuid) from public;
 grant execute on function public.user_xp(uuid) to anon, authenticated;
+
+-- Десятка по опыту для главной: те же числа, что у user_xp, только
+-- сразу у всех. Опыт — оценки и комментарии, без разбора, открыты ли
+-- оценки: сколько их, видно и так, а какие — отсюда не узнать.
+create or replace function public.top_xp()
+returns table (user_id uuid, name text, login text, avatar_url text, color text, ratings int, comments int)
+language sql stable security definer set search_path = '' as $$
+  select p.id, p.name, p.login, p.avatar_url, p.color, coalesce(r.n, 0)::int, coalesce(c.n, 0)::int
+    from public.profiles p
+    left join (select user_id, count(*) n from public.ratings group by user_id) r on r.user_id = p.id
+    left join (select user_id, count(*) n from public.comments group by user_id) c on c.user_id = p.id
+   where coalesce(r.n, 0) + coalesce(c.n, 0) > 0
+   order by coalesce(r.n, 0) + coalesce(c.n, 0) desc, p.created_at
+   limit 10
+$$;
+revoke execute on function public.top_xp() from public;
+grant execute on function public.top_xp() to anon, authenticated;
 
 -- ---------- кто сейчас на сайте ----------
 create table if not exists public.online (
