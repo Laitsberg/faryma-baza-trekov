@@ -13396,6 +13396,11 @@ function drawTrack() {
   drawHero();
   drawTabs();
   drawTab();
+  // Панели не пересоздаются, но площадки оригинала могли доехать позже.
+  Object.values(T.панели).forEach(el => {
+    const о = el.querySelector && el.querySelector('.pan.orig');
+    if (о && о._обновить) о._обновить(показ());
+  });
   drawTalk();
   drawMine();
   drawFacts();
@@ -14322,7 +14327,7 @@ function оригиналы(r) {
 }
 
 function панельОригинала(r, duo) {
-  const есть = оригиналы(r);
+  let есть = оригиналы(r);
   const pan = document.createElement('section');
   pan.className = 'pan orig';
   pan.innerHTML =
@@ -14342,7 +14347,8 @@ function панельОригинала(r, duo) {
   const из = площадкаИз(r);
   let любимая = '';
   try { любимая = localStorage.getItem(ПЛ_LS) || ''; } catch {}
-  let сейчас = [любимая, из, 'yt', 'sp', 'ya'].find(k => k && есть[k]) || '';
+  const выбрать = () => [любимая, из, 'yt', 'sp', 'ya'].find(k => k && есть[k]) || '';
+  let сейчас = выбрать();
   const длит = r.длит ? ' · ' + время(r.длит) : '';
   const альбом = путь => путь.startsWith('album/') ? ' · ссылка на альбом' : '';
 
@@ -14446,8 +14452,29 @@ function панельОригинала(r, duo) {
   pan.querySelectorAll('.plat button').forEach(b => b.addEventListener('click', () => {
     if (b.disabled || b.dataset.k === сейчас) return;
     try { localStorage.setItem(ПЛ_LS, b.dataset.k); } catch {}
+    любимая = b.dataset.k;
     рисовать(b.dataset.k, false);
   }));
+  /* years.json (3 МБ) приезжает позже, чем рисуется панель, а с ним и
+     трек в Spotify (spSid). Панель ради этого не пересоздаётся — звук бы
+     оборвался, — поэтому площадки обновляются на месте: кнопка
+     загорается, а если ничего не играет и по выбору зрителя теперь
+     положена другая площадка — плеер переключается на неё. Раньше
+     Spotify оставался погашенным, хотя в шапке трека ссылка на него уже
+     была. */
+  pan._обновить = свежий => {
+    const было = JSON.stringify(есть);
+    есть = оригиналы(свежий);
+    if (JSON.stringify(есть) === было) return;
+    r = свежий;
+    pan.querySelectorAll('.plat button').forEach(b => {
+      b.disabled = !есть[b.dataset.k];
+      if (b.dataset.k === 'sp' && есть.sp) b.dataset.tip = 'Без ВПН и входа в аккаунт Spotify может не заиграть';
+    });
+    const надо = выбрать();
+    const играет = pan._звук && pan._звук.играет;
+    if (надо !== сейчас && !играет) рисовать(надо, false);
+  };
   /* Замолчать. Плеер с пультом ставим на паузу — так он и место в песне
      помнит. Без пульта (Яндекс, или скрипт не загрузился) остаётся
      только перезагрузить рамку. */
