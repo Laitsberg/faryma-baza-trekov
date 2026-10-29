@@ -902,7 +902,6 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   .sc{flex:1;min-width:0}
   .tp-nav{width:100%;margin-left:0}
   .tp-nav button{flex:1}
-  .game{grid-template-columns:minmax(0,1fr)}
   .adm-row{flex-wrap:wrap}
 }
 
@@ -974,6 +973,10 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 .fun-h{margin:4px 0 6px;font:800 26px var(--d)}
 .fun-p{margin:0 0 18px;color:var(--dim);font-size:14px;max-width:80ch}
 .game{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:22px;align-items:start}
+/* Сразу за правилом, а не в общем блоке @media выше: там его
+   перебивало это же правило, стоящее ниже, — и на телефоне игра
+   оставалась в две колонки, а «пропустить» вылезало за экран. */
+@media (max-width:900px){.game{grid-template-columns:minmax(0,1fr)}}
 .game .vid{margin:0}
 .g-src{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12.5px;color:var(--dim)}
 .g-src label{display:flex;align-items:center;gap:6px;cursor:pointer}
@@ -1301,7 +1304,10 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
 .me-cnt{margin-top:12px;color:var(--faint);font-size:11.5px}
 
 @media(max-width:1000px){
-  .feats{grid-template-columns:1fr;max-width:600px;margin:27px auto 0}
+  /* minmax(0,1fr), а не 1fr: у 1fr нижняя граница — ширина содержимого,
+     и длинное название трека-примера (в строку, с многоточием) растягивало
+     колонку за экран телефона. */
+  .feats{grid-template-columns:minmax(0,1fr);max-width:600px;margin:27px auto 0}
   .feat{min-height:auto}
   .feat p{min-height:0}
 }
@@ -11207,6 +11213,12 @@ const COVER = Object.assign({}, COVERS_INLINE);
 const ФАКТОВ = 3;
 const ФАКТ_МАКС = 400;
 const FACT = Object.assign({}, FACTS_INLINE);
+/* Что сейчас лежит в covers.json и facts.json — как в самих файлах,
+   без подборки по склеенным ключам. Из этого панель #covers собирает
+   новые файлы: собирай она их из встроенной копии, утверждённое после
+   пересборки страницы при следующей замене файла пропало бы. */
+let ОБЛОЖКИ_ФАЙЛ = COVERS_INLINE;
+let ФАКТЫ_ФАЙЛ = FACTS_INLINE;
 let MYFACT = store.facts || {};
 
 const save = () => { try {
@@ -11346,10 +11358,9 @@ const число = n => n.toLocaleString('ru-RU');
    таблица: врать про «файл сам не обновляется», когда он только что
    подтянул свежую выгрузку, нельзя. */
 const FOOT_NOTE = 'Оценка на карточке — композитора, как она записана в таблице разносов. ' +
-  'Сердечко, своя оценка и предложенная обложка живут в этом браузере и видны только тебе: ' +
-  'числа лайков и зрительских оценок в архиве нет. Обложки — превью со страниц треков на ' +
-  'YouTube и Spotify; где превью не достать, картинку можно предложить со страницы трека — ' +
-  'у всех она появится, когда её утвердят.';
+  'Своя оценка и сердечко у вошедшего через Twitch хранятся в профиле, без входа — в этом браузере. ' +
+  'Обложки — превью со страниц треков на YouTube и Spotify; где превью не достать, картинку можно ' +
+  'предложить со страницы трека — до проверки её видишь только ты, а у всех она появится, когда её утвердят.';
 
 function приписка() {
   const откуда = СВЕЖО
@@ -11460,8 +11471,8 @@ async function подтянуть() {
   const [обл, фкт] = await Promise.all([
     достать(ЖИВЫЕ.обложки, true), достать(ЖИВЫЕ.факты, true)
   ]);
-  if (обл && typeof обл === 'object') Object.assign(COVER, обл);
-  if (фкт && typeof фкт === 'object') Object.assign(FACT, фкт);
+  if (обл && typeof обл === 'object') { Object.assign(COVER, обл); ОБЛОЖКИ_ФАЙЛ = обл; }
+  if (фкт && typeof фкт === 'object') { Object.assign(FACT, фкт); ФАКТЫ_ФАЙЛ = фкт; }
   // Склеенный трек мог получить обложку или факт на любой из своих
   // ключей — общие файлы приезжают позже склейки, поэтому здесь снова.
   if (обл || фкт) подобратьЧужое();
@@ -11938,43 +11949,55 @@ function rows() {
 /* ---------- рельс ---------- */
 /* Счётчик считается так, будто своя группа не выбрана: иначе у
    невыбранных пунктов вечно стоял бы ноль и выбрать второй жанр
-   было бы нельзя. */
-function cnt(field, val) {
-  return CAT.filter(r => {
-    if (!match(r, field)) return false;
-    switch (field) {
-      case 'tier':    return разы(r).some(x => оценкаКлючи(x.rate).includes(val));
-      case 'myTier':  return мояКлючи(MY[r.key]).includes(val);
-      case 'release': return годКлючи(r.year).includes(val);
-      /* У жанра счётчик особый: раз они складываются, полезное число —
-         сколько останется, если добавить этот жанр к уже выбранным.
-         Поэтому здесь, в отличие от остальных столбцов, своя группа не
-         сбрасывается: иначе рядом с «рэп» стояло бы число всех рэп-треков
-         архива, а нажатие давало бы горстку. Ноль — честный ответ, что
-         такого сочетания в архиве нет. */
-      case 'genre': {
-        const c = FC.genre;
-        for (const g of c.да) if (!r.genres.includes(g)) return false;
-        if (!r.genres.includes(val)) return false;
-        /* Когда где-то выбрано «только этот жанр», число обязано
-           считать по тому же правилу. Иначе у соседних пунктов
-           стояли бы сотни, а щелчок давал бы ноль: «только метал» и
-           «есть фолк» вместе не живут по определению. */
-        if (c.только.size &&
-            (r.genres.length !== c.только.size || !r.genres.every(g => c.только.has(g))))
-          return false;
-        return true;
-      }
-      case 'origin':  return r.origin === val;
-      case 'kind':    return r.kind === val;
-      case 'tag':     return r.tags.includes(val);
-      case 'country': return r.country === val;
-      case 'has':     return val === 'fav'     ? FAV.has(r.key)
-                           : val === 'nocover' ? безОбложки(r)
-                           : !!MY[r.key];
+   было бы нельзя.
+
+   Считаем за один проход на столбец, а не на пункт: пунктов в рельсе
+   полторы сотни (одних точных годов под сотню), и проход по семи
+   тысячам строк на каждый растягивал любой щелчок по отбору на секунду
+   с лишним. СЧЁТ сбрасывает rail() — числа живут одну пересборку. */
+let СЧЁТ = {};
+function ключиСчёта(field, r) {
+  switch (field) {
+    case 'tier':    return разы(r).flatMap(x => оценкаКлючи(x.rate));
+    case 'myTier':  return мояКлючи(MY[r.key]);
+    case 'release': return годКлючи(r.year);
+    /* У жанра счётчик особый: раз они складываются, полезное число —
+       сколько останется, если добавить этот жанр к уже выбранным.
+       Поэтому здесь, в отличие от остальных столбцов, своя группа не
+       сбрасывается: иначе рядом с «рэп» стояло бы число всех рэп-треков
+       архива, а нажатие давало бы горстку. Ноль — честный ответ, что
+       такого сочетания в архиве нет. */
+    case 'genre': {
+      const c = FC.genre;
+      for (const g of c.да) if (!r.genres.includes(g)) return [];
+      /* Когда где-то выбрано «только этот жанр», число обязано
+         считать по тому же правилу. Иначе у соседних пунктов
+         стояли бы сотни, а щелчок давал бы ноль: «только метал» и
+         «есть фолк» вместе не живут по определению. */
+      if (c.только.size &&
+          (r.genres.length !== c.только.size || !r.genres.every(g => c.только.has(g))))
+        return [];
+      return r.genres;
     }
-    return false;
-  }).length;
+    case 'origin':  return [r.origin];
+    case 'kind':    return [r.kind];
+    case 'tag':     return r.tags;
+    case 'country': return [r.country];
+    case 'has':     return [FAV.has(r.key) && 'fav', безОбложки(r) && 'nocover', !!MY[r.key] && 'mine'];
+  }
+  return [];
+}
+function cnt(field, val) {
+  if (!СЧЁТ[field]) {
+    const m = new Map();
+    CAT.forEach(r => {
+      if (!match(r, field)) return;
+      // Каждая строка — один раз на значение, сколько бы раз оно в ней ни стояло.
+      new Set(ключиСчёта(field, r)).forEach(v => m.set(v, (m.get(v) || 0) + 1));
+    });
+    СЧЁТ[field] = m;
+  }
+  return СЧЁТ[field].get(val) || 0;
 }
 
 /* Имя не top(): в глобальной области оно уже занято window.top,
@@ -12252,6 +12275,7 @@ function список(b, ключ, значения, рисовать) {
 
 function rail() {
   применить();
+  СЧЁТ = {};
   const box = $('rail');
   box.textContent = '';
 
@@ -12272,7 +12296,8 @@ function rail() {
     box.append(g); }
 
   { const { g, b } = group('моя оценка', true,
-      'Живут в этом браузере и видны только тебе.');
+      'Твои оценки. У вошедшего через Twitch они хранятся в профиле и видны другим, ' +
+      'если не скрыть их в настройках; без входа — только в этом браузере.');
     оценки(b, 'myTier');
     box.append(g); }
 
@@ -12696,7 +12721,8 @@ function card(r) {
     const t = TIERS.find(x => x.key === v.t); if (!t) return;
     const next = t.mods.indexOf(v.m) - Number(b.dataset.d);
     if (next < 0 || next >= t.mods.length) return;
-    v.m = t.mods[next]; save(); paint();
+    // Точные оценки в отборе («атлична+») живут и от модификатора.
+    v.m = t.mods[next]; save(); paint(); railAfterRate();
   });
 
   const favBtn = el.querySelector('.fav');
@@ -13039,7 +13065,12 @@ function showTrack(r) {
   $('upage').hidden = true;
   $('tpage').hidden = false;
   document.title = (r.title || '—') + ' — база треков';
+  // Вернулись к тому же треку — лента комментариев осталась от прошлого
+  // захода (её не пересобирают, чтобы не потерять недописанное), а за это
+  // время могли написать новые. Спрашиваем их заново.
+  const тотЖе = $('tTalk').dataset.key === r.key;
   drawTrack();
+  if (тотЖе && ОБЛ && ОБЛ.sb) комментарииЗагрузить(r.key);
   window.scrollTo(0, 0);
   // Пришли облачком с карточки — сразу к комментариям. Ещё раз чуть
   // позже: плееры и обложка над ними дорисовываются и сдвигают ленту.
@@ -13182,9 +13213,15 @@ const ПЛ_ЗНАЧОК = {
   ya: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#FFCC00"/><path d="M13.2 6.5h-1.6c-2 0-3.4 1.2-3.4 3.2 0 1.6.8 2.5 2.2 3.3L8 17.5h2l2.3-4.2h.9v4.2h1.8v-11zm0 5.4h-.8c-1.2 0-2-.6-2-2.1 0-1.4.8-2 2-2h.8z" fill="#121212"/></svg>',
   ссылка: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>'
 };
+/* С какой площадки ссылка в таблице. Яндекс узнаём и по самому адресу:
+   общий разбор знает только music.yandex.ru и .com, а в архиве есть и
+   .by — такая ссылка вставала второй плашкой «Другое» рядом с «Я.Музыкой». */
+const площадкаИз = r => !r.link ? ''
+  : ({ YouTube: 'yt', Spotify: 'sp', 'Яндекс.Музыка': 'ya' })[r.link.platform] ||
+    (yandexTrack(r.link.url) || yandexAlbum(r.link.url) ? 'ya' : '');
 function площадкиСсылки(r) {
   const есть = оригиналы(r);
-  const из = r.link ? ({ YouTube: 'yt', Spotify: 'sp', 'Яндекс.Музыка': 'ya' })[r.link.platform] : '';
+  const из = площадкаИз(r);
   const адрес = {
     yt: есть.yt && (из === 'yt' ? r.link.url : 'https://youtu.be/' + есть.yt),
     sp: есть.sp && (из === 'sp' ? r.link.url : 'https://open.spotify.com/' + есть.sp),
@@ -13867,7 +13904,7 @@ function шапкаОкна(v, панель, з) {
    открывается страница трека. */
 function играйСКарточки(r, что) {
   const есть = оригиналы(r);
-  const из = r.link ? ({ YouTube: 'yt', Spotify: 'sp', 'Яндекс.Музыка': 'ya' })[r.link.platform] : '';
+  const из = площадкаИз(r);
   let любимая = '';
   try { любимая = localStorage.getItem(ПЛ_LS) || ''; } catch {}
   const пл = [любимая, из, 'yt', 'sp', 'ya'].find(k => k && есть[k]) || '';
@@ -14045,7 +14082,7 @@ function панельОригинала(r, duo) {
 
   const vid = pan.querySelector('.vid');
   const ссылка = pan.querySelector('.vid-ft .go');
-  const из = r.link ? ({ YouTube: 'yt', Spotify: 'sp', 'Яндекс.Музыка': 'ya' })[r.link.platform] : '';
+  const из = площадкаИз(r);
   let любимая = '';
   try { любимая = localStorage.getItem(ПЛ_LS) || ''; } catch {}
   let сейчас = [любимая, из, 'yt', 'sp', 'ya'].find(k => k && есть[k]) || '';
@@ -14523,8 +14560,12 @@ function tabSim(box) {
 function drawMine() {
   const r = T.r;
   const box = $('tMine');
+  /* Кому видна — смотря по входу и настройке «показывать мои оценки»:
+     у вошедшего она по умолчанию открыта. */
+  const видна = вошёл() && !(ОБЛ.проф && ОБЛ.проф.ratings_public === false)
+    ? 'видна другим зрителям' : 'видна только тебе';
   box.innerHTML =
-    '<h2>Твоя оценка<small>видна только тебе</small></h2>' +
+    '<h2>Твоя оценка<small>' + видна + '</small></h2>' +
     '<div class="big-scale"></div>' +
     '<div class="rate-line"><span class="val">—</span>' +
       '<span class="rate-mods">' +
@@ -14613,7 +14654,8 @@ function drawMine() {
     const t = TIERS.find(x => x.key === v.t); if (!t) return;
     const next = t.mods.indexOf(v.m) - Number(b.dataset.d);
     if (next < 0 || next >= t.mods.length) return;
-    v.m = t.mods[next]; save(); paint();
+    // Средняя зрителей в шапке считает и плюсы с минусами — пересчитываем.
+    v.m = t.mods[next]; save(); paint(); drawDist();
   });
   paint();
 
@@ -14670,6 +14712,10 @@ function drawFacts() {
   const box = $('tFacts');
   const факты = [];
   const цвет = 'style="--tc:' + tColor(r.rate) + '"';
+  /* Эфиры и заявки считаем по разносам, а не по карточкам: прошлый
+     разнос повтора склеен в карточку свежего и в CAT своей строкой не
+     лежит. Без этого в эфире №16 выходило 57 треков вместо 59. */
+  const всеРазы = CAT.flatMap(разы);
   const деньги = t => { const c = String(t || '').replace(/\D/g, ''); return c ? +c : 0; };
 
   if (/ПОВТОР/i.test(r.full || ''))
@@ -14692,13 +14738,13 @@ function drawFacts() {
     факты.push('У исполнителя в архиве <b>' + свои.length + '</b> ' +
       plural(свои.length, 'трек', 'трека', 'треков') +
       (оц.length ? ', средняя оценка — <b>' + средняя.toFixed(1) + '</b> из 10' : '') +
-      (лучший === r ? ', и этот — лучший из них.' : '.'));
+      (лучший && лучший.key === r.key ? ', и этот — лучший из них.' : '.'));
   } else if (свои.length === 1 && r.artist) {
     факты.push('Единственный трек этого исполнителя за весь архив.');
   }
 
   if (r.streamNum != null) {
-    const эфир = CAT.filter(x => x.streamNum === r.streamNum);
+    const эфир = всеРазы.filter(x => x.streamNum === r.streamNum);
     const место = эфир.filter(x => sc(x) > sc(r)).length + 1;
     факты.push('В эфире <b>№' + r.streamNum + '</b> разнесли <b>' + эфир.length + '</b> ' +
       plural(эфир.length, 'трек', 'трека', 'треков') +
@@ -14706,7 +14752,7 @@ function drawFacts() {
   }
 
   if (r.user) {
-    const его = CAT.filter(x => x.user === r.user);
+    const его = всеРазы.filter(x => x.user === r.user);
     факты.push('Заказал <b>' + заказалHtml(r.user) + '</b>' + (его.length > 1
       ? ' — всего в архиве у него <b>' + число(его.length) + '</b> ' +
         plural(его.length, 'заявка', 'заявки', 'заявок') + '.'
@@ -14730,7 +14776,7 @@ function drawFacts() {
   }
 
   if (деньги(r.sum) && r.streamNum != null) {
-    const эфир = CAT.filter(x => x.streamNum === r.streamNum);
+    const эфир = всеРазы.filter(x => x.streamNum === r.streamNum);
     const макс = Math.max(...эфир.map(x => деньги(x.sum)));
     if (эфир.length > 1 && деньги(r.sum) === макс)
       факты.push('Самая дорогая заявка своего эфира — <b>' + esc(r.sum) + '</b>.');
@@ -15063,10 +15109,10 @@ function drawAdmin() {
   // Всё вместе: что уже в файле, что прислали, и что предложено отсюда.
   const все = [];
   const класть = (key, url, src) => все.push({ key, url, src });
-  Object.entries(COVERS_INLINE).forEach(([k, v]) => класть(k, v, 'в файле'));
-  Object.entries(INBOX).forEach(([k, v]) => { if (!COVERS_INLINE[k]) класть(k, v, 'прислали'); });
+  Object.entries(ОБЛОЖКИ_ФАЙЛ).forEach(([k, v]) => класть(k, v, 'в файле'));
+  Object.entries(INBOX).forEach(([k, v]) => { if (!ОБЛОЖКИ_ФАЙЛ[k]) класть(k, v, 'прислали'); });
   Object.entries(MYCOV).forEach(([k, v]) => {
-    if (!COVERS_INLINE[k] && !INBOX[k]) класть(k, v.url, 'отсюда');
+    if (!ОБЛОЖКИ_ФАЙЛ[k] && !INBOX[k]) класть(k, v.url, 'отсюда');
   });
 
   box.innerHTML =
@@ -15248,7 +15294,7 @@ function drawAdminФакты() {
     if (было.some(ф => ф.text.trim() === t.trim())) return;
     было.push({ text: t, src });
   };
-  Object.entries(FACTS_INLINE).forEach(([k, v]) => (v || []).forEach(t => класть(k, t, 'в файле')));
+  Object.entries(ФАКТЫ_ФАЙЛ).forEach(([k, v]) => (v || []).forEach(t => класть(k, t, 'в файле')));
   Object.entries(FIN).forEach(([k, v]) => (v || []).forEach(t => класть(k, t, 'прислали')));
   Object.entries(MYFACT).forEach(([k, v]) => (v || []).forEach(f => класть(k, f.text, 'отсюда')));
 
@@ -16577,6 +16623,8 @@ function облакоНет(почему) {
   ОБЛ.состояние = 'нет';
   ОБЛ.ошибка = почему;
   облакоРисовать(true);
+  // Чужой профиль ждал сервер со словом «загружаю…» — теперь ждать нечего.
+  if (!$('upage').hidden) route();
 }
 
 async function облакоСтарт() {
@@ -16637,7 +16685,7 @@ function облакоВышел() {
 }
 
 function войти() {
-  if (!ОБЛ.sb) return;
+  if (!ОБЛ.sb) { toast('Вход ещё загружается — попробуй через пару секунд'); return; }
   try { sessionStorage.setItem(ВХОД_LS, location.hash); } catch {}
   ОБЛ.sb.auth.signInWithOAuth({ provider: 'twitch',
     options: { redirectTo: location.origin + location.pathname } })
@@ -16660,6 +16708,14 @@ document.addEventListener('click', e => {
    бесполезной, а войти всё равно нельзя. */
 function нужноВойти() {
   if (!ОБЛ || ОБЛ.состояние === 'вошёл' || ОБЛ.состояние === 'нет') return false;
+  /* Пока библиотека входа грузится, вошедший выглядит гостем, и первые
+     секунды после открытия ему на щелчок по шкале выпадало «войди».
+     Сессия к этому времени уже лежит в браузере — по ней и узнаём.
+     Оценка ляжет в браузер, а сверка при входе отвезёт её на сервер:
+     она свежее серверной. */
+  if (ОБЛ.состояние === 'грузится') {
+    try { if (localStorage.getItem('faryma-auth')) return false; } catch {}
+  }
   const m = $('mLogin');
   m.querySelector('.tw-in').innerHTML = ЗНАЧОК_TW + 'Войти через Twitch';
   m.hidden = false;
