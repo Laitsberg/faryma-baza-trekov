@@ -12707,6 +12707,11 @@ function coverOf(r) {
   if (COVER[r.key])  return { url: COVER[r.key] };
   if (MYCOV[r.key])  return { url: MYCOV[r.key].url, own: true };
   if (r.spCover)     return { url: r.spCover };
+  /* Трек нашёлся в Spotify (тот же порог доверия, что у обложки), но
+     картинки в years.json нет — у записей старого формата (v:4) поля
+     «обложка» нет, а sid есть: плеер Spotify играл, обложки не было.
+     Тогда спрашиваем её у oEmbed по id, как для ссылки на Spotify. */
+  if (r.spSid)       return { url: SPC[r.spSid] || '', sp: r.spSid };
   if (r.ytId)        return { url: ytCover(r.ytId) };
   if (r.spId)        return { url: SPC[r.spId] || '', sp: r.spId };
   if (r.spAlbum)     return { url: SPC['album/' + r.spAlbum] || '', sp: 'album/' + r.spAlbum };
