@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>База треков</title>
 <meta name="description" content="Каталог разносов композитора: обложка, оценка, запись разбора и ссылка послушать.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,6 +42,8 @@
   --t-krin:#E5497E;
 
   --like:#FF5470;
+  /* Рецензии — золотым: своё отличие от комментария. */
+  --rv:#E1B04D;
 
   /* Заголовки и текст — один Inter, разным начертанием. Раньше стоял
      Unbounded: красивый, но его ставят все подряд, и страница от этого
@@ -69,7 +71,9 @@ input,select{font:inherit;color:inherit}
 .tb-in{max-width:1560px;margin:0 auto;padding:11px 22px;
   display:flex;align-items:center;gap:26px}
 
-.tb-search{display:flex;align-items:center;gap:8px;flex:0 1 420px;min-width:170px}
+.tb-search{position:relative;display:flex;align-items:center;gap:8px;flex:0 1 420px;min-width:170px}
+/* Подсказки под полем в шапке — те же, что у большого поиска на главной. */
+.suggest.tb-sug{top:calc(100% + 7px);z-index:45;min-width:min(340px,calc(100vw - 20px))}
 .tb-search input{flex:1;min-width:0;background:var(--card-2);
   border:1px solid var(--line);border-radius:5px;padding:7px 12px;color:var(--ink)}
 .tb-search input::placeholder{color:var(--faint)}
@@ -193,7 +197,13 @@ input,select{font:inherit;color:inherit}
    остаётся одна сортировка. */
 .hd-l{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}
 .hd-l:empty{display:none}
+.hd-r{display:flex;align-items:center;gap:16px}
 .sortbtn{display:flex;align-items:center;gap:9px;font-weight:600;font-size:16px;color:var(--ink)}
+.viewbtn{display:flex;gap:2px;padding:2px;border-radius:7px;background:var(--card)}
+.viewbtn button{width:32px;height:30px;display:grid;place-items:center;border-radius:5px;color:var(--faint)}
+.viewbtn button:hover{color:var(--ink)}
+.viewbtn button[aria-pressed="true"]{background:var(--card-2);color:var(--brand-hi)}
+.viewbtn svg{width:16px;height:16px}
 .sortbtn .car{color:var(--brand);font-size:10px}
 .sortbtn select{background:none;border:0;font:600 16px var(--b);color:var(--ink);cursor:pointer}
 /* Раскрытый список у выпадашки рисует браузер, и без подсказки он
@@ -474,6 +484,73 @@ a.cmt:hover{color:var(--brand-hi)}
   .grid{grid-template-columns:repeat(auto-fill,minmax(144px,1fr));gap:12px}
   .art-fb{font-size:40px}
 }
+/* Каталог на телефоне — почти от края до края: по 22 пикселя полей с
+   каждой стороны съедали у двух колонок по обложке на ряд. Две колонки
+   ровно, карточки от этого крупнее. */
+@media(max-width:760px){
+  .page{padding:12px 5px 60px}
+  .hd,.more-wrap,.ftoggle,.rail{margin-left:5px;margin-right:5px;width:auto}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .grid .body{padding:9px 10px 0}
+  .grid .foot{padding:8px 10px 10px}
+  /* Сортировка и «плитками / списком» — строкой под заголовком: рядом с
+     ним они ломали «база треков» на два слова в столбик. */
+  .hd{grid-template-columns:minmax(0,1fr)}
+  .hd-r{justify-content:space-between}
+}
+/* ---------- каталог списком ----------
+   Те же карточки, только строкой: обложка маленьким квадратом, название
+   и исполнитель, шкала оценки прямо в строке (наводить на крошечную
+   обложку незачем), сердечко, облачко и две оценки с кнопкой ▶.
+   Обложка раскладывается в строку (display:contents), и её слои ложатся
+   в свои клетки сетки — разметка карточки та же, что у плитки. */
+.grid.list{display:flex;flex-direction:column;gap:6px}
+.grid.list .card{display:grid;align-items:center;gap:0 14px;padding:6px 10px 6px 6px;
+  grid-template-columns:58px minmax(0,1fr) auto 348px 40px 52px 150px;
+  grid-template-areas:"art body tm rater fav cmt foot"}
+/* Колонки справа — постоянной ширины, чтобы шкалы и оценки стояли
+   ровным столбцом из строки в строку. */
+.grid.list .card:hover{transform:none;background:var(--card-2)}
+.grid.list .cover{display:contents}
+.grid.list .art,.grid.list .art-fb{grid-area:art;position:relative;inset:auto;width:58px;height:58px;border-radius:6px}
+.grid.list .art-fb{font-size:20px}
+.grid.list .card:hover .art,.grid.list .card:hover .art-fb,
+.grid.list .card:focus-within .art,.grid.list .card:focus-within .art-fb{filter:none}
+.grid.list .mine-ck,.grid.list .goto-w{display:none}
+.grid.list .rater{grid-area:rater;position:static;opacity:1;pointer-events:auto;flex-direction:row-reverse;
+  align-items:center;gap:12px;padding:0}
+.grid.list .rater .scale{width:186px;gap:5px}
+.grid.list .rater .seg{flex:1;width:auto;height:24px;border-radius:5px}
+.grid.list .rater .mods{width:150px;max-width:none}
+.grid.list .rater .rt{font-size:12.5px;text-shadow:none}
+.grid.list .mods.off .rt{color:var(--faint);font-weight:400}
+.grid.list .badge{position:static}
+.grid.list .fav{grid-area:fav;justify-self:start}
+.grid.list .strm{grid-area:cmt;justify-self:start}
+.grid.list .times{grid-area:tm}
+.grid.list .body{grid-area:body;padding:0;min-height:0}
+.grid.list .tt{-webkit-line-clamp:1}
+.grid.list .foot{grid-area:foot;padding:0}
+@media(max-width:1100px){
+  .grid.list .card{grid-template-columns:58px minmax(0,1fr) auto 186px 40px 52px 150px}
+  .grid.list .rater .mods{display:none}
+}
+@media(max-width:760px){
+  .grid.list{gap:5px}
+  .grid.list .card{grid-template-columns:50px minmax(0,1fr) 32px 112px;grid-template-areas:"art body fav foot";gap:0 10px}
+  .grid.list .art,.grid.list .art-fb{width:50px;height:50px}
+  .grid.list .rater,.grid.list .strm,.grid.list .times,.grid.list .rt-u{display:none}
+  .grid.list .badge{width:30px;height:30px}
+}
+/* Телефон — как приложение: масштаб не крутится и вбок страница не
+   ездит. Метатег viewport запрещает масштаб не везде (iOS его
+   слушается не всегда), поэтому ещё и touch-action: странице можно
+   только листаться вверх-вниз, а лентам, которые листаются вбок, —
+   и вбок тоже. */
+@media(pointer:coarse){
+  html{touch-action:pan-y}
+  .nav,.c-tabs,.st-scale,.tabs,.top-list{touch-action:pan-x pan-y}
+}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{transition-duration:.001ms!important}
 }
@@ -507,6 +584,10 @@ a.cmt:hover{color:var(--brand-hi)}
   font-size:12.5px;color:var(--dim);white-space:nowrap;min-height:38px}
 .tp-nav button:hover:not(:disabled){background:var(--card-2);color:var(--ink)}
 .tp-nav button:disabled{opacity:.32;cursor:default}
+/* На фоне из обложки — такими же полупрозрачными плашками, как всё на
+   странице трека: глухие серые торчали заплатками. */
+.atmo-on .tp-nav button{background:rgba(24,24,28,.5);border:1px solid rgba(255,255,255,.07)}
+.atmo-on .tp-nav button:hover:not(:disabled){background:rgba(255,255,255,.1)}
 
 .tp-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:20px;align-items:start}
 .tp-col{display:flex;flex-direction:column;gap:18px;min-width:0}
@@ -521,18 +602,21 @@ a.cmt:hover{color:var(--brand-hi)}
    backdrop-filter и transform на плашках не ставить: под ними живут
    плееры, а плавающий плеер (position:fixed) от такого предка начал
    бы отсчитываться от плашки, а не от окна. */
-#tpage .pan,#tpage .talk{position:relative;overflow:hidden}
-.atmo-on #tpage .pan,.atmo-on #tpage .talk{background:rgba(24,24,28,.5);
+#tpage .pan,#tpage .talk,#rpage .pan{position:relative;overflow:hidden}
+.atmo-on #tpage .pan,.atmo-on #tpage .talk,.atmo-on #rpage .pan{background:rgba(24,24,28,.5);
   border:1px solid rgba(255,255,255,.07)}
-.atmo-on #tpage .pan::before,.atmo-on #tpage .talk::before{content:'';position:absolute;
+.atmo-on #tpage .pan::before,.atmo-on #tpage .talk::before,.atmo-on #rpage .pan::before{content:'';position:absolute;
   inset:-80px;z-index:-1;pointer-events:none;background:var(--atmo) center/cover no-repeat;
   filter:blur(60px) saturate(1.3);opacity:.3}
 /* Шапка трека — как в прежних версиях: своя размытая обложка внутри и
    затемнение по диагонали, только прозрачнее, чем было, — цвет обложки
-   в ней самый густой на странице. */
+   в ней самый густой на странице. Размыта сильнее фона: при 34px у
+   части обложек в шапке читались пятна и контуры, и глаз цеплялся за
+   них раньше, чем за название. Слой шире плашки на столько же, иначе
+   по краям размытие светлеет. */
 .atmo-on .hero{background:rgba(24,24,28,.35);border:1px solid rgba(255,255,255,.08)}
-.hero-bg{position:absolute;inset:-40px;background-size:cover;background-position:center;
-  filter:blur(34px) saturate(1.3);opacity:.75}
+.hero-bg{position:absolute;inset:-140px;background-size:cover;background-position:center;
+  filter:blur(90px) saturate(1.3);opacity:.75}
 .hero-bg::after{content:'';position:absolute;inset:0;
   background:linear-gradient(155deg,rgba(22,22,25,.35),rgba(22,22,25,.8))}
 
@@ -559,12 +643,15 @@ a.cmt:hover{color:var(--brand-hi)}
 /* Поле поиска и плашка «что играет» — тоже стеклом: глухие серые, они
    торчали заплатками на окрашенной шапке. */
 .atmo-on .tb-search input,.atmo-on .np{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12)}
-.atmo-on .tb{background:var(--bg);overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.04)}
-.atmo-on .tb::before{content:'';position:absolute;left:-120px;right:-120px;top:-120px;height:1340px;
-  z-index:-2;pointer-events:none;background:var(--atmo) center 30%/cover no-repeat;
+/* Слой обрезан своим блоком (.tb-bg), а не самой шапкой: с overflow
+   у шапки обрезались бы и подсказки поиска, и список уведомлений. */
+.atmo-on .tb{background:var(--bg);box-shadow:0 1px 0 rgba(255,255,255,.04)}
+.tb-bg{display:none}
+.atmo-on .tb-bg{display:block;position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.atmo-on .tb-bg::before{content:'';position:absolute;left:-120px;right:-120px;top:-120px;height:1340px;
+  background:var(--atmo) center 30%/cover no-repeat;
   filter:blur(70px) saturate(1.35);opacity:.5}
-.atmo-on .tb::after{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
-  background:rgba(0,0,0,.4)}
+.atmo-on .tb-bg::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.4)}
 .hero-in{position:relative;display:flex;gap:18px;padding:18px}
 .hero-cov{position:relative;width:196px;height:196px;flex:none;border-radius:var(--r);
   overflow:hidden;background:#1F1F22;padding:0;cursor:zoom-in}
@@ -844,17 +931,56 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 .talk-hd select{margin-left:auto;background:var(--card-2);border:1px solid var(--line);
   border-radius:6px;padding:6px 10px;font-size:13px;color:var(--dim);cursor:pointer}
 .talk-form{display:flex;gap:12px;align-items:flex-start;margin-bottom:8px}
-.talk-box{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;
-  background:var(--bg);overflow:hidden}
+/* Поле в одну строку и растёт по мере текста; кнопка — в самом поле.
+   Под полем — только выбор «комментарий / рецензия», без полосы. */
+.talk-main{flex:1;min-width:0}
+.talk-box{display:flex;align-items:flex-end;gap:6px;border:1px solid var(--line);border-radius:8px;
+  background:var(--bg);padding:0 5px 5px 0}
 .talk-box:focus-within{border-color:var(--brand)}
-.talk-box textarea{display:block;width:100%;min-height:74px;padding:12px 14px;border:0;
-  background:none;resize:vertical;font:14px var(--b);color:var(--ink)}
+.talk-box textarea{display:block;flex:1;min-width:0;min-height:42px;padding:10px 13px 5px;border:0;
+  background:none;resize:none;font:14px/1.5 var(--b);color:var(--ink);overflow-y:auto}
+.talk-form.is-review textarea{min-height:120px}
 .talk-box textarea:focus{outline:none}
 .talk-box textarea::placeholder{color:var(--faint)}
-.talk-ft{display:flex;align-items:center;gap:12px;padding:8px 8px 8px 14px;
-  border-top:1px solid var(--line)}
-.talk-ft .note{flex:1;margin:0;color:var(--faint);font-size:12.5px}
-.talk-ft .btn{min-height:36px;padding:7px 14px;font-size:13px}
+.talk-box .send{width:34px;height:34px;flex:none;border-radius:7px;display:grid;place-items:center;
+  background:var(--brand);color:#151517}
+.talk-box .send:hover{background:var(--brand-hi)}
+.talk-box .send svg{width:16px;height:16px}
+.talk-opts{display:flex;align-items:center;gap:10px;margin-top:7px}
+.kind{display:flex;gap:2px;padding:2px;border-radius:7px;background:rgba(255,255,255,.04)}
+.kind button{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;
+  font-size:12px;font-weight:600;color:var(--faint)}
+.kind button:hover{color:var(--ink)}
+.kind button[aria-checked="true"]{background:var(--card-2);color:var(--ink)}
+.kind button[data-kind="review"][aria-checked="true"]{color:var(--rv)}
+.kind .pen{width:12px;height:12px}
+.talk-left{margin-left:auto;font:500 11px var(--m);color:var(--faint)}
+.kind-hint{margin:8px 0 0;font-size:12.5px;color:var(--dim)}
+.kind-hint[hidden]{display:none}
+.kind-hint button{margin-left:10px;padding:0;font-size:12.5px;font-weight:600;color:var(--rv)}
+.kind-hint button + button{color:var(--faint);font-weight:400}
+.kind-hint button:hover{text-decoration:underline;text-underline-offset:3px}
+/* ---------- рецензия ----------
+   Отдельная сущность среди комментариев: своя ссылка (#r=id), длинный
+   текст, оценка автора. В ленте — плашкой с золотой чертой и пометкой у
+   ника. Цвет свой: оранжевый значит «сделал ты сам», фиолетовый —
+   Twitch и роли, красный — ошибки. */
+.msg.review{margin:6px 0;padding:14px 14px 12px;border:1px solid rgba(225,176,77,.22);border-left:3px solid var(--rv);
+  border-radius:8px;background:rgba(225,176,77,.055)}
+.msg.review + .msg:not(.reply){border-top:0}
+.rv-k{display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:1px 7px;border-radius:5px;vertical-align:1px;
+  font:600 10.5px/1.6 var(--b);color:var(--rv);background:rgba(225,176,77,.12);border:1px solid rgba(225,176,77,.35)}
+.rv-k .pen{width:11px;height:11px}
+.rv-time{text-decoration:none}
+.rv-time:hover time{color:var(--rv)}
+.rv-rate{display:block;margin-top:3px;font-size:12px;color:var(--dim)}
+.rv-rate b{font:600 12px var(--m);color:var(--tc)}
+.msg .bd p.rv-text{margin-top:8px;font-size:14.5px;line-height:1.6}
+.rv-text.clamp{display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden}
+.msg-act{display:flex;flex-wrap:wrap;gap:4px 16px}
+.msg-act:empty{display:none}
+.rv-more{margin-top:5px;padding:0;font-size:12px;font-weight:600;color:var(--rv)}
+a.re{text-decoration:none}
 .talk-empty{margin:0;color:var(--dim);font-size:14px;padding:14px 0 4px 46px}
 .msg{display:flex;align-items:flex-start;gap:11px;padding:12px 0;border-top:1px solid var(--line)}
 .msg .ini,.talk-form .ini{width:34px;height:34px;flex:none;border-radius:50%;display:grid;
@@ -891,18 +1017,69 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   .duo{grid-template-columns:minmax(0,1fr)}
   .hero-sc{width:176px}
 }
+/* Узкий экран. Обложка во всю ширину занимала весь первый экран, и до
+   названия, оценки и плеера надо было листать. Теперь шапка трека как
+   в музыкальном приложении: обложка небольшим квадратом, рядом
+   название и исполнитель, ниже плашки, кнопки и обе оценки.
+   Колонки страницы раскладываются в один поток (display:contents) в
+   том порядке, в каком их ищут: шапка, своя оценка, вкладки с разносом,
+   факты, оценки зрителей и в конце комментарии. */
 @media (max-width:900px){
-  .tpage{padding:14px 14px 48px}
-  .tp-grid{grid-template-columns:1fr}
-  .hero-in{flex-direction:column}
-  .hero-cov{width:100%;height:auto;aspect-ratio:1}
-  .hero-b h1{font-size:24px}
-  .hero-art{font-size:19px}
+  .tpage{padding:12px 10px 48px}
+  .tp-grid{display:flex;flex-direction:column;align-items:stretch;gap:14px}
+  .tp-col{display:contents}
+  #tHero{order:1}#tMine{order:2}#tTabs{order:3}#tTab{order:4}#tFacts{order:5}#tDist{order:6}#tTalk{order:7}
+  .hero-in{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px 14px;padding:14px}
+  .hero-b{display:contents}
+  .hero-cov{grid-row:1/span 2;width:104px;height:104px}
+  .hero-cov .art-fb{font-size:36px}
+  .hero-b h1{grid-column:2;align-self:end;font-size:21px}
+  .hero-art{grid-column:2;align-self:start;font-size:16px;margin:0}
+  .hero-b .tgs,.hero-b .tags,.hero-act,.hero-sc{grid-column:1/-1}
+  .tags{margin-top:-4px}
+  .hero-act{padding-top:0}
   .hero-sc{width:auto;flex-direction:row}
-  .sc{flex:1;min-width:0}
+  .sc{flex:1;min-width:0;padding:9px 12px}
+  .sc b{font-size:17px}
+  .tabs{gap:4px 24px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .tab{white-space:nowrap;font-size:15px}
+  .tab[aria-selected="true"]::after{bottom:0}
   .tp-nav{width:100%;margin-left:0}
   .tp-nav button{flex:1}
   .adm-row{flex-wrap:wrap}
+}
+
+/* ---------- рецензия отдельной страницей ---------- */
+.rv-grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;align-items:start;max-width:1180px}
+.rv-track .cov{position:relative;display:block;aspect-ratio:1;border-radius:var(--r);overflow:hidden;background:#1F1F22;margin-bottom:14px}
+.rv-track .cov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.rv-track .cov .art-fb{font-size:60px}
+.rv-track h2{display:block;font:800 21px/1.2 var(--d);margin:0 0 4px;overflow-wrap:anywhere}
+.rv-track h2 a{color:inherit;text-decoration:none}
+.rv-track h2 a:hover{color:var(--brand-hi)}
+.rv-track .rv-art{display:block;color:var(--dim);font-size:15px;margin-bottom:14px}
+.rv-track .sc{margin-bottom:8px}
+.rv-track .act{width:100%;justify-content:center;margin-top:6px}
+.rv-main .rv-k{margin-left:0}
+.rv-head{display:flex;align-items:center;gap:12px;margin:12px 0 18px}
+.rv-head .ini{width:46px;height:46px;flex:none;border-radius:50%;overflow:hidden;display:grid;place-items:center;
+  background:var(--card-2);font:700 16px var(--d);color:var(--dim)}
+.rv-head .ini img{width:100%;height:100%;object-fit:cover}
+.rv-head b{font-size:16px}
+.rv-head a{color:inherit;text-decoration:none}
+.rv-head a:hover b{color:var(--brand-hi)}
+.rv-head time{display:block;font:500 11.5px var(--m);color:var(--faint);margin-top:2px}
+.rv-body p{margin:0 0 12px;font-size:15.5px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.rv-body p:last-child{margin-bottom:0}
+.rv-foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:20px;padding-top:14px;border-top:1px solid var(--line)}
+.atmo-on .rv-foot{border-top-color:rgba(255,255,255,.1)}
+.rv-foot .note{margin-left:auto}
+@media (max-width:900px){
+  .rv-grid{grid-template-columns:minmax(0,1fr)}
+  .rv-track{display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 14px;align-items:center}
+  .rv-track .cov{grid-row:1/span 2;margin:0}
+  .rv-track .rv-art{margin:0}
+  .rv-track .sc,.rv-track .act{grid-column:1/-1}
 }
 
 /* ---------- обложка во весь экран ---------- */
@@ -1204,7 +1381,6 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
 .msg .ini,.talk-form .ini{overflow:hidden}
 .msg .ban{flex:none;color:var(--faint);font-size:13px;padding:5px 7px}
 .msg .ban:hover{color:var(--like)}
-.talk-ft .note b{color:var(--ink);font-weight:600}
 
 /* ---------- мои треки и заявки ---------- */
 .tab-n{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:4px;
@@ -1321,6 +1497,37 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
   .bs-ic{width:20px;height:20px}
   .bs-go{min-height:42px;padding:8px 12px;font-size:13px}
   .bs-go svg{display:none}
+  /* Поиск в шапке на телефоне виден всегда (иначе она прыгала бы по
+     высоте), и большой под ним был вторым полем подряд. Остаётся
+     одно — в шапке; человечки гуляют по черте на месте большого. */
+  .home-search .bigsearch,.home-search .suggest{display:none}
+  .runway{border-bottom:1px solid var(--line)}
+  .home{padding-left:7px;padding-right:7px}
+}
+/* Топ-10 по опыту: десять плашек в два ряда, на телефоне — лентой вбок. */
+.top{margin:34px auto 0;max-width:1190px;text-align:left}
+.top[hidden]{display:none}
+.top-hd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.top-hd h2{margin:0;font:800 20px/1.2 var(--d);letter-spacing:-.03em}
+.top-hd small{color:var(--faint);font-size:12px}
+.top-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.top-u{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;min-width:0;
+  background:var(--card);border:1px solid #3a3a40;color:inherit;text-decoration:none;transition:border-color .15s,background .15s}
+.top-u:hover{border-color:#5e5550;background:#2e2e33}
+.top-u.me{border-color:rgba(242,102,15,.45)}
+.top-n{flex:none;width:18px;font:700 13px var(--m);color:var(--faint);text-align:center}
+.top-list li:nth-child(-n+3) .top-n{color:var(--brand-hi)}
+.top-ava{position:relative;width:36px;height:36px;flex:none;border-radius:50%;overflow:hidden;display:grid;place-items:center;
+  background:#34302d;border:2px solid var(--c);font:800 12px var(--b);color:#f5b087}
+.top-ava img{width:100%;height:100%;object-fit:cover}
+.top-tx{min-width:0}
+.top-tx b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-tx small{display:block;font:500 11px var(--m);color:var(--dim);white-space:nowrap}
+@media(max-width:1000px){.top-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+  .top{margin-top:24px}
+  .top-list{display:flex;overflow-x:auto;scrollbar-width:none;gap:8px;padding-bottom:2px}
+  .top-list li{flex:0 0 auto;width:min(210px,62vw)}
 }
 @media(prefers-reduced-motion:reduce){
   .walker,.walker .lg,.walker .spr{animation:none}
@@ -1957,10 +2164,12 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
 <div class="atmo" id="atmo" hidden><i></i></div>
 
 <header class="tb">
+ <div class="tb-bg" aria-hidden="true"></div>
  <div class="tb-in">
   <div class="tb-search">
    <label class="vh" for="q">Поиск по треку, исполнителю и заказчику</label>
-   <input id="q" type="search" placeholder="Исполнитель, трек, кто заказал…" autocomplete="off">
+   <input id="q" type="search" placeholder="Исполнитель, трек, кто заказал…" autocomplete="off" aria-controls="qSuggest" aria-expanded="false">
+   <div class="suggest tb-sug" id="qSuggest" hidden></div>
    <button class="tb-ic" id="btnSearch" data-tip="Искать" aria-label="Искать">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
    </button>
@@ -2019,6 +2228,9 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
    <div class="quick" id="hQuick"></div>
   </div>
   <div class="feats" id="hFeats"></div>
+  <!-- Десятка по опыту: кто больше всех оценил и написал. Видна всем,
+       и гостям, и вошедшим; без сервера её нет. Рисует JS. -->
+  <section class="top" id="hTop" aria-labelledby="hTopH" hidden></section>
  </section>
  <button class="ftoggle" id="fToggle" type="button" aria-expanded="false" aria-controls="rail">Фильтры<b></b></button>
  <aside class="rail" id="rail" aria-label="Фильтры"></aside>
@@ -2026,6 +2238,7 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
  <main>
   <div class="hd">
    <h1 class="h1">база треков<small id="count">—</small></h1>
+   <div class="hd-r">
     <span class="sortbtn">
      <span class="car">▼</span>
      <select id="sort" aria-label="Сортировка">
@@ -2036,6 +2249,13 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
       <option value="az">по алфавиту</option>
      </select>
     </span>
+    <span class="viewbtn" id="view" role="group" aria-label="Вид каталога">
+     <button type="button" data-view="grid" aria-pressed="true" aria-label="Плитками" data-tip="Плитками">
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg></button>
+     <button type="button" data-view="list" aria-pressed="false" aria-label="Списком" data-tip="Списком">
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="4" width="5" height="4" rx="1.2"/><rect x="10" y="5" width="11" height="2" rx="1"/><rect x="3" y="10" width="5" height="4" rx="1.2"/><rect x="10" y="11" width="11" height="2" rx="1"/><rect x="3" y="16" width="5" height="4" rx="1.2"/><rect x="10" y="17" width="11" height="2" rx="1"/></svg></button>
+    </span>
+   </div>
    <div class="hd-l" id="chips"></div>
   </div>
 
@@ -2124,6 +2344,18 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
  </div>
  <section class="c-hero" id="uHero" aria-label="Профиль"></section>
  <div id="uBody"></div>
+</div>
+
+<!-- Рецензия отдельной страницей (#r=id): на неё можно дать ссылку,
+     а не на трек, где она теряется среди комментариев. Рисует JS. -->
+<div class="tpage" id="rpage" hidden>
+ <div class="tp-top">
+  <nav class="crumbs" id="rCrumbs" aria-label="Где я"><a href="#base">база треков</a><span class="sep">›</span><b>рецензия</b></nav>
+ </div>
+ <div class="rv-grid">
+  <aside class="pan rv-track" id="rTrack"></aside>
+  <article class="pan rv-main" id="rMain"></article>
+ </div>
 </div>
 
 <div class="tpage cab" id="mpage" hidden>
@@ -12871,6 +13103,9 @@ function controls() {
     clearTimeout(timer);
     вКаталог(() => { F.q = q.value.trim().toLowerCase(); });
   };
+  // Подсказки — раньше своего Enter: выбранный стрелкой трек открывается
+  // сразу, и тогда в каталог не уводим.
+  подсказчик(q, $('qSuggest'), '.tb-search', () => вКаталогСПоиском());
   q.addEventListener('input', () => {
     clearTimeout(timer);
     timer = setTimeout(() => {
@@ -12893,6 +13128,19 @@ function controls() {
   window.addEventListener('load', сверить);
   window.addEventListener('pageshow', сверить);
   $('sort').addEventListener('change', e => { F.sort = e.target.value; render(); });
+
+  /* Плитками или списком. Выбор — удобство зрителя, лежит в браузере. */
+  const ВИД_LS = 'faryma-catalog-view';
+  const вид = в => {
+    $('grid').classList.toggle('list', в === 'list');
+    $('view').querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === в)));
+  };
+  try { вид(localStorage.getItem(ВИД_LS) === 'list' ? 'list' : 'grid'); } catch { вид('grid'); }
+  $('view').addEventListener('click', e => {
+    const b = e.target.closest('[data-view]'); if (!b) return;
+    вид(b.dataset.view);
+    try { localStorage.setItem(ВИД_LS, b.dataset.view); } catch {}
+  });
 
   $('btnLuck').addEventListener('click', () => {
     // Не в каталоге — сразу открываем выпавший трек: прокручивать к
@@ -13017,6 +13265,8 @@ function route() {
     return showUser(login);
   }
   if (location.hash === '#studio') return showStudio();
+  const рец = location.hash.match(/^#r=(\d+)$/);
+  if (рец) return showReview(Number(рец[1]));
   const m = location.hash.match(/^#t=([\s\S]+)$/);
   let r = null;
   if (m) {
@@ -13063,6 +13313,7 @@ function showTrack(r) {
   $('fpage').hidden = true;
   $('mpage').hidden = true;
   $('upage').hidden = true;
+  $('rpage').hidden = true;
   $('tpage').hidden = false;
   document.title = (r.title || '—') + ' — база треков';
   // Вернулись к тому же треку — лента комментариев осталась от прошлого
@@ -13095,6 +13346,7 @@ function showCatalog() {
   $('fpage').hidden = true;
   $('mpage').hidden = true;
   $('upage').hidden = true;
+  $('rpage').hidden = true;
   плашкаЭфира();
   $('page').hidden = false;
   $('footNote').hidden = false;
@@ -14241,12 +14493,26 @@ function drawTalk() {
       '<select aria-label="Порядок комментариев">' +
         '<option value="new">Сначала новые</option><option value="old">Сначала старые</option>' +
       '</select></div>' +
+    /* Форма нарочно лёгкая: поле, кнопка и выбор «комментарий или
+       рецензия». Подпись «увидят все — под ником…» и полоса под полем
+       убраны по просьбе заказчика; кто увидит написанное гость, сказано
+       в самом поле. */
     '<form class="talk-form">' +
       '<span class="ini"></span>' +
-      '<div class="talk-box">' +
-        '<textarea maxlength="1500" placeholder="Что думаешь об этом треке и разборе?" aria-label="Комментарий"></textarea>' +
-        '<div class="talk-ft"><p class="note"></p>' +
-          '<button type="submit" class="btn">Опубликовать →</button></div>' +
+      '<div class="talk-main">' +
+        '<div class="talk-box">' +
+          '<textarea rows="1" maxlength="' + ДЛИНА.comment + '" aria-label="Комментарий"></textarea>' +
+          '<button type="submit" class="send" aria-label="Опубликовать" data-tip="Опубликовать (Ctrl+Enter)">' + ИК_ОТПРАВИТЬ + '</button>' +
+        '</div>' +
+        '<div class="talk-opts">' +
+          '<div class="kind" role="radiogroup" aria-label="Что пишешь">' +
+            '<button type="button" role="radio" data-kind="comment" aria-checked="true">комментарий</button>' +
+            '<button type="button" role="radio" data-kind="review" aria-checked="false" data-tip="Длинный разбор трека: у рецензии своя ссылка, и в ленте она выделена">' + ИК_ПЕРО + 'рецензия</button>' +
+          '</div>' +
+          '<span class="talk-left"></span>' +
+        '</div>' +
+        '<p class="kind-hint" hidden>Получается целая рецензия — у неё будет своя ссылка, и в ленте её видно сразу. ' +
+          '<button type="button" data-hint="yes">сделать рецензией</button><button type="button" data-hint="no">нет, это комментарий</button></p>' +
       '</div>' +
     '</form>' +
     '<div class="talk-list"></div>';
@@ -14258,7 +14524,7 @@ function drawTalk() {
   порядок.value = ПОРЯДОК;
 
   const рисовать = () => {
-    подписьФормы(форма);
+    подписьФормы(форма, форма.classList.contains('is-review') ? 'review' : 'comment');
     const список = лентаКомментариев(r.key);
     счёт.textContent = список.length;
     счётКомментариев();
@@ -14274,20 +14540,44 @@ function drawTalk() {
     список.filter(м => м.parent).forEach(м => ветки.set(м.parent, (ветки.get(м.parent) || []).concat(м)));
     const один = (м, ответ) => {
       const el = document.createElement('article');
-      el.className = 'msg' + (ответ ? ' reply' : '');
+      const рец = м.вид === 'review' && !ответ;
+      el.className = 'msg' + (ответ ? ' reply' : '') + (рец ? ' review' : '');
+      if (рец && м.id) el.id = 'rv-' + м.id;
       const роль = РОЛИ[м.роль];
+      const автор = рец ? оценкаАвтора(r.key, м.user_id, м.локально) : null;
       el.innerHTML =
         '<span class="ini">' + (м.аватар ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(м.аватар) + '">'
                                          : esc((м.who || '?').trim()[0].toUpperCase())) + '</span>' +
         '<div class="bd">' + (м.логин ? '<a class="who" href="#u=' + encodeURIComponent(м.логин) + '"><b>' + esc(м.who) + '</b></a>'
                                        : '<b>' + esc(м.who) + '</b>') +
           (роль ? '<span class="role ' + м.роль + '">' + роль + '</span>' : '') +
-          '<time>' + когда(м.when) + '</time>' +
+          (рец ? '<span class="rv-k">' + ИК_ПЕРО + 'рецензия</span>' : '') +
+          (рец && м.id ? '<a class="rv-time" href="#r=' + м.id + '" data-tip="Открыть рецензию отдельно"><time>' + когда(м.when) + '</time></a>'
+                       : '<time>' + когда(м.when) + '</time>') +
           (м.локально && ОБЛ && ОБЛ.sb ? '<span class="only-me" data-tip="Этот комментарий лежит только в твоём браузере">видишь только ты</span>' : '') +
-          '<p></p>' + (м.id && можноОтвечать() ? '<button class="re" type="button">ответить</button>' : '') + '</div>' +
+          (автор ? '<span class="rv-rate" style="--tc:' + TCOLOR[автор.t] + '" data-tip="Оценка автора рецензии">оценка автора: <b>' + esc(автор.t + modLabel(автор.m)) + '</b></span>' : '') +
+          '<p' + (рец ? ' class="rv-text clamp"' : '') + '></p>' +
+          '<div class="msg-act">' +
+            (рец ? '<button class="rv-more" type="button" hidden>читать целиком</button>' : '') +
+            (м.id && можноОтвечать() ? '<button class="re" type="button">ответить</button>' : '') +
+            (рец && м.id ? '<a class="re" href="#r=' + м.id + '">открыть отдельно</a><button class="re rv-copy" type="button">ссылка на рецензию</button>' : '') +
+          '</div></div>' +
         (м.можноБан ? '<button class="ban" type="button" data-tip="Закрыть автору комментарии">⊘</button>' : '') +
         (м.можноУдалить ? '<button class="del" type="button" aria-label="Удалить">✕</button>' : '');
       el.querySelector('p').textContent = м.text;
+      const ещё = el.querySelector('.rv-more');
+      if (ещё) {
+        // Длинную рецензию сворачиваем до семи строк. Сколько строк вышло,
+        // видно только после вёрстки — проверяем кадром позже.
+        const текст = el.querySelector('.rv-text');
+        requestAnimationFrame(() => { ещё.hidden = текст.scrollHeight <= текст.clientHeight + 2; });
+        ещё.addEventListener('click', () => {
+          const свёрнут = текст.classList.toggle('clamp');
+          ещё.textContent = свёрнут ? 'читать целиком' : 'свернуть';
+        });
+      }
+      const ссылка = el.querySelector('.rv-copy');
+      if (ссылка) ссылка.addEventListener('click', () => копия(адресРецензии(м.id), 'Ссылка на рецензию скопирована'));
       const im = el.querySelector('.ini img');
       if (im) im.addEventListener('error', () => { im.parentNode.textContent = (м.who || '?').trim()[0].toUpperCase(); });
       const del = el.querySelector('.del');
@@ -14312,13 +14602,49 @@ function drawTalk() {
 
   box._рисовать = рисовать;
   порядок.addEventListener('change', () => { ПОРЯДОК = порядок.value; рисовать(); });
+
+  /* Комментарий или рецензия. Переключатель стоит с самого начала, по
+     умолчанию — комментарий. Набралось 200 знаков — предлагаем сделать
+     рецензией, один раз: отказался — больше не спрашиваем. */
+  const поле = форма.querySelector('textarea');
+  const подсказка = форма.querySelector('.kind-hint');
+  const остаток = форма.querySelector('.talk-left');
+  let вид = 'comment', отказ = false;
+  const сменитьВид = в => {
+    вид = в;
+    форма.querySelectorAll('[data-kind]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.kind === в)));
+    форма.classList.toggle('is-review', в === 'review');
+    поле.maxLength = ДЛИНА[в];
+    поле.setAttribute('aria-label', в === 'review' ? 'Рецензия' : 'Комментарий');
+    подписьФормы(форма, в);
+    дорасти();
+  };
+  const дорасти = () => {
+    поле.style.height = 'auto';
+    поле.style.height = Math.min(поле.scrollHeight + 2, 460) + 'px';
+    const n = поле.value.trim().length;
+    подсказка.hidden = !(вид === 'comment' && !отказ && n >= РЕЦЕНЗИЯ_ОТ);
+    остаток.textContent = вид === 'review' || n > ДЛИНА.comment * .8 ? число(n) + ' / ' + число(ДЛИНА[вид]) : '';
+  };
+  форма.querySelector('.kind').addEventListener('click', e => {
+    const b = e.target.closest('[data-kind]'); if (b) { сменитьВид(b.dataset.kind); поле.focus(); }
+  });
+  подсказка.addEventListener('click', e => {
+    const b = e.target.closest('[data-hint]'); if (!b) return;
+    if (b.dataset.hint === 'yes') сменитьВид('review'); else { отказ = true; дорасти(); }
+    поле.focus();
+  });
+  поле.addEventListener('input', дорасти);
+  поле.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) форма.requestSubmit();
+  });
   форма.addEventListener('submit', async e => {
     e.preventDefault();
-    const поле = форма.querySelector('textarea');
     const text = поле.value.trim();
     if (!text) return;
-    if (await опубликовать(r, text)) поле.value = '';
+    if (await опубликовать(r, text, null, вид)) { поле.value = ''; отказ = false; сменитьВид('comment'); }
   });
+  сменитьВид('comment');
 
   рисовать();
   комментарииЗагрузить(r.key);
@@ -14332,30 +14658,47 @@ function лентаКомментариев(key) {
   const общие = ((ОБЛ && ОБЛ.комм[key]) || []).map(c => {
     const п = c.profiles || {};
     return { id: c.id, parent: c.parent_id || null, user_id: c.user_id, who: п.name || п.login || 'зритель', логин: п.login || '', аватар: п.avatar_url || '',
-             роль: п.role, when: Date.parse(c.created_at), text: c.body,
+             роль: п.role, when: Date.parse(c.created_at), text: c.body, вид: c.kind || 'comment',
              можноУдалить: c.user_id === мой || штат,
              можноБан: штат && c.user_id !== мой && (!п.role || п.role === 'user') };
   });
-  const свои = (TALK[key] || []).map(м => ({ who: м.who || 'Я', when: м.when, text: м.text,
+  const свои = (TALK[key] || []).map(м => ({ who: м.who || 'Я', when: м.when, text: м.text, вид: м.kind || 'comment',
     локально: true, исх: м, можноУдалить: true }));
   return общие.concat(свои).sort((a, b) => a.when - b.when);
 }
 
-/* Подпись под полем — честно о том, кто увидит написанное. */
-function подписьФормы(форма) {
+/* Длина: комментарий — пара абзацев, рецензия — разбор. Те же пределы
+   стоят в базе (comments_body_check). С 200 знаков комментарий
+   предлагают сделать рецензией. */
+const ДЛИНА = { comment: 1500, review: 6000 };
+const РЕЦЕНЗИЯ_ОТ = 200;
+const ИК_ПЕРО = '<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+const ИК_ОТПРАВИТЬ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg>';
+const адресРецензии = id => location.href.split('#')[0] + '#r=' + id;
+
+/* Оценка автора рецензии этому треку — если он её открыл (или это ты
+   сам). Без неё рецензия всё равно рецензия, просто без строчки. */
+function оценкаАвтора(key, uid, локально) {
+  if (локально || (вошёл() && uid === ОБЛ.user.id)) return MY[key] || null;
+  const v = ((ОБЛ && ОБЛ.голоса[key]) || []).find(x => x.u === uid);
+  return v || null;
+}
+
+/* Аватар у поля и сама подсказка в поле — честно о том, кто увидит
+   написанное. Отдельной строки под полем больше нет. */
+function подписьФормы(форма, вид) {
   const ini = форма.querySelector('.ini');
-  const note = форма.querySelector('.note');
+  const поле = форма.querySelector('textarea');
   const img = мойАватар();
   const ник = мойНик() || ктоЯ() || 'Я';
   if (ini) ini.innerHTML = img ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(img) + '">'
                                : esc(ник.trim()[0].toUpperCase());
-  if (!note) return;
-  if (вошёл()) note.innerHTML = ОБЛ.проф && ОБЛ.проф.banned
-    ? 'Тебе закрыли комментарии — написанное увидишь только ты'
-    : 'Комментарий увидят все — под ником <b>' + esc(ник) + '</b>';
-  else if (ОБЛ && ОБЛ.sb) note.innerHTML = 'Без входа комментарий видишь только ты · ' +
-    '<button type="button" class="lnk-tw" data-login>войти через Twitch</button>';
-  else note.textContent = 'Комментарии сохраняются только в твоём браузере';
+  if (!поле) return;
+  const что = вид === 'review' ? 'Рецензия: что в треке работает, что нет, с чем его сравнить…'
+                               : 'Что думаешь об этом треке и разборе?';
+  поле.placeholder = вошёл() && ОБЛ.проф && ОБЛ.проф.banned ? 'Тебе закрыли комментарии — написанное увидишь только ты'
+    : вошёл() ? что
+    : что + (ОБЛ && ОБЛ.sb ? ' Без входа через Twitch это увидишь только ты' : ' Сохранится только в этом браузере');
 }
 
 /* Написать: вошедший — в базу, гость или закрытый — в браузер. */
@@ -14381,13 +14724,17 @@ function формаОтвета(el, r, корень, кому) {
   });
 }
 
-async function опубликовать(r, text, корень) {
+/* Рецензия уходит со своим kind; у ответа и комментария его нет вовсе —
+   так комментарии работают и с базой, где столбца ещё нет. */
+async function опубликовать(r, text, корень, вид) {
+  const рецензия = вид === 'review' && !корень;
   if (вошёл() && !(ОБЛ.проф && ОБЛ.проф.banned)) {
     const { error } = await ОБЛ.sb.from('comments').insert(Object.assign({ track_key: r.key, body: text },
-      корень ? { parent_id: корень } : {}));
+      корень ? { parent_id: корень } : {}, рецензия ? { kind: 'review' } : {}));
     if (error) {
       toast(/too many/.test(error.message) ? 'Слишком часто — подожди пару минут'
           : /banned/.test(error.message) ? 'Тебе закрыли комментарии'
+          : рецензия && /kind/.test(error.message) ? 'Рецензии на сервере ещё не включены — сохрани текст и попробуй позже'
           : 'Не удалось опубликовать: ' + error.message);
       return false;
     }
@@ -14396,7 +14743,8 @@ async function опубликовать(r, text, корень) {
     await комментарииЗагрузить(r.key);
     return true;
   }
-  (TALK[r.key] = TALK[r.key] || []).push({ who: мойНик() || ктоЯ() || 'Я', text, when: Date.now() });
+  (TALK[r.key] = TALK[r.key] || []).push(Object.assign({ who: мойНик() || ктоЯ() || 'Я', text, when: Date.now() },
+    рецензия ? { kind: 'review' } : {}));
   saveTalk(); учёт('talk');
   const лента = $('tTalk');
   if (лента._рисовать) лента._рисовать();
@@ -15097,6 +15445,7 @@ function showAdmin() {
   $('fpage').hidden = true;
   $('mpage').hidden = true;
   $('upage').hidden = true;
+  $('rpage').hidden = true;
   $('apage').hidden = false;
   плашкаЭфира();
   document.title = 'Заявки на обложки — база треков';
@@ -15411,6 +15760,7 @@ function showFun() {
   $('apage').hidden = true;
   $('mpage').hidden = true;
   $('upage').hidden = true;
+  $('rpage').hidden = true;
   $('fpage').hidden = false;
   document.title = 'Прикольчики — база треков';
   $('fBack').onclick = e => { e.preventDefault(); toCatalog(); };
@@ -15656,7 +16006,7 @@ function вКаталог(setup) {
   } else toCatalog(setup);
 }
 
-const ГЛ = { пример: '', подсказки: [], выбор: -1 };
+const ГЛ = { пример: '', подсказчик: null };
 
 /* Жанры, которых в архиве хватает на отбор: мелочь вроде одного
    «шансона» в случайный жанр не годится. */
@@ -15720,6 +16070,7 @@ function главная() {
       '<button type="button" class="feat-go" data-roast-luck>Случайный разнос ↗</button>' +
     '</article>';
   шить($('hFeats'));
+  топРисовать();
   tb.classList.toggle('hero-on', ГЛ.наВиду && !$('page').hidden);
 }
 
@@ -15749,6 +16100,40 @@ function полоса() {
   if ($('runway').innerHTML !== html) $('runway').innerHTML = html;
 }
 
+/* Топ-10 по опыту под приветствием. Опыт считает сервер (top_xp) по тем
+   же правилам, что уровень в профиле: оценка и комментарий — по +10.
+   Обновляется раз в пять минут: гонка за место не так быстра. */
+async function топЗагрузить() {
+  if (!ОБЛ.sb) return;
+  const { data, error } = await ОБЛ.sb.rpc('top_xp');
+  if (!error) { ОБЛ.топ = data || []; топРисовать(); }
+  clearTimeout(ОБЛ.топТаймер);
+  ОБЛ.топТаймер = setTimeout(топЗагрузить, 5 * 60 * 1000);
+}
+function топРисовать() {
+  const box = $('hTop');
+  const топ = (ОБЛ && ОБЛ.топ) || [];
+  box.hidden = !топ.length;
+  if (!топ.length) return;
+  const мой = вошёл() ? ОБЛ.user.id : '';
+  box.innerHTML = '<div class="top-hd"><h2 id="hTopH">Топ-10 по опыту</h2>' +
+      '<small>каждая оценка и каждый комментарий — +' + ОПЫТ_ЗА + ' XP</small></div>' +
+    '<ol class="top-list">' + топ.map((x, i) => {
+      const у = уровень(x.ratings || 0, x.comments || 0);
+      const ник = x.name || x.login || 'зритель';
+      return '<li><a class="top-u' + (x.user_id === мой ? ' me' : '') + '" href="' +
+          (x.user_id === мой ? '#me' : '#u=' + encodeURIComponent(x.login || '')) + '" style="--c:' + esc(x.color || цветПо(x.user_id)) + '"' +
+          ' data-tip="' + esc(число(x.ratings || 0) + ' ' + plural(x.ratings || 0, 'оценка', 'оценки', 'оценок') + ', ' +
+            число(x.comments || 0) + ' ' + plural(x.comments || 0, 'комментарий', 'комментария', 'комментариев')) + '">' +
+        '<span class="top-n">' + (i + 1) + '</span>' +
+        '<span class="top-ava">' + (x.avatar_url ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(x.avatar_url) + '">' : esc(буквы(ник))) + '</span>' +
+        '<span class="top-tx"><b>' + esc(ник) + '</b><small>ур. ' + у.lvl + ' · ' + число(у.xp) + ' XP</small></span></a></li>';
+    }).join('') + '</ol>';
+  box.querySelectorAll('.top-ava img').forEach(im => im.addEventListener('error', () => {
+    const a = im.closest('.top-u'); im.parentNode.textContent = буквы(a.querySelector('b').textContent);
+  }));
+}
+
 /* Шапка над витриной та же, что везде, — у неё только аватар или ник
    вместо совы. */
 function ава() {
@@ -15768,56 +16153,64 @@ function ава() {
 
 function поискСГлавной(q) {
   q = q.trim();
-  скрытьПодсказки();
+  ГЛ.подсказчик.скрыть();
   вКаталог(() => { $('q').value = q; F.q = q.toLowerCase(); });
 }
 
-function подсказки() {
-  const q = $('hq').value.trim();
-  const w = слова(q);
-  if (!w.length) return скрытьПодсказки();
-  ГЛ.подсказки = CAT.filter(r => w.every(t => совпало(r, t, r.слова))).slice(0, 5);
-  ГЛ.выбор = -1;
-  const box = $('hSuggest');
-  box.innerHTML = '<div class="sg-t">' + (ГЛ.подсказки.length ? 'Совпадения в каталоге' : 'Ничего не нашлось по началу слова') + '</div>' +
-    ГЛ.подсказки.map(r => '<a class="sg" href="' + trackHref(r) + '"><span class="th">' + covHtml(r) + '</span>' +
-      '<span class="tx"><b>' + esc(r.title) + '</b><small>' + esc(r.artist) + '</small></span>' +
-      '<span class="rt" style="--tc:' + tColor(r.rate) + '">' + esc(r.rate ? r.rate.label : '') + '</span></a>').join('') +
-    '<button type="button" class="sg-all">Найти «' + esc(q) + '» в каталоге ↓</button>';
-  шить(box);
-  box.hidden = false;
-  $('hq').setAttribute('aria-expanded', 'true');
-}
-function скрытьПодсказки() {
-  $('hSuggest').hidden = true;
-  $('hq').setAttribute('aria-expanded', 'false');
-  ГЛ.выбор = -1;
+/* Подсказки под полем поиска — у большого на главной и у поля в шапке,
+   одни и те же: пять первых совпадений по началу слова и «найти всё в
+   каталоге». Стрелки выбирают, Enter открывает выбранный трек, Escape
+   и щелчок мимо закрывают. Enter без выбора поле решает само. */
+function подсказчик(поле, box, обёртка, искатьВсё) {
+  const П = { список: [], выбор: -1 };
+  const скрыть = () => {
+    box.hidden = true;
+    поле.setAttribute('aria-expanded', 'false');
+    П.выбор = -1;
+  };
+  const показать = () => {
+    const q = поле.value.trim();
+    const w = слова(q);
+    if (!w.length || !CAT.length || document.activeElement !== поле) return скрыть();
+    П.список = CAT.filter(r => w.every(t => совпало(r, t, r.слова))).slice(0, 5);
+    П.выбор = -1;
+    box.innerHTML = '<div class="sg-t">' + (П.список.length ? 'Совпадения в каталоге' : 'Ничего не нашлось по началу слова') + '</div>' +
+      П.список.map(r => '<a class="sg" href="' + trackHref(r) + '"><span class="th">' + covHtml(r) + '</span>' +
+        '<span class="tx"><b>' + esc(r.title) + '</b><small>' + esc(r.artist) + '</small></span>' +
+        '<span class="rt" style="--tc:' + tColor(r.rate) + '">' + esc(r.rate ? r.rate.label : '') + '</span></a>').join('') +
+      '<button type="button" class="sg-all">Найти «' + esc(q) + '» в каталоге ↓</button>';
+    шить(box);
+    box.hidden = false;
+    поле.setAttribute('aria-expanded', 'true');
+  };
+  let timer;
+  поле.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(показать, 120); });
+  поле.addEventListener('focus', () => { if (поле.value.trim()) показать(); });
+  поле.addEventListener('keydown', e => {
+    if (e.key === 'Escape') return скрыть();
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !box.hidden) {
+      e.preventDefault();
+      П.выбор = Math.max(-1, Math.min(П.список.length - 1, П.выбор + (e.key === 'ArrowDown' ? 1 : -1)));
+      box.querySelectorAll('.sg').forEach((a, i) => a.classList.toggle('sel', i === П.выбор));
+    } else if (e.key === 'Enter') {
+      clearTimeout(timer);
+      const r = !box.hidden && П.выбор >= 0 ? П.список[П.выбор] : null;
+      скрыть();
+      if (r) { e.preventDefault(); e.stopImmediatePropagation(); openTrack(r); }
+    }
+  });
+  box.addEventListener('click', e => {
+    if (e.target.closest('.sg-all')) { скрыть(); искатьВсё(поле.value); }
+    else if (e.target.closest('.sg')) скрыть();
+  });
+  document.addEventListener('click', e => { if (!e.target.closest(обёртка)) скрыть(); });
+  return { скрыть };
 }
 
 function главнаяПульт() {
   const hq = $('hq');
-  let timer;
-  hq.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(подсказки, 120); });
-  hq.addEventListener('keydown', e => {
-    const box = $('hSuggest');
-    if (e.key === 'Escape') return скрытьПодсказки();
-    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !box.hidden) {
-      e.preventDefault();
-      ГЛ.выбор = Math.max(-1, Math.min(ГЛ.подсказки.length - 1, ГЛ.выбор + (e.key === 'ArrowDown' ? 1 : -1)));
-      box.querySelectorAll('.sg').forEach((a, i) => a.classList.toggle('sel', i === ГЛ.выбор));
-    } else if (e.key === 'Enter' && ГЛ.выбор >= 0) {
-      e.preventDefault();
-      const r = ГЛ.подсказки[ГЛ.выбор];
-      скрытьПодсказки();
-      openTrack(r);
-    }
-  });
+  ГЛ.подсказчик = подсказчик(hq, $('hSuggest'), '.home-search', поискСГлавной);
   $('hForm').addEventListener('submit', e => { e.preventDefault(); поискСГлавной(hq.value); });
-  $('hSuggest').addEventListener('click', e => {
-    if (e.target.closest('.sg-all')) поискСГлавной(hq.value);
-    else if (e.target.closest('.sg')) скрытьПодсказки();
-  });
-  document.addEventListener('click', e => { if (!e.target.closest('.home-search')) скрытьПодсказки(); });
 
   $('hQuick').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -15961,6 +16354,7 @@ function showMe() {
   $('apage').hidden = true;
   $('fpage').hidden = true;
   $('upage').hidden = true;
+  $('rpage').hidden = true;
   $('mpage').hidden = false;
   плашкаЭфира();
   document.title = 'Личный кабинет — база треков';
@@ -16001,6 +16395,8 @@ function аваЗапас(box, ник) {
     s.textContent = буквы(ник) || '🦉'; im.replaceWith(s); });
 }
 
+const фонИзАватара = () => вошёл() && ОБЛ.проф && 'bg_avatar' in ОБЛ.проф ? !!ОБЛ.проф.bg_avatar : !!ПРОФ.фон;
+
 /* Шапка профиля. Отдельно от вкладок: вход и выход перерисовывают
    только её, а поле поиска или формы во вкладке не теряет фокус. */
 function meHero() {
@@ -16009,13 +16405,14 @@ function meHero() {
   const п = вошёл() ? ОБЛ.проф : null;
   const с = new Date((п && п.created_at) || ПРОФ.с || Date.now());
   const логин = п && п.login;
-  // Фон из аватара — своя настройка, лежит в браузере.
-  if (!$('mpage').hidden) фон(ПРОФ.фон && img ? img : '');
+  // Фон из аватара. У вошедшего — из профиля: его же видят те, кто
+  // открывает этот профиль. У гостя — в браузере.
+  if (!$('mpage').hidden) фон(фонИзАватара() && img ? img : '');
 
   let мета = (п && РОЛИ[п.role] ? '<span class="role-tag ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '') +
     '<span class="hero-since"' + (п ? '' : ' data-tip="Без входа всё твоё лежит в этом браузере"') + '>' +
       (п ? 'на сайте с ' : 'здесь с ') + МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span>' +
-    (логин ? '<a class="twitch-link" href="https://www.twitch.tv/' + encodeURIComponent(логин) +
+    (логин && !п.twitch_hidden ? '<a class="twitch-link" href="https://www.twitch.tv/' + encodeURIComponent(логин) +
       '" target="_blank" rel="noopener noreferrer">Twitch · ' + esc(логин) + ' ↗</a>' : '') +
     (вошёл() && ОБЛ.ошибка ? '<span class="hero-warn" data-tip="' + esc(ОБЛ.ошибка) + '">не сохраняется на сервер</span>' : '');
   let вход = '';
@@ -16498,12 +16895,15 @@ function meSettings(box) {
     '<span><b>' + имя + '</b>' + что + '</span></label>';
   box.innerHTML = '<div class="tab-heading"><div><h2>настройки</h2><p>Личные данные, внешний вид и что видят другие пользователи.</p></div></div>' +
     '<div class="appearance-box"><div class="appearance-icon">♫</div><div class="appearance-content"><strong>Фон из аватара</strong>' +
-      '<span>' + (img ? 'Размытые цвета аватара на фоне страницы и в шапке' : 'Размытые цвета аватара на фоне страницы и в шапке — появится вместе с аватаром с Twitch') + '</span></div>' +
-      '<label class="switch"><input id="stBg" type="checkbox" aria-label="Фон из аватара"' + (ПРОФ.фон ? ' checked' : '') + (img ? '' : ' disabled') + '>' +
+      '<span>' + (img ? 'Размытые цвета аватара на фоне страницы и в шапке' + (п ? ' — и у тебя, и у всех, кто откроет твой профиль' : '')
+        : 'Размытые цвета аватара на фоне страницы и в шапке — появится вместе с аватаром с Twitch') + '</span></div>' +
+      '<label class="switch"><input id="stBg" type="checkbox" aria-label="Фон из аватара"' + (фонИзАватара() ? ' checked' : '') + (img ? '' : ' disabled') + '>' +
         '<span class="switch-track"></span></label></div>' +
     '<div class="settings-grid"><section class="settings-box"><form id="meForm">' +
       '<label class="form-label" for="meNick">Имя пользователя</label>' +
-      (п ? '<input type="text" id="meNick" value="' + esc(мойНик()) + '" disabled><p class="setting-hint">Имя синхронизируется с Twitch.</p>'
+      (п ? '<input type="text" id="meNick" maxlength="30" autocomplete="nickname" value="' + esc(мойНик()) + '">' +
+           '<p class="setting-hint">' + (п.name_custom ? 'Своё имя на сайте. Сотри его и сохрани — вернётся ник с Twitch.'
+             : 'Сейчас — ник с Twitch. Можно поставить своё: от 2 до 30 знаков, чужой ник или логин занять нельзя.') + '</p>'
          : '<input type="text" id="meNick" maxlength="28" autocomplete="nickname" value="' + esc(ПРОФ.ник || '') + '">' +
            '<p class="setting-hint">Войдёшь через Twitch — имя возьмётся оттуда.</p>') +
       '<label class="form-label" for="meBio">Немного о себе</label>' +
@@ -16517,6 +16917,8 @@ function meSettings(box) {
           'Другие пользователи увидят мои оценки треков — в профиле, в «оценках зрителей» и в «близких по вкусу». По умолчанию они открыты.') +
         флажок('prFavs', п.favs_public !== false, 'Показывать избранное', 'Выбранные тобой треки будут видны в публичном профиле.') +
         флажок('prHide', !!п.hide_online, 'Не показывать меня в человечках', 'На главной тебя не будет видно, даже когда ты на сайте.') +
+        ('twitch_hidden' in п ? флажок('prTw', !!п.twitch_hidden, 'Скрыть ссылку на мой Twitch',
+          'В кабинете и в публичном профиле не будет ссылки на твой канал.') : '') +
         (п.login ? '<a class="soft-btn" href="#u=' + encodeURIComponent(п.login) + '" style="margin-top:14px">' + ико('external') + ' Предпросмотр профиля</a>' : '')
       : '<div class="setting-help"><p>Публичный профиль появляется после входа через Twitch: ник и аватар оттуда, пара слов о себе, ' +
           'оценки и избранное — если их не скрыть.</p><p>Без входа ник, оценки и комментарии лежат в этом браузере, и другие их не видят.</p></div>' +
@@ -16531,7 +16933,18 @@ function meSettings(box) {
       ? '<section class="settings-box" style="margin-top:24px"><div class="section-title"><h2>команда сайта</h2></div><div id="meTeam"><p class="me-cnt">загружаю…</p></div></section>' : '');
   командаНарисовать($('meTeam'));
   приватностьПодключить(box);
-  $('stBg').addEventListener('change', e => { ПРОФ.фон = e.target.checked; saveПроф(); meHero(); });
+  $('stBg').addEventListener('change', async e => {
+    const el = e.target;
+    ПРОФ.фон = el.checked; saveПроф();
+    if (вошёл() && ОБЛ.проф && 'bg_avatar' in ОБЛ.проф) {
+      el.disabled = true;
+      const { error } = await ОБЛ.sb.from('profiles').update({ bg_avatar: el.checked }).eq('id', ОБЛ.user.id);
+      el.disabled = false;
+      if (error) { el.checked = !el.checked; ПРОФ.фон = el.checked; saveПроф(); return toast('Не удалось: ' + error.message); }
+      ОБЛ.проф.bg_avatar = el.checked;
+    }
+    meHero();
+  });
   $('meSw').addEventListener('click', e => {
     const b = e.target.closest('[data-c]'); if (!b) return;
     цвет = b.dataset.c;
@@ -16539,14 +16952,22 @@ function meSettings(box) {
     const знак = $('meHero').querySelector('.music-symbol');
     if (знак) знак.style.color = цвет;
   });
-  $('meForm').addEventListener('submit', e => {
+  $('meForm').addEventListener('submit', async e => {
     e.preventDefault();
     if (!вошёл()) ПРОФ.ник = $('meNick').value.trim().slice(0, 28);
     ПРОФ.о = $('meBio').value.trim().slice(0, 90);
     ПРОФ.цвет = цвет;
     saveПроф();
-    if (вошёл()) профильВБазу();
-    else toast('Профиль сохранён');
+    if (вошёл()) {
+      await профильВБазу();
+      // Ник пишет сервер (set_name): он же не даст занять чужой. Не
+      // вышло — цвет и пара слов о себе всё равно уже сохранены.
+      const ник = $('meNick').value.replace(/\s+/g, ' ').trim();
+      if (ник !== (ОБЛ.проф.name || '') && await никВБазу(ник)) {
+        toast(ник ? 'Профиль сохранён, ник — «' + ОБЛ.проф.name + '»' : 'Вернули ник с Twitch — «' + ОБЛ.проф.name + '»');
+        meSettings(box);
+      }
+    } else toast('Профиль сохранён');
     главная();
     meHero();
   });
@@ -16623,8 +17044,8 @@ function облакоНет(почему) {
   ОБЛ.состояние = 'нет';
   ОБЛ.ошибка = почему;
   облакоРисовать(true);
-  // Чужой профиль ждал сервер со словом «загружаю…» — теперь ждать нечего.
-  if (!$('upage').hidden) route();
+  // Чужой профиль и рецензия ждали сервер со словом «загружаю…» — теперь ждать нечего.
+  if (!$('upage').hidden || !$('rpage').hidden) route();
 }
 
 async function облакоСтарт() {
@@ -16635,7 +17056,8 @@ async function облакоСтарт() {
   } catch { return облакоНет('сеть'); }
   if (T.r) { комментарииЗагрузить(T.r.key); голосаЗагрузить(T.r.key); }
   владельцыЗагрузить();
-  if (!$('upage').hidden) route();
+  топЗагрузить();
+  if (!$('upage').hidden || !$('rpage').hidden) route();
   /* Внутри этого обработчика нельзя ждать других вызовов Supabase:
      они встанут в очередь за ним самим. Поэтому дела — следующим тиком. */
   ОБЛ.sb.auth.onAuthStateChange((событие, сессия) => { setTimeout(() => облакоСессия(сессия), 0); });
@@ -16735,7 +17157,7 @@ function облакоСбой(e) {
 /* ---------- профиль ---------- */
 async function профильИзБазы() {
   const { data, error } = await профильПо('id', ОБЛ.user.id,
-    'name,login,avatar_url,color,bio,role,banned,ratings_public,favs_public,hide_online,created_at');
+    'name,login,avatar_url,color,bio,role,banned,ratings_public,favs_public,hide_online,created_at,bg_avatar,twitch_hidden,name_custom');
   if (error) return облакоСбой(error);
   ОБЛ.проф = data;
   const к = await ОБЛ.sb.from('comments').select('id', { count: 'exact', head: true }).eq('user_id', ОБЛ.user.id);
@@ -16746,15 +17168,33 @@ async function профильИзБазы() {
     const нужно = {};
     if (!data.color && ПРОФ.цвет) нужно.color = ПРОФ.цвет;
     if (data.bio == null && ПРОФ.о) нужно.bio = ПРОФ.о;
+    // Фон из аватара раньше жил только в браузере. Включённый до входа —
+    // один раз переносим в профиль; дальше решает профиль.
+    if ('bg_avatar' in data && ПРОФ.фон && !ПРОФ.фонВБазе && !data.bg_avatar) нужно.bg_avatar = true;
     if (Object.keys(нужно).length) {
       const r = await ОБЛ.sb.from('profiles').update(нужно).eq('id', ОБЛ.user.id);
       if (!r.error) Object.assign(data, нужно);
     }
     if (data.color) ПРОФ.цвет = data.color;
     if (data.bio != null) ПРОФ.о = data.bio;
+    if ('bg_avatar' in data) { ПРОФ.фон = !!data.bg_avatar; ПРОФ.фонВБазе = true; }
     saveПроф();
   }
   облакоРисовать();
+}
+async function никВБазу(ник) {
+  const { data, error } = await ОБЛ.sb.rpc('set_name', { p_name: ник });
+  if (error) {
+    toast(/name taken/.test(error.message) ? 'Такой ник уже занят — выбери другой'
+        : /length/.test(error.message) ? 'Ник — от 2 до 30 знаков'
+        : /set_name|function/.test(error.message) ? 'Смена ника на сервере ещё не включена'
+        : 'Не удалось сменить ник: ' + error.message);
+    return false;
+  }
+  ОБЛ.проф.name = data || ник;
+  ОБЛ.проф.name_custom = !!ник;
+  ктоНаСайте();
+  return true;
 }
 async function профильВБазу() {
   const { error } = await ОБЛ.sb.from('profiles')
@@ -16952,11 +17392,19 @@ function студияДоступ() {
 }
 
 /* ---------- общие комментарии ---------- */
+/* Столбец kind появился позже остальных: пока схему не перезапустили,
+   база про него не знает — тогда спрашиваем без него, и всё в ленте —
+   комментарии. */
 async function комментарииЗагрузить(key) {
   if (!ОБЛ.sb) return;
-  const { data, error } = await ОБЛ.sb.from('comments')
-    .select('id,body,created_at,user_id,parent_id,profiles(name,login,avatar_url,role)')
+  const спросить = вид => ОБЛ.sb.from('comments')
+    .select('id,body,created_at,user_id,parent_id,' + (вид ? 'kind,' : '') + 'profiles(name,login,avatar_url,role)')
     .eq('track_key', key).order('created_at').limit(500);
+  let { data, error } = await спросить(!ОБЛ.безВида);
+  if (error && !ОБЛ.безВида && /kind/.test(error.message || '')) {
+    ОБЛ.безВида = true;
+    ({ data, error } = await спросить(false));
+  }
   if (error) return;
   ОБЛ.комм[key] = data || [];
   // Комментарии трека только что пришли целиком — заодно и число на карточке.
@@ -17253,8 +17701,12 @@ async function голосаЗагрузить(key) {
   const { data, error } = await ОБЛ.sb.from('ratings').select('user_id,tier,mod').eq('track_key', key).limit(1000);
   if (error) return;
   const я = вошёл() ? ОБЛ.user.id : '';
-  ОБЛ.голоса[key] = (data || []).filter(x => x.user_id !== я).map(x => ({ t: x.tier, m: x.mod }));
-  if (T.r && T.r.key === key) drawDist();
+  ОБЛ.голоса[key] = (data || []).filter(x => x.user_id !== я).map(x => ({ t: x.tier, m: x.mod, u: x.user_id }));
+  if (T.r && T.r.key === key) {
+    drawDist();
+    // У рецензий в ленте — оценка автора, а она как раз из этих голосов.
+    if ($('tTalk')._рисовать && (ОБЛ.комм[key] || []).some(c => c.kind === 'review')) $('tTalk')._рисовать();
+  }
 }
 
 /* ---------- уведомления ---------- */
@@ -17352,10 +17804,12 @@ function приватностьПодключить(box) {
     ОБЛ.проф[поле] = el.checked;
     toast(el.checked ? да : нет);
     if (поле === 'hide_online') { if (!el.checked) отметиться(); ктоНаСайте(); }
+    if (поле === 'twitch_hidden') meHero();
   };
   [['#prRates', 'ratings_public', 'Оценки теперь видны другим', 'Оценки снова видишь только ты'],
    ['#prFavs', 'favs_public', 'Избранное теперь видно в профиле', 'Избранное больше никому не видно'],
-   ['#prHide', 'hide_online', 'На главной тебя больше не видно', 'Тебя снова видно на главной']].forEach(([sel, поле, да, нет]) => {
+   ['#prHide', 'hide_online', 'На главной тебя больше не видно', 'Тебя снова видно на главной'],
+   ['#prTw', 'twitch_hidden', 'Ссылки на Twitch в профиле больше нет', 'Ссылка на Twitch снова в профиле']].forEach(([sel, поле, да, нет]) => {
     const el = box.querySelector(sel);
     if (el) el.addEventListener('change', () => сохранить(поле, el, да, нет));
   });
@@ -17393,7 +17847,7 @@ function showUser(login) {
   фон('');
   if (T.r) уходСТрека();
   T.r = null;
-  ['page', 'tpage', 'apage', 'fpage', 'mpage', 'footNote'].forEach(id => { $(id).hidden = true; });
+  ['page', 'tpage', 'apage', 'fpage', 'mpage', 'rpage', 'footNote'].forEach(id => { $(id).hidden = true; });
   $('upage').hidden = false;
   плашкаЭфира();
   document.title = login + ' — база треков';
@@ -17401,13 +17855,14 @@ function showUser(login) {
   drawUser(login);
 }
 
-/* Поля профиля. favs_public появилось позже остальных: пока схему не
-   перезапустили, база про него не знает — тогда спрашиваем без него. */
-const ПОЛЯ_ПРОФИЛЯ = 'id,name,login,avatar_url,color,bio,role,ratings_public,favs_public,created_at';
+/* Поля профиля. Часть появилась позже остальных: пока схему не
+   перезапустили, база про них не знает — тогда спрашиваем без них. */
+const ПОЛЯ_ПРОФИЛЯ = 'id,name,login,avatar_url,color,bio,role,ratings_public,favs_public,created_at,bg_avatar,twitch_hidden';
+const ПОЛЯ_ПОЗЖЕ = [',bg_avatar', ',twitch_hidden', ',name_custom', ',favs_public'];
 async function профильПо(поле, значение, поля = ПОЛЯ_ПРОФИЛЯ) {
   const r = await ОБЛ.sb.from('profiles').select(поля).eq(поле, значение).maybeSingle();
-  if (r.error && r.error.code === '42703' && /favs_public/.test(поля))
-    return профильПо(поле, значение, поля.replace(',favs_public', ''));
+  const лишнее = r.error && r.error.code === '42703' && ПОЛЯ_ПОЗЖЕ.find(x => поля.includes(x));
+  if (лишнее) return профильПо(поле, значение, поля.replace(лишнее, ''));
   return r;
 }
 
@@ -17436,15 +17891,17 @@ async function drawUser(login) {
       '<div class="hero-name">' + esc(ник) + '</div><div class="hero-bio">' + esc(п.bio || '') + '</div>' +
       '<div class="hero-meta">' + (РОЛИ[п.role] ? '<span class="role-tag ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '') +
         '<span class="hero-since">на сайте с ' + МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span>' +
-        '<a class="twitch-link" href="https://www.twitch.tv/' + encodeURIComponent(п.login) + '" target="_blank" rel="noopener noreferrer">Twitch · ' +
-          esc(п.login) + ' ↗</a></div><div data-lvl></div></div>' +
+        (п.twitch_hidden ? '' : '<a class="twitch-link" href="https://www.twitch.tv/' + encodeURIComponent(п.login) + '" target="_blank" rel="noopener noreferrer">Twitch · ' +
+          esc(п.login) + ' ↗</a>') + '</div><div data-lvl></div></div>' +
     (это ? '<div class="hero-actions"><a class="soft-btn" href="#me/settings">' + ико('edit') + '<span>Настройки</span></a></div>' : '');
   аваЗапас($('uHero'), ник);
+  // Фон из аватара хозяин профиля включает у себя — и он виден всем, кто зашёл.
+  фон(п.bg_avatar && п.avatar_url ? п.avatar_url : '');
 
   const открытоИзбранное = п.favs_public !== false && 'favs_public' in п;
   const [cl, cm, rt, fv, xp] = await Promise.all([
     ОБЛ.sb.from('claims').select('name,shown').eq('user_id', п.id).eq('status', 'approved'),
-    ОБЛ.sb.from('comments').select('id,track_key,body,created_at').eq('user_id', п.id).order('created_at', { ascending: false }).limit(5),
+    комментарииЗрителя(п.id),
     п.ratings_public ? оценкиЗрителя(п.id) : Promise.resolve(null),
     открытоИзбранное ? ОБЛ.sb.from('favs').select('track_key,created_at').eq('user_id', п.id).order('created_at', { ascending: false }).limit(200)
       : Promise.resolve(null),
@@ -17500,10 +17957,14 @@ async function drawUser(login) {
 
   // Комментарии.
   const кс = ((cm && cm.data) || []).filter(c => по.get(c.track_key));
-  левое += '<section class="o-panel"><div class="section-title"><h2>комментарии</h2><span class="mutedline">последние</span></div>' +
+  // Рецензия ведёт на свою страницу, комментарий — на трек.
+  левое += '<section class="o-panel"><div class="section-title"><h2>комментарии и рецензии</h2><span class="mutedline">последние</span></div>' +
     (кс.length ? '<div>' + кс.map(c => {
       const r = по.get(c.track_key);
-      return '<a class="note-row" href="' + trackHref(r) + '"><span><b>' + esc(r.title) + '</b> — ' + esc(обрезать(c.body, 120)) + '</span>' +
+      const рец = c.kind === 'review';
+      return '<a class="note-row" href="' + (рец ? '#r=' + c.id : trackHref(r)) + '"><span>' +
+        (рец ? '<span class="rv-k" style="margin:0 7px 0 0">' + ИК_ПЕРО + 'рецензия</span>' : '') +
+        '<b>' + esc(r.title) + '</b> — ' + esc(обрезать(c.body, 120)) + '</span>' +
         '<time>' + когда(Date.parse(c.created_at)) + '</time></a>';
     }).join('') + '</div>' : '<p class="mutedline" style="margin:0">Пока ни одного.</p>') + '</section>';
 
@@ -17517,6 +17978,101 @@ async function drawUser(login) {
   сеткаКарточек($('uBody').querySelector('[data-cards]'), любимые || [], 10);
 }
 $('uBody').addEventListener('click', e => { const b = e.target.closest('[data-fav]'); if (b) сердцеЩёлк(b); });
+
+/* ---------- рецензия отдельной страницей (#r=id) ----------
+   Ссылка на саму рецензию, а не на трек, где она лежит среди
+   комментариев. Слева трек и две оценки — композитора и автора (если он
+   их не скрыл), справа текст целиком. Ответы — на странице трека. */
+function showReview(id) {
+  уходИзСтудии();
+  уходИзИгры();
+  if (T.r) уходСТрека();
+  T.r = null;
+  ['page', 'tpage', 'apage', 'fpage', 'mpage', 'upage', 'footNote'].forEach(x => { $(x).hidden = true; });
+  $('rpage').hidden = false;
+  плашкаЭфира();
+  document.title = 'Рецензия — база треков';
+  window.scrollTo(0, 0);
+  drawReview(id);
+}
+
+async function drawReview(id) {
+  const адрес = location.hash;
+  const пусто = текст => {
+    фон('');
+    $('rTrack').hidden = true;
+    $('rMain').innerHTML = '<span class="rv-k">' + ИК_ПЕРО + 'рецензия</span><p class="note" style="margin-top:12px">' + текст + '</p>';
+  };
+  if (!ОБЛ.sb) return пусто(ОБЛ.состояние === 'грузится' ? 'загружаю…'
+    : 'Рецензии видны на сайте, когда есть связь с сервером.');
+  пусто('загружаю…');
+  const { data: c, error } = await ОБЛ.sb.from('comments')
+    .select('id,track_key,body,created_at,user_id,kind,profiles(name,login,avatar_url,role)').eq('id', id).maybeSingle();
+  if (location.hash !== адрес) return;
+  if (error || !c || c.kind !== 'review') return пусто(error && /kind/.test(error.message || '')
+    ? 'Рецензии на сервере ещё не включены.' : 'Такой рецензии нет — возможно, автор её удалил.');
+
+  // Оценка автора — только открытая: закрытую база и не отдаст.
+  let автор = null;
+  const [o, отв] = await Promise.all([
+    вошёл() && c.user_id === ОБЛ.user.id ? Promise.resolve({ data: null })
+      : ОБЛ.sb.from('ratings').select('tier,mod').eq('user_id', c.user_id).eq('track_key', c.track_key).maybeSingle(),
+    ОБЛ.sb.from('comments').select('id', { count: 'exact', head: true }).eq('parent_id', id)
+  ]);
+  if (location.hash !== адрес) return;
+  if (вошёл() && c.user_id === ОБЛ.user.id) автор = MY[c.track_key] || null;
+  else if (o && !o.error && o.data) автор = { t: o.data.tier, m: o.data.mod };
+  const ответов = отв && !отв.error ? отв.count || 0 : 0;
+
+  const r = CAT.find(x => x.key === c.track_key);
+  const п = c.profiles || {};
+  const ник = п.name || п.login || 'зритель';
+  document.title = 'Рецензия ' + ник + (r ? ' на «' + (r.title || '—') + '»' : '') + ' — база треков';
+  $('rCrumbs').innerHTML = '<a href="#base">база треков</a><span class="sep">›</span>' +
+    (r ? '<a href="' + trackHref(r) + '">' + esc(r.title || '—') + '</a><span class="sep">›</span>' : '') + '<b>рецензия</b>';
+  фон(r ? covUrl(r) : '');
+
+  $('rTrack').hidden = false;
+  $('rTrack').innerHTML = r
+    ? '<a class="cov" href="' + trackHref(r) + '">' + covHtml(r) + '</a>' +
+      '<h2><a href="' + trackHref(r) + '">' + esc(r.title || '—') + '</a></h2><span class="rv-art">' + esc(r.artist || '—') + '</span>' +
+      '<div class="sc" style="--tc:' + tColor(r.rate) + '"><span>оценка композера</span><b>' + esc(r.rate ? r.rate.label : 'нет') + '</b></div>' +
+      '<div class="sc' + (автор ? '' : ' nobody') + '"' + (автор ? ' style="--tc:' + TCOLOR[автор.t] + '"' : '') + '>' +
+        '<span>оценка автора рецензии</span><b>' + (автор ? esc(автор.t + modLabel(автор.m)) : 'скрыта или не поставлена') + '</b></div>' +
+      '<a class="act" href="' + trackHref(r) + '">к треку и разносу</a>'
+    : '<p class="note">Трека этой рецензии в базе нет.</p>';
+  covWire($('rTrack'));
+  шить($('rTrack'));
+
+  const абзацы = String(c.body).split(/\n\s*\n/).map(x => x.trim()).filter(Boolean);
+  const роль = РОЛИ[п.role];
+  $('rMain').innerHTML = '<span class="rv-k">' + ИК_ПЕРО + 'рецензия</span>' +
+    '<div class="rv-head"><span class="ini">' + (п.avatar_url ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(п.avatar_url) + '">'
+        : esc(ник.trim()[0].toUpperCase())) + '</span>' +
+      '<div>' + (п.login ? '<a href="#u=' + encodeURIComponent(п.login) + '"><b>' + esc(ник) + '</b></a>' : '<b>' + esc(ник) + '</b>') +
+        (роль ? '<span class="role ' + п.role + '">' + роль + '</span>' : '') +
+        '<time>' + когда(Date.parse(c.created_at)) + '</time></div></div>' +
+    '<div class="rv-body">' + абзацы.map(a => '<p>' + esc(a) + '</p>').join('') + '</div>' +
+    '<div class="rv-foot"><button type="button" class="act" id="rCopy">скопировать ссылку</button>' +
+      (r ? '<a class="act" href="' + trackHref(r) + '" data-talk>' + (ответов
+        ? ответов + ' ' + plural(ответов, 'ответ', 'ответа', 'ответов') + ' — на странице трека' : 'ответить на странице трека') + '</a>' : '') +
+    '</div>';
+  const im = $('rMain').querySelector('.ini img');
+  if (im) im.addEventListener('error', () => { im.parentNode.textContent = ник.trim()[0].toUpperCase(); });
+  $('rCopy').addEventListener('click', () => копия(адресРецензии(id), 'Ссылка на рецензию скопирована'));
+  const к = $('rMain').querySelector('[data-talk]');
+  if (к) к.addEventListener('click', () => { T.кКомментам = true; });
+}
+
+/* Последние комментарии и рецензии зрителя для его профиля. Без kind —
+   если база про него ещё не знает. */
+async function комментарииЗрителя(uid) {
+  const спросить = вид => ОБЛ.sb.from('comments').select('id,track_key,body,created_at' + (вид ? ',kind' : ''))
+    .eq('user_id', uid).order('created_at', { ascending: false }).limit(8);
+  let r = await спросить(!ОБЛ.безВида);
+  if (r.error && !ОБЛ.безВида && /kind/.test(r.error.message || '')) { ОБЛ.безВида = true; r = await спросить(false); }
+  return r;
+}
 
 async function оценкиЗрителя(uid) {
   const все = [];
@@ -18624,6 +19180,7 @@ function showStudio() {
   $('fpage').hidden = true;
   $('mpage').hidden = true;
   $('upage').hidden = true;
+  $('rpage').hidden = true;
   $('spage').hidden = false;
   document.body.classList.add('st-on');
   document.title = 'Студия оценок — база треков';
