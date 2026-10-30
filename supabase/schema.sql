@@ -731,8 +731,9 @@ grant execute on function public.resolve_report(bigint, boolean) to authenticate
 -- ---------- хочу заказать ----------
 -- Трек узнаётся по ключу песни (song_key: нормированные первый артист и
 -- название — их считает страница кодом razneset, тем же, что сверяет
--- плейлист с архивом) и по треку Spotify. Ремастер, сингл и альбомная
--- версия одной песни дают один ключ, поэтому совпадают.
+-- плейлист с архивом), по треку Spotify и по ролику YouTube. Ремастер,
+-- сингл и альбомная версия одной песни дают один ключ, поэтому
+-- совпадают — и трек из Spotify совпадает с тем же треком с YouTube.
 create table if not exists public.wishes (
   user_id     uuid not null default auth.uid() references public.profiles (id) on delete cascade,
   song_key    text not null check (char_length(song_key) between 2 and 300),
@@ -742,7 +743,12 @@ create table if not exists public.wishes (
   created_at  timestamptz not null default now(),
   primary key (user_id, song_key)
 );
+-- Ролик YouTube — для желаний, добавленных ссылкой на YouTube.
+alter table public.wishes add column if not exists yt_id text;
+alter table public.wishes drop constraint if exists wishes_yt_id_check;
+alter table public.wishes add constraint wishes_yt_id_check check (yt_id is null or yt_id ~ '^[A-Za-z0-9_-]{11}$');
 create index if not exists wishes_song on public.wishes (song_key);
+create index if not exists wishes_yt on public.wishes (yt_id) where yt_id is not null;
 create index if not exists wishes_sp on public.wishes (sp_id) where sp_id is not null;
 alter table public.wishes enable row level security;
 
@@ -770,19 +776,20 @@ create policy wishes_public_read on public.wishes
   using (exists (select 1 from public.profiles p where p.id = wishes.user_id and p.wishes_public));
 revoke all on public.wishes from anon, authenticated;
 grant select, delete on public.wishes to authenticated;
-grant insert (song_key, sp_id, title, artist) on public.wishes to authenticated;
+grant insert (song_key, sp_id, yt_id, title, artist) on public.wishes to authenticated;
 grant select on public.wishes to anon;
 
 -- Кто ещё хочет то же, что я: по каждому своему желанию — другие
--- зрители с тем же ключом песни или тем же треком Spotify (только
--- открывшие свои желания).
+-- зрители с тем же ключом песни, тем же треком Spotify или тем же
+-- роликом YouTube (только открывшие свои желания).
 create or replace function public.wish_mates()
 returns table (song_key text, user_id uuid, name text, login text, avatar_url text)
 language sql stable security definer set search_path = '' as $$
   select distinct m.song_key, p.id, p.name, p.login, p.avatar_url
     from public.wishes m
     join public.wishes o on o.user_id <> m.user_id
-                        and (o.song_key = m.song_key or (m.sp_id is not null and o.sp_id = m.sp_id))
+                        and (o.song_key = m.song_key or (m.sp_id is not null and o.sp_id = m.sp_id)
+                             or (m.yt_id is not null and o.yt_id = m.yt_id))
     join public.profiles p on p.id = o.user_id and p.wishes_public
    where m.user_id = (select auth.uid())
 $$;
@@ -839,7 +846,8 @@ language sql stable security definer set search_path = '' as $$
          o.created_at > me.seen, null
     from public.wishes m
     join public.wishes o on o.user_id <> m.user_id and o.created_at > m.created_at
-                        and (o.song_key = m.song_key or (m.sp_id is not null and o.sp_id = m.sp_id))
+                        and (o.song_key = m.song_key or (m.sp_id is not null and o.sp_id = m.sp_id)
+                             or (m.yt_id is not null and o.yt_id = m.yt_id))
     join public.profiles p on p.id = o.user_id and p.wishes_public, me
    where m.user_id = me.id and o.created_at > now() - interval '30 days'
   order by 2 desc

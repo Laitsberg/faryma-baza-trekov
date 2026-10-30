@@ -2028,6 +2028,17 @@ body.st-air #stAir:hover{opacity:1}
 .wish-mates a{color:#9ee2b8;font-weight:700;text-decoration:none}
 .wish-mates a:hover{text-decoration:underline}
 .wish-done{display:block;margin-top:6px;font-size:12px;color:var(--dim)}
+.wish-add{margin-bottom:24px}
+.wish-add #wUrl{margin-bottom:0}
+.wish-found{display:flex;gap:14px;align-items:flex-start;margin-top:14px}
+.wish-found[hidden]{display:none}
+.wish-found img{width:120px;aspect-ratio:16/9;object-fit:cover;border-radius:7px;flex:none;background:#333}
+.wish-fields{flex:1;min-width:0}
+.wish-fields .st-names{grid-template-columns:1fr 1fr}
+.settings-box .wish-fields .st-names input{margin:0}
+.wish-fields .wish-done{margin:0 0 10px;color:var(--brand-hi)}
+.wish-pl svg{width:16px;height:16px}
+@media(max-width:600px){.wish-found{flex-direction:column}.wish-found img{width:100%}.wish-fields .st-names{grid-template-columns:1fr}}
 .wish-done[hidden]{display:none}
 .wish-done a{color:inherit}
 .track-identity:has(.wish-mates) small{white-space:normal}
@@ -17634,7 +17645,7 @@ function строкаКаталога(код, m) {
 async function желанияЗагрузить() {
   if (!вошёл()) return null;
   const [a, b] = await Promise.all([
-    ОБЛ.sb.from('wishes').select('song_key,sp_id,title,artist,created_at').eq('user_id', ОБЛ.user.id).order('created_at', { ascending: false }),
+    ОБЛ.sb.from('wishes').select('song_key,sp_id,yt_id,title,artist,created_at').eq('user_id', ОБЛ.user.id).order('created_at', { ascending: false }),
     ОБЛ.sb.rpc('wish_mates')
   ]);
   if (a.error) { ОБЛ.желания = null; ОБЛ.желанияОшибка = a.error.message; return null; }
@@ -17649,11 +17660,12 @@ async function желанияЗагрузить() {
 }
 const совпаденийЖеланий = () => ОБЛ && ОБЛ.желания && ОБЛ.попутчики
   ? [...ОБЛ.желания.keys()].filter(k => (ОБЛ.попутчики.get(k) || []).length).length : 0;
-async function хочу(т, ключ, вкл) {
+async function хочу(т, ключ, вкл, ютуб) {
   if (нужноВойти('желание')) return false;
   if (!вошёл()) { toast('Вход ещё загружается — попробуй через пару секунд'); return false; }
   const { error } = вкл
     ? await ОБЛ.sb.from('wishes').insert({ song_key: ключ, sp_id: /^[A-Za-z0-9]{22}$/.test(т.id || '') ? т.id : null,
+        yt_id: ютуб || null,
         title: String(т.title).slice(0, 300), artist: (т.artists.map(a => a.name).join(', ') || '—').slice(0, 300) })
     : await ОБЛ.sb.from('wishes').delete().eq('user_id', ОБЛ.user.id).eq('song_key', ключ);
   if (error && !(вкл && error.code === '23505')) {
@@ -17826,17 +17838,20 @@ async function meWishes(box) {
   const список = [...ж.values()].sort((a, b) => есть(b) - есть(a));
   box.innerHTML = шапка +
     (скрыты ? '<div class="cl-hint">Твой список скрыт от других — совпадений не будет. Открыть можно в <a class="text-link" href="#me/settings">настройках</a>.</div>' : '') +
+    формаЖеланияHtml() +
     (список.length ? '<div class="music-list">' + список.map(w => '<div class="track-row wish-row" data-key="' + esc(w.song_key) + '">' +
         заглушкаСп({ title: w.title, artists: [{ name: w.artist }] }) +
         '<span class="track-identity"><strong>' + esc(w.title) + '</strong><small>' + esc(w.artist) + ' · с ' + датаКороткая(Date.parse(w.created_at)) + '</small>' +
           попутчикиHtml(w.song_key) + '<span class="wish-done" hidden></span></span>' +
-        (w.sp_id ? '<a class="soft-btn" href="https://open.spotify.com/track/' + esc(w.sp_id) + '" target="_blank" rel="noopener noreferrer" aria-label="Открыть в Spotify" data-tip="Открыть в Spotify">' + ико('external') + '</a>' : '') +
+        (w.yt_id ? '<a class="soft-btn wish-pl" href="https://youtu.be/' + esc(w.yt_id) + '" target="_blank" rel="noopener noreferrer" aria-label="Открыть на YouTube" data-tip="Открыть на YouTube">' + ПЛ_ЗНАЧОК.yt + '</a>' : '') +
+        (w.sp_id ? '<a class="soft-btn wish-pl" href="https://open.spotify.com/track/' + esc(w.sp_id) + '" target="_blank" rel="noopener noreferrer" aria-label="Открыть в Spotify" data-tip="Открыть в Spotify">' + ПЛ_ЗНАЧОК.sp + '</a>' : '') +
         '<button type="button" class="soft-btn bad" data-unwish aria-label="Убрать" data-tip="Убрать из списка">' + ико('close') + '</button></div>').join('') + '</div>'
-      : '<div class="c-empty">Пока пусто. Отмечай треки во вкладке <a href="#me/playlist">«мой плейлист»</a> — кнопкой «хочу заказать».</div>');
+      : '<div class="c-empty">Пока пусто. Добавь трек ссылкой выше или отмечай треки во вкладке <a href="#me/playlist">«мой плейлист»</a> — кнопкой «хочу заказать».</div>');
+  формаЖеланияПодключить(box);
   box.querySelectorAll('[data-unwish]').forEach(b => b.addEventListener('click', async () => {
     const w = ж.get(b.closest('[data-key]').dataset.key);
     b.disabled = true;
-    if (await хочу({ id: w.sp_id, title: w.title, artists: [{ name: w.artist }] }, w.song_key, false)) meWishes(box);
+    if (await хочу({ id: w.sp_id, title: w.title, artists: [{ name: w.artist }] }, w.song_key, false, w.yt_id)) meWishes(box);
     else b.disabled = false;
   }));
   // Трек из списка тем временем могли разнести — тогда так и пишем.
@@ -17845,14 +17860,91 @@ async function meWishes(box) {
       const w = ж.get(row.dataset.key); if (!w) return;
       const т = { id: w.sp_id || '', title: w.title, artists: w.artist.split(', ').map(name => ({ id: '', name })) };
       const ключи = т.artists.map(a => код.p.resolveArtist(код.ix, a)).filter(Boolean);
+      const el = row.querySelector('.wish-done');
+      const точно = вАрхивеПоСсылке(w.yt_id, w.sp_id);
+      if (точно) {
+        el.hidden = false;
+        el.innerHTML = 'уже разнесли: <a href="' + trackHref(точно) + '"><b>' + esc(точно.rate ? точно.rate.label : 'без оценки') + '</b></a> · эфир №' + esc(точно.streamNum);
+        return;
+      }
       const м = код.p.findRated(код.ix, т, ключи)[0];
       if (!м) return;
       const r = строкаКаталога(код, м);
-      const el = row.querySelector('.wish-done');
       el.hidden = false;
       el.innerHTML = 'уже разнесли: ' + (r ? '<a href="' + trackHref(r) + '">' : '') + '<b>' + esc(м.l || 'без оценки') + '</b>' + (r ? '</a>' : '') + ' · эфир №' + esc(м.s);
     });
   }).catch(() => {});
+}
+
+/* ---------- «хочу заказать» по ссылке ----------
+   Не только из плейлиста Spotify: ссылкой на ролик YouTube (обычный,
+   YouTube Music, шортс) или на трек Spotify. Исполнитель и название
+   подтягиваются из oEmbed площадки — у ютуба это заголовок ролика,
+   поэтому оба поля можно поправить, прежде чем добавить. Ключ песни
+   считается из них тем же кодом razneset, что и у треков плейлиста:
+   трек с ютуба совпадает с тем же треком из Spotify. */
+const спТрекИз = url => (String(url).match(/open\.spotify\.com\/(?:intl-[a-z-]+\/)?track\/([A-Za-z0-9]{22})/) ||
+  String(url).match(/^spotify:track:([A-Za-z0-9]{22})$/) || [])[1] || '';
+/* Трек уже в архиве — по самому ролику или треку Spotify, без догадок. */
+const вАрхивеПоСсылке = (yt, sp) => (yt || sp) ? CAT.find(r => !r.mine && !r.студия && разы(r).some(x =>
+  (yt && x.ytId === yt) || (sp && (x.spId === sp || x.spSid === sp)))) || null : null;
+async function чтоПоСсылке(url) {
+  const yt = youtubeId(url), sp = yt ? '' : спТрекИз(url);
+  if (!yt && !sp) return null;
+  const j = yt
+    ? await стСпросить('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + yt))
+    : await стСпросить('https://open.spotify.com/oembed?url=' + encodeURIComponent('https://open.spotify.com/track/' + sp));
+  const имя = j && j.title ? (yt ? заголовокЮтуба(j) : { artist: '', title: j.title }) : { artist: '', title: '' };
+  return Object.assign({ yt, sp, картинка: (j && j.thumbnail_url) || (yt ? ytCover(yt) : '') }, имя);
+}
+function формаЖеланияHtml() {
+  return '<section class="settings-box wish-add"><div class="section-title"><h2>добавить по ссылке</h2></div>' +
+    '<label class="form-label" for="wUrl">Ссылка на трек — YouTube или Spotify</label>' +
+    '<input type="text" id="wUrl" placeholder="https://youtu.be/… или https://open.spotify.com/track/…" autocomplete="off" spellcheck="false">' +
+    '<div class="wish-found" id="wFound" hidden></div></section>';
+}
+function формаЖеланияПодключить(box) {
+  const поле = box.querySelector('#wUrl'), найдено = box.querySelector('#wFound');
+  if (!поле) return;
+  let т, нашли = null, запрос = 0;
+  const нарисовать = () => {
+    if (!нашли) { найдено.hidden = true; return; }
+    const в = вАрхивеПоСсылке(нашли.yt, нашли.sp);
+    найдено.hidden = false;
+    найдено.innerHTML = (нашли.картинка ? '<img alt="" src="' + esc(нашли.картинка) + '">' : '') +
+      '<div class="wish-fields">' +
+        (в ? '<p class="wish-done">Этот трек уже разнесли: <a href="' + trackHref(в) + '"><b>' + esc(в.rate ? в.rate.label : 'без оценки') +
+             '</b></a> · эфир №' + esc(в.streamNum) + '. Заказать его можно разве что повтором.</p>' : '') +
+        '<div class="st-names"><input type="text" id="wArtist" maxlength="300" placeholder="исполнитель" aria-label="Исполнитель" value="' + esc(нашли.artist) + '">' +
+        '<input type="text" id="wTitle" maxlength="300" placeholder="название" aria-label="Название" value="' + esc(нашли.title) + '"></div>' +
+        '<p class="setting-hint" style="margin:6px 0 10px">' + (нашли.yt ? 'Взято из заголовка ролика — проверь, где исполнитель, а где название.'
+          : 'Spotify не отдаёт исполнителя по ссылке — впиши его.') + ' По ним сайт найдёт тех, кто хочет тот же трек.</p>' +
+        '<button type="button" class="main-btn" data-w-add>+ хочу заказать</button></div>';
+    шить(найдено);
+    найдено.querySelector('[data-w-add]').addEventListener('click', async e => {
+      const artist = найдено.querySelector('#wArtist').value.trim(), title = найдено.querySelector('#wTitle').value.trim();
+      if (!artist || !title) return toast('Нужны и исполнитель, и название');
+      e.target.disabled = true;
+      const код = await разнесётКод().catch(() => null);
+      if (!код) { e.target.disabled = false; return toast('Не загрузился код сверки — попробуй ещё раз'); }
+      const трек = { id: нашли.sp, title, artists: [{ name: artist }] };
+      if (await хочу(трек, ключПесни(код.n, трек), true, нашли.yt)) meWishes(box);
+      else e.target.disabled = false;
+    });
+  };
+  поле.addEventListener('input', () => {
+    clearTimeout(т);
+    т = setTimeout(async () => {
+      const url = поле.value.trim();
+      const мой = ++запрос;
+      if (!url) { нашли = null; return нарисовать(); }
+      const ч = await чтоПоСсылке(url);
+      if (мой !== запрос) return;
+      if (!ч) { нашли = null; найдено.hidden = false; найдено.innerHTML = '<p class="setting-hint" style="margin:0">Это не похоже на ссылку на ролик YouTube или трек Spotify.</p>'; return; }
+      нашли = ч;
+      нарисовать();
+    }, 350);
+  });
 }
 
 /* ---------- управление ----------
@@ -19891,6 +19983,12 @@ const стСпросить = url => fetch(url, { signal: AbortSignal.timeout ? A
    «… - Topic» — это и есть исполнитель. Всё равно помечаем «из ссылки —
    проверь»: заголовки пишут как попало. */
 const СТ_ХВОСТ = /\s*[(\[](?:official|офиц|lyric|lyrics|mv|m\/v|music video|audio|video|hd|4k|клип)[^)\]]*[)\]]/gi;
+function заголовокЮтуба(j) {
+  const чистый = j.title.replace(СТ_ХВОСТ, '').trim();
+  const m = чистый.match(/^(.+?)\s+[—–-]\s+(.+)$/);
+  return { artist: m ? m[1].trim() : String(j.author_name || '').replace(/\s*-\s*Topic$|VEVO$/i, '').trim(),
+           title: m ? m[2].trim() : чистый };
+}
 async function стДополнить(t) {
   if (t.arch) return;
   let тронули = false;
@@ -19898,10 +19996,7 @@ async function стДополнить(t) {
     const j = await стСпросить('https://www.youtube.com/oembed?format=json&url=' +
       encodeURIComponent('https://www.youtube.com/watch?v=' + t.ytId));
     if (j && j.title) {
-      const чистый = j.title.replace(СТ_ХВОСТ, '').trim();
-      const m = чистый.match(/^(.+?)\s+[—–-]\s+(.+)$/);
-      t.artist = m ? m[1].trim() : String(j.author_name || '').replace(/\s*-\s*Topic$|VEVO$/i, '').trim();
-      t.title = m ? m[2].trim() : чистый;
+      Object.assign(t, заголовокЮтуба(j));
       t.из = 'из ссылки — проверь';
       тронули = true;
     }
