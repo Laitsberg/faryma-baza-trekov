@@ -18636,7 +18636,7 @@ function студияДоступ() {
 async function комментарииЗагрузить(key) {
   if (!ОБЛ.sb) return;
   const спросить = вид => ОБЛ.sb.from('comments')
-    .select('id,body,created_at,user_id,parent_id,' + (вид ? 'kind,' : '') + 'profiles(name,login,avatar_url,role)')
+    .select('id,body,created_at,user_id,parent_id,' + (вид ? 'kind,' : '') + 'profiles!comments_user_id_fkey(name,login,avatar_url,role)')
     .eq('track_key', key).order('created_at').limit(500);
   let [{ data, error }] = await Promise.all([спросить(!ОБЛ.безВида), лайкиЗагрузить(key)]);
   if (error && !ОБЛ.безВида && /kind/.test(error.message || '')) {
@@ -19310,7 +19310,7 @@ async function drawReview(id) {
     : 'Рецензии видны на сайте, когда есть связь с сервером.');
   пусто('загружаю…');
   const { data: c, error } = await ОБЛ.sb.from('comments')
-    .select('id,track_key,body,created_at,user_id,kind,profiles(name,login,avatar_url,role)').eq('id', id).maybeSingle();
+    .select('id,track_key,body,created_at,user_id,kind,profiles!comments_user_id_fkey(name,login,avatar_url,role)').eq('id', id).maybeSingle();
   if (location.hash !== адрес) return;
   if (error || !c || c.kind !== 'review') return пусто(error && /kind/.test(error.message || '')
     ? 'Рецензии на сервере ещё не включены.' : 'Такой рецензии нет — возможно, автор её удалил.');
