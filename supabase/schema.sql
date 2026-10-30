@@ -32,6 +32,14 @@
 --              комментарии трека), опыт зрителя для уровня в профиле и
 --              десятка по опыту на главной.
 --   set_name — свой ник на сайте вместо ника с Twitch.
+--   comment_likes — сердечки комментариям и рецензиям. Кто именно
+--              лайкнул, не видно никому, кроме него самого: наружу
+--              отдаётся только число (comment_likes_for).
+--   follows  — подписки: зритель держит у себя в кабинете тех, кто ему
+--              интересен. Не взаимно, как у Twitch.
+--   reports  — «сообщить о неточности» со страницы трека. Видят автор
+--              и команда сайта, разбирают во вкладке «управление».
+--   track_avgs — средняя оценка зрителей для карточек каталога.
 --
 -- «Automatically expose new tables» при создании проекта выключен,
 -- поэтому доступ к каждой таблице ниже выдаётся явно (grant).
@@ -80,6 +88,13 @@ alter table public.profiles add column if not exists bg_avatar boolean not null 
 alter table public.profiles add column if not exists twitch_hidden boolean not null default false;
 -- Ник сменён на сайте: вход через Twitch его больше не переписывает.
 alter table public.profiles add column if not exists name_custom boolean not null default false;
+-- Не показывать свои последние действия в публичном профиле.
+alter table public.profiles add column if not exists activity_hidden boolean not null default false;
+-- Привязанный плейлист Spotify — только его id из ссылки.
+alter table public.profiles add column if not exists spotify_playlist text;
+alter table public.profiles drop constraint if exists profiles_spotify_playlist_check;
+alter table public.profiles add constraint profiles_spotify_playlist_check
+  check (spotify_playlist is null or spotify_playlist ~ '^[A-Za-z0-9]{10,40}$');
 alter table public.profiles enable row level security;
 
 drop policy if exists profiles_read on public.profiles;
@@ -92,7 +107,8 @@ create policy profiles_update_own on public.profiles
 
 revoke all on public.profiles from anon, authenticated;
 grant select on public.profiles to anon, authenticated;
-grant update (color, bio, ratings_public, favs_public, hide_online, bg_avatar, twitch_hidden) on public.profiles to authenticated;
+grant update (color, bio, ratings_public, favs_public, hide_online, bg_avatar, twitch_hidden,
+               activity_hidden, spotify_playlist) on public.profiles to authenticated;
 
 -- Twitch отдаёт: name — логин, nickname — отображаемое имя,
 -- avatar_url / picture — аватар, provider_id — id на Twitch.
@@ -435,6 +451,16 @@ begin
       from public.comments where id = new.parent_id;
     if new.parent_id is null then raise exception 'no such comment'; end if;
   end if;
+  -- Рецензия — разбор, а не реплика: от 250 знаков и только от того, кто
+  -- сам оценил трек. Проверка на вставке, а не ограничением столбца:
+  -- рецензии, написанные до этого правила, остаются как были.
+  if new.kind = 'review' then
+    if char_length(new.body) < 250 then raise exception 'review too short'; end if;
+    if not exists (select 1 from public.ratings
+                    where user_id = new.user_id and track_key = new.track_key) then
+      raise exception 'review needs rating';
+    end if;
+  end if;
   return new;
 end $$;
 revoke execute on function public.comment_guard() from public, anon, authenticated;
@@ -456,6 +482,51 @@ revoke all on public.comments from anon, authenticated;
 grant select on public.comments to anon, authenticated;
 grant insert (track_key, body, parent_id, kind) on public.comments to authenticated;
 grant delete on public.comments to authenticated;
+
+-- ---------- лайки комментариев ----------
+-- Обезличенные: кто лайкнул, видит только он сам, остальным —
+-- число (comment_likes_for). Свой комментарий лайкнуть нельзя.
+create table if not exists public.comment_likes (
+  comment_id  bigint not null references public.comments (id) on delete cascade,
+  user_id     uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  created_at  timestamptz not null default now(),
+  primary key (comment_id, user_id)
+);
+create index if not exists comment_likes_user on public.comment_likes (user_id);
+alter table public.comment_likes enable row level security;
+
+create or replace function public.like_guard()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  new.created_at := now();
+  if exists (select 1 from public.comments where id = new.comment_id and user_id = new.user_id) then
+    raise exception 'own comment';
+  end if;
+  return new;
+end $$;
+revoke execute on function public.like_guard() from public, anon, authenticated;
+drop trigger if exists comment_likes_guard on public.comment_likes;
+create trigger comment_likes_guard before insert on public.comment_likes
+  for each row execute function public.like_guard();
+
+drop policy if exists comment_likes_own on public.comment_likes;
+create policy comment_likes_own on public.comment_likes
+  for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+revoke all on public.comment_likes from anon, authenticated;
+grant select, insert, delete on public.comment_likes to authenticated;
+
+create or replace function public.comment_likes_for(p_track text)
+returns table (comment_id bigint, n int, mine boolean)
+language sql stable security definer set search_path = '' as $$
+  select l.comment_id, count(*)::int, coalesce(bool_or(l.user_id = (select auth.uid())), false)
+    from public.comment_likes l
+    join public.comments c on c.id = l.comment_id
+   where c.track_key = p_track
+   group by l.comment_id
+$$;
+revoke execute on function public.comment_likes_for(text) from public;
+grant execute on function public.comment_likes_for(text) to anon, authenticated;
 
 -- ---------- заявки на свои заказы ----------
 -- В таблице разносов заказчик записан так, как его назвали на стриме, и
@@ -540,27 +611,147 @@ end $$;
 revoke execute on function public.decide_claim(bigint, boolean, text) from public, anon;
 grant execute on function public.decide_claim(bigint, boolean, text) to authenticated;
 
+-- ---------- подписки ----------
+-- Не дружба, а подписка: взаимности не нужно. Список своих подписок и
+-- подписчиков видит сам зритель; другим — только числа (follow_stats).
+create table if not exists public.follows (
+  follower    uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  followee    uuid not null references public.profiles (id) on delete cascade,
+  created_at  timestamptz not null default now(),
+  primary key (follower, followee),
+  check (follower <> followee)
+);
+create index if not exists follows_followee on public.follows (followee);
+alter table public.follows enable row level security;
+
+create or replace function public.follow_guard()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  new.created_at := now();
+  if (select count(*) from public.follows where follower = new.follower) >= 1000 then
+    raise exception 'too many follows';
+  end if;
+  return new;
+end $$;
+revoke execute on function public.follow_guard() from public, anon, authenticated;
+drop trigger if exists follows_guard on public.follows;
+create trigger follows_guard before insert on public.follows
+  for each row execute function public.follow_guard();
+
+drop policy if exists follows_read on public.follows;
+create policy follows_read on public.follows
+  for select to authenticated using (follower = (select auth.uid()) or followee = (select auth.uid()));
+drop policy if exists follows_add on public.follows;
+create policy follows_add on public.follows
+  for insert to authenticated with check (follower = (select auth.uid()));
+drop policy if exists follows_drop on public.follows;
+create policy follows_drop on public.follows
+  for delete to authenticated using (follower = (select auth.uid()));
+revoke all on public.follows from anon, authenticated;
+grant select, delete on public.follows to authenticated;
+grant insert (followee) on public.follows to authenticated;
+
+create or replace function public.follow_stats(p_user uuid)
+returns table (followers int, following int, mine boolean)
+language sql stable security definer set search_path = '' as $$
+  select (select count(*)::int from public.follows where followee = p_user),
+         (select count(*)::int from public.follows where follower = p_user),
+         exists (select 1 from public.follows where follower = (select auth.uid()) and followee = p_user)
+$$;
+revoke execute on function public.follow_stats(uuid) from public;
+grant execute on function public.follow_stats(uuid) to anon, authenticated;
+
+-- ---------- сообщить о неточности ----------
+-- Со страницы трека: не та обложка, не тот год, опечатка. Видят автор и
+-- команда сайта; разбирают во вкладке «управление» (resolve_report).
+create table if not exists public.reports (
+  id          bigint generated always as identity primary key,
+  track_key   text not null check (char_length(track_key) between 1 and 600),
+  user_id     uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  what        text not null default 'other' check (what in ('cover', 'year', 'name', 'genre', 'link', 'other')),
+  body        text not null check (char_length(btrim(body)) between 1 and 500),
+  status      text not null default 'open' check (status in ('open', 'done')),
+  decided_by  uuid references public.profiles (id) on delete set null,
+  decided_at  timestamptz,
+  created_at  timestamptz not null default now()
+);
+create index if not exists reports_open on public.reports (created_at desc) where status = 'open';
+alter table public.reports enable row level security;
+
+create or replace function public.report_guard()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  new.created_at := now();
+  new.body := btrim(new.body);
+  new.status := 'open'; new.decided_by := null; new.decided_at := null;
+  if (select banned from public.profiles where id = new.user_id) then raise exception 'banned'; end if;
+  if (select count(*) from public.reports
+      where user_id = new.user_id and created_at > now() - interval '1 hour') >= 10 then
+    raise exception 'too many reports';
+  end if;
+  return new;
+end $$;
+revoke execute on function public.report_guard() from public, anon, authenticated;
+drop trigger if exists reports_guard on public.reports;
+create trigger reports_guard before insert on public.reports
+  for each row execute function public.report_guard();
+
+drop policy if exists reports_read on public.reports;
+create policy reports_read on public.reports
+  for select to authenticated using (user_id = (select auth.uid()) or (select public.is_staff()));
+drop policy if exists reports_add on public.reports;
+create policy reports_add on public.reports
+  for insert to authenticated with check (user_id = (select auth.uid()));
+drop policy if exists reports_drop on public.reports;
+create policy reports_drop on public.reports
+  for delete to authenticated using ((user_id = (select auth.uid()) and status = 'open') or (select public.is_staff()));
+revoke all on public.reports from anon, authenticated;
+grant select, delete on public.reports to authenticated;
+grant insert (track_key, what, body) on public.reports to authenticated;
+
+create or replace function public.resolve_report(p_id bigint, p_done boolean)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if not public.is_staff() then raise exception 'not allowed'; end if;
+  update public.reports
+     set status = case when p_done then 'done' else 'open' end,
+         decided_by = case when p_done then (select auth.uid()) end,
+         decided_at = case when p_done then now() end
+   where id = p_id;
+end $$;
+revoke execute on function public.resolve_report(bigint, boolean) from public, anon;
+grant execute on function public.resolve_report(bigint, boolean) to authenticated;
+
 -- ---------- уведомления ----------
--- Что нового у зрителя: решения по его заявкам и ответы на его
--- комментарии за последний месяц. «Новое» — позже, чем он в последний
--- раз открывал уведомления.
+-- Что нового у зрителя: решения по его заявкам, ответы на его
+-- комментарии и новые подписчики за последний месяц. «Новое» — позже,
+-- чем он в последний раз открывал уведомления. У ответа — его id: по
+-- уведомлению страница трека прокручивается прямо к нему.
+-- Набор столбцов менялся, а «or replace» его поменять не может.
+drop function if exists public.my_notifications();
 create or replace function public.my_notifications()
 returns table (kind text, at timestamptz, track_key text, body text, who text, who_login text,
-               status text, claim text, answer text, fresh boolean)
+               status text, claim text, answer text, fresh boolean, comment_id bigint)
 language sql stable security definer set search_path = '' as $$
   with me as (select id, coalesce(notes_seen_at, 'epoch'::timestamptz) seen
               from public.profiles where id = (select auth.uid()))
   select 'claim', c.decided_at, null, null, null, null, c.status, coalesce(c.shown, c.name), c.answer,
-         c.decided_at > me.seen
+         c.decided_at > me.seen, null::bigint
     from public.claims c, me
    where c.user_id = me.id and c.status <> 'pending' and c.decided_at > now() - interval '30 days'
   union all
   select 'reply', r.created_at, r.track_key, r.body, p.name, p.login, null, null, null,
-         r.created_at > me.seen
+         r.created_at > me.seen, r.id
     from public.comments r
     join public.comments mine on mine.id = r.parent_id
     join public.profiles p on p.id = r.user_id, me
    where mine.user_id = me.id and r.user_id <> me.id and r.created_at > now() - interval '30 days'
+  union all
+  select 'follow', f.created_at, null, null, p.name, p.login, null, null, null,
+         f.created_at > me.seen, null
+    from public.follows f
+    join public.profiles p on p.id = f.follower, me
+   where f.followee = me.id and f.created_at > now() - interval '30 days'
   order by 2 desc
   limit 50
 $$;
@@ -627,6 +818,21 @@ language sql stable security definer set search_path = '' as $$
 $$;
 revoke execute on function public.track_counts() from public;
 grant execute on function public.track_counts() to anon, authenticated;
+
+-- Средняя оценка зрителей для карточки каталога: по тем, кто открыл свои
+-- оценки. Своя оценка спрашивающего сюда не входит — страница добавляет
+-- её сама, и средняя меняется сразу по щелчку.
+create or replace function public.track_avgs()
+returns table (track_key text, n int, score numeric)
+language sql stable security definer set search_path = '' as $$
+  select r.track_key, count(*)::int, round(avg(public.rate_score(r.tier, r.mod)), 3)
+    from public.ratings r
+    join public.profiles p on p.id = r.user_id and p.ratings_public
+   where r.user_id is distinct from (select auth.uid())
+   group by r.track_key
+$$;
+revoke execute on function public.track_avgs() from public;
+grant execute on function public.track_avgs() to anon, authenticated;
 
 -- Опыт для уровня в профиле: каждая оценка и каждый комментарий — +10,
 -- считает страница. Сюда — только сколько их; сами оценки этим не

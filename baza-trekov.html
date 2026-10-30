@@ -24,8 +24,19 @@
   --card-2:#323238;
   --line:#3A3A41;
   --ink:#EDEDEF;
-  --dim:#9A9AA2;
-  --faint:#6E6E78;
+  /* Служебный текст светлее, чем был (#9A9AA2 и #6E6E78): на фоне из
+     светлой обложки серые подписи пропадали совсем. */
+  --dim:#C4C4CC;
+  --faint:#A2A2AC;
+
+  /* Всё, что раскрывается поверх страницы, — выпадающие списки,
+     подсказки поиска, уведомления, — одного вида: та же плашка, те же
+     скругления и тот же отклик на наведение. */
+  --pop-bg:#2B2B31;
+  --pop-line:rgba(255,255,255,.11);
+  --pop-hover:rgba(255,255,255,.075);
+  --pop-r:12px;
+  --pop-shadow:0 18px 44px rgba(0,0,0,.45);
 
   /* Оранжевый — с логотипа композитора, как на статистике */
   --brand:#F2660F;
@@ -83,8 +94,8 @@ input,select{font:inherit;color:inherit}
 
 /* Выбор эфира над плеером — для треков, которые разносили не раз. */
 /* Эфир с датой над плеером, прижат вправо. */
-.vid-hd{text-align:right;color:var(--faint);font-size:12.5px;margin:0 0 8px}
-.vid-hd a{color:var(--dim);border-bottom:1px solid var(--line)}
+.vid-hd{text-align:right;color:var(--dim);font-size:12.5px;margin:0 0 8px}
+.vid-hd a{color:#E0E0E6;border-bottom:1px solid rgba(255,255,255,.3)}
 .vid-hd a:hover{color:var(--brand-hi);border-color:var(--brand-hi)}
 
 .razy{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
@@ -204,13 +215,46 @@ input,select{font:inherit;color:inherit}
 .viewbtn button:hover{color:var(--ink)}
 .viewbtn button[aria-pressed="true"]{background:var(--card-2);color:var(--brand-hi)}
 .viewbtn svg{width:16px;height:16px}
-.sortbtn .car{color:var(--brand);font-size:10px}
 .sortbtn select{background:none;border:0;font:600 16px var(--b);color:var(--ink);cursor:pointer}
 /* Раскрытый список у выпадашки рисует браузер, и без подсказки он
-   белый. color-scheme просит тёмный, а цвет пунктов задаём сами. */
+   белый. color-scheme просит тёмный, а цвет пунктов задаём сами.
+   Видно это только до того, как выпадашка подменит его своим (ниже). */
 select{color-scheme:dark}
 select option{background:var(--card-2);color:var(--ink)}
 .sortbtn select:focus{outline:none;color:var(--brand-hi)}
+
+/* ---------- выпадашка ----------
+   Свой список вместо браузерного: у того на наведении голубая
+   системная подсветка и острые углы, и выглядел он по-разному в
+   каждом браузере. Настоящий select остаётся в разметке спрятанным —
+   значение и событие change идут через него, поэтому код, который его
+   слушает, ничего не замечает. Галка ▼ — у самого поля. */
+.dd{position:relative;display:inline-flex;min-width:0;vertical-align:middle}
+.dd > select{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none}
+.dd-b{display:inline-flex;align-items:center;gap:9px;min-width:0;max-width:100%;height:100%;
+  text-align:left;white-space:nowrap;cursor:pointer}
+.dd-b span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.dd-b::after{content:'';flex:none;width:0;height:0;margin-left:auto;
+  border-top:6px solid var(--brand);border-left:4.5px solid transparent;border-right:4.5px solid transparent;
+  transition:transform .18s}
+.dd.open .dd-b::after{transform:rotate(180deg)}
+.dd-l{position:absolute;top:calc(100% + 6px);left:0;z-index:50;min-width:100%;max-width:min(340px,calc(100vw - 20px));
+  max-height:min(340px,60vh);overflow-y:auto;padding:6px;margin:0;list-style:none;
+  background:var(--pop-bg);border:1px solid var(--pop-line);border-radius:var(--pop-r);box-shadow:var(--pop-shadow);
+  opacity:0;transform:translateY(-4px);visibility:hidden;pointer-events:none;
+  transition:opacity .14s,transform .14s,visibility 0s .14s;scrollbar-width:thin;scrollbar-color:var(--card-2) transparent}
+.dd.right .dd-l{left:auto;right:0}
+.dd.open .dd-l{opacity:1;transform:none;visibility:visible;pointer-events:auto;transition:opacity .14s,transform .14s}
+.dd-o{display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:8px;cursor:pointer;
+  font:500 13.5px/1.3 var(--b);color:var(--ink);white-space:nowrap}
+.dd-o.cur{background:var(--pop-hover)}
+.dd-o[aria-selected="true"]{color:var(--brand-hi);font-weight:600}
+.dd-o[aria-selected="true"]::after{content:'';margin-left:auto;width:9px;height:5px;flex:none;
+  border:solid currentColor;border-width:0 0 2px 2px;transform:translateY(-2px) rotate(-45deg)}
+/* Сортировка каталога — словом, без рамки, как была. */
+.sortbtn .dd-b{font:600 16px var(--b);color:var(--ink)}
+.sortbtn .dd-b:hover,.sortbtn .dd.open .dd-b{color:var(--brand-hi)}
+@media(max-width:760px){.sortbtn .dd-b{font-size:14px}}
 
 .chip{display:inline-flex;align-items:center;gap:8px;background:var(--card-2);
   border-radius:5px;padding:4px 7px 4px 11px;font-size:13px;color:var(--ink)}
@@ -277,8 +321,8 @@ select option{background:var(--card-2);color:var(--ink)}
 .badge{position:absolute;z-index:4;bottom:8px;width:32px;height:32px;padding:0;
   display:flex;align-items:center;justify-content:center;gap:5px;border-radius:8px;
   background:rgba(14,14,16,.3);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
-  font-family:var(--m);font-size:12.5px;color:#fff}
-.badge svg{width:19px;height:19px}
+  font-family:var(--m);font-size:12.5px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.badge svg{width:19px;height:19px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55))}
 .badge:empty{display:none}
 .fav{left:8px}
 /* Лайк — оранжевым, а не красным: оранжевый на странице значит «это
@@ -357,6 +401,12 @@ a.cmt:hover{color:var(--brand-hi)}
   color:#fff;font-size:21px;line-height:1}
 .mod:hover:not(:disabled){background:rgba(255,255,255,.2)}
 .mod:disabled{opacity:.28;cursor:default}
+/* Поставили оценку — «−» и «+» не выскакивают сразу, а после удара
+   (0,7 с) за 0,8 секунды опускаются сверху на место. Конечного кадра у
+   анимации нет: погашенная кнопка остаётся погашенной. */
+.mods.pop .mod{animation:modIn .8s cubic-bezier(.2,.8,.2,1) .7s both}
+@keyframes modIn{from{opacity:0;transform:translateY(-12px)}}
+@media(prefers-reduced-motion:reduce){.mods.pop .mod{animation:none}}
 
 /* ---------- низ карточки ---------- */
 .body{padding:11px 12px 0;flex:1}
@@ -396,12 +446,12 @@ a.cmt:hover{color:var(--brand-hi)}
   font-family:var(--m);font-size:12.5px;font-weight:600;color:var(--tc,var(--faint))}
 .rt-c .tri{width:0;height:0;flex:none;border-left:9px solid currentColor;
   border-top:5.5px solid transparent;border-bottom:5.5px solid transparent}
-.rt-u svg{width:13px;height:13px;flex:none}
-.play{margin-left:auto;width:44px;height:24px;flex:none;border-radius:5px;
+.rt-u svg{width:15px;height:15px;flex:none}
+.play{margin-left:auto;width:52px;height:30px;flex:none;border-radius:6px;
   background:var(--card-2);display:grid;place-items:center;color:var(--ink);
   transition:background .14s,color .14s}
 .play:hover{background:var(--brand);color:#151517}
-.play svg{width:11px;height:11px}
+.play svg{width:14px;height:14px}
 
 /* ---------- служебное ---------- */
 .boot,.empty{grid-column:1/-1;padding:70px 20px;text-align:center;color:var(--dim)}
@@ -573,8 +623,8 @@ a.cmt:hover{color:var(--brand-hi)}
 
 .tp-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .crumbs{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap;
-  font-size:13px;color:var(--dim)}
-.crumbs a{color:var(--dim);text-decoration:none;border-bottom:1px solid transparent}
+  font-size:13px;color:var(--dim);text-shadow:0 1px 8px rgba(0,0,0,.35)}
+.crumbs a{color:#DADAE0;text-decoration:none;border-bottom:1px solid transparent}
 .crumbs a:hover{color:var(--ink);border-bottom-color:var(--brand)}
 .crumbs .sep{color:var(--faint)}
 .crumbs b{color:var(--ink);font-weight:600;max-width:44ch;white-space:nowrap;
@@ -621,13 +671,13 @@ a.cmt:hover{color:var(--brand-hi)}
   background:linear-gradient(155deg,rgba(22,22,25,.35),rgba(22,22,25,.8))}
 
 /* ---------- фон страницы трека ----------
-   Обложка, размытая во весь верх страницы и тающая книзу до нашего
-   обычного тёмного — к середине первого экрана её уже нет. Лежит за
-   всем содержимым и прокручивается вместе со страницей. */
-.atmo{position:absolute;left:0;right:0;top:0;height:1100px;z-index:-1;overflow:hidden;
-  pointer-events:none;
-  -webkit-mask-image:linear-gradient(#000 0%,rgba(0,0,0,.55) 35%,transparent 80%);
-          mask-image:linear-gradient(#000 0%,rgba(0,0,0,.55) 35%,transparent 80%)}
+   Обложка, размытая во весь экран. Фон неподвижен: страница едет по
+   нему, а он стоит. Раньше он прокручивался вместе со страницей и к
+   середине первого экрана таял до серого — у длинных страниц низ
+   оставался просто серым. Книзу он лишь чуть темнеет. */
+.atmo{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;
+  -webkit-mask-image:linear-gradient(#000 0%,rgba(0,0,0,.8) 55%,rgba(0,0,0,.62) 100%);
+          mask-image:linear-gradient(#000 0%,rgba(0,0,0,.8) 55%,rgba(0,0,0,.62) 100%)}
 .atmo[hidden]{display:none}
 .atmo i{position:absolute;inset:-120px;background-size:cover;background-position:center 30%;
   filter:blur(70px) saturate(1.35);opacity:.5}
@@ -648,7 +698,7 @@ a.cmt:hover{color:var(--brand-hi)}
 .atmo-on .tb{background:var(--bg);box-shadow:0 1px 0 rgba(255,255,255,.04)}
 .tb-bg{display:none}
 .atmo-on .tb-bg{display:block;position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-.atmo-on .tb-bg::before{content:'';position:absolute;left:-120px;right:-120px;top:-120px;height:1340px;
+.atmo-on .tb-bg::before{content:'';position:absolute;left:-120px;right:-120px;top:-120px;height:calc(100vh + 240px);
   background:var(--atmo) center 30%/cover no-repeat;
   filter:blur(70px) saturate(1.35);opacity:.5}
 .atmo-on .tb-bg::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.4)}
@@ -674,20 +724,21 @@ a.cmt:hover{color:var(--brand-hi)}
    жанр — это про сам трек, а тэг — пометка к нему. Решётка их и
    отличает; щёлкаются они так же, как плашки. */
 .tags{display:flex;flex-wrap:wrap;gap:3px 12px;margin-top:-3px}
-.tags button{padding:0;font-size:13px;color:var(--faint)}
+.tags button{padding:0;font-size:13px;color:#D2D2D9}
 .tags button:hover{color:var(--brand-hi)}
 /* Оценки — отдельным столбцом справа: одной строкой под плашками они
    читались как ещё одна плашка, а это главное, ради чего трек открыли. */
 .hero-sc{flex:none;width:206px;display:flex;flex-direction:column;gap:10px}
 .sc{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:var(--r);
   padding:11px 14px}
-.sc span{display:block;font-size:12px;color:var(--dim)}
+.sc span{display:block;font-size:12px;color:#D6D6DD}
 .sc b{display:block;margin-top:3px;font:700 19px var(--m);color:var(--tc,var(--faint));
   white-space:nowrap}
-.sc small{display:block;margin-top:2px;font-size:11.5px;color:var(--faint)}
+.sc small{display:block;margin-top:2px;font-size:11.5px;color:var(--dim)}
+.sc small:empty{display:none}
 /* не .none: так в рельсе зовётся «ничего не нашлось», и плитка
    становилась курсивом */
-.sc.nobody b{font:600 15px var(--b)}
+.sc.nobody b{font:600 15px var(--b);color:#D6D6DD}
 /* ---------- своя подсказка ----------
    Вместо браузерного title. У того вид системной плашки Windows, ждёт
    он секунду с лишним, и на телефоне не показывается вовсе — а мы туда
@@ -701,8 +752,8 @@ a.cmt:hover{color:var(--brand-hi)}
 @media(prefers-reduced-motion:reduce){.tip{transition:none}}
 
 .tgs{display:flex;flex-wrap:wrap;gap:6px}
-.tg{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;
-  padding:3px 10px;font-size:12px;color:var(--dim);white-space:nowrap}
+.tg{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:999px;
+  padding:3px 10px;font-size:12px;color:#E4E4EA;white-space:nowrap}
 .tg.brand{border-color:transparent;background:var(--brand);color:#151517;font-weight:600}
 button.tg{cursor:pointer;font-family:var(--b)}
 button.tg:hover{border-color:var(--brand);color:var(--ink)}
@@ -782,12 +833,14 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 .vid-ft .go{margin-left:auto;color:var(--dim);font-size:12.5px;white-space:nowrap;
   text-decoration:none}
 .vid-ft a.go:hover{color:var(--brand-hi)}
-/* Выбор площадки для оригинала. Площадка без данных гаснет, а не
-   пропадает — как кнопки в шапке трека. */
-.plat{margin-left:auto;display:flex;gap:2px;padding:3px;border-radius:7px;background:var(--bg)}
+/* Выбор площадки для оригинала — только те, что у трека есть. Раньше
+   площадка без данных гасла, и выбирать приходилось среди погашенных. */
+.plat{margin-left:auto;display:flex;gap:2px;padding:3px;border-radius:8px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+.plat[hidden],.plat button[hidden]{display:none}
 .plat button{padding:4px 9px;border-radius:5px;font-size:12px;font-weight:600;color:var(--dim)}
 .plat button:hover:not(:disabled){color:var(--ink)}
-.plat button[aria-pressed="true"]{background:var(--card-2);color:var(--ink)}
+.plat button[aria-pressed="true"]{background:rgba(255,255,255,.14);color:#fff}
 .plat button:disabled{opacity:.32;cursor:default}
 /* Ютуб не вставляется сразу: сначала превью с кнопкой. Страница не
    тянет плеер ради каждого трека, и у кого ютуб не открывается, тот
@@ -830,36 +883,30 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
   background:var(--tc,var(--faint));min-width:0}
 .dist .vl{color:var(--dim);text-align:right}
 
-/* ---------- своя оценка ---------- */
-.big-scale{display:flex;gap:6px}
+/* ---------- своя оценка ----------
+   Как на карточке каталога: посередине «оцени этот трек!», на
+   наведении — название ступени, а «−» и «+» по бокам появляются, когда
+   оценка поставлена. Поставил — плашка бьёт тем же ударом, что карточка. */
+.mine-rate{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px}
+#tMine .mods{max-width:none;min-height:34px}
+#tMine .rt{font-size:17px;font-weight:700;text-shadow:none;color:var(--ink)}
+#tMine .rt.named{font-family:var(--m);font-size:17px}
+#tMine .mod{width:38px;height:32px;font-size:23px;background:rgba(255,255,255,.07)}
+#tMine .mod:hover:not(:disabled){background:rgba(255,255,255,.16)}
+.big-scale{display:flex;gap:6px;width:100%}
 .big-scale .seg{width:auto;flex:1;height:40px;border-color:rgba(255,255,255,.35)}
 .big-scale .seg:hover{border-color:#fff}
-.rate-line{display:flex;align-items:center;justify-content:space-between;
-  gap:10px;margin-top:13px}
-.rate-line .val{font-family:var(--m);font-size:13px;font-weight:600;
-  color:var(--tc,var(--dim))}
-.rate-mods{display:flex;gap:6px}
-.rate-mods button{width:36px;height:32px;border-radius:5px;background:var(--card-2);
-  display:grid;place-items:center;font-size:20px;line-height:1}
-.rate-mods button:hover:not(:disabled){background:#44444C}
-.rate-mods button:disabled{opacity:.3;cursor:default}
-/* Комментарий под своей оценкой и ссылка ко всем комментариям */
-.mine-talk{display:flex;gap:8px;align-items:stretch;margin-top:16px}
-.mine-talk textarea{flex:1;min-width:0;min-height:44px;padding:9px 12px;border-radius:8px;
-  border:1px solid var(--line);background:rgba(0,0,0,.22);resize:vertical;
-  font:13.5px/1.4 var(--b);color:var(--ink)}
-.mine-talk textarea::placeholder{color:var(--faint)}
-.mine-talk textarea:focus{outline:none;border-color:var(--brand)}
-.mine-talk .send{width:44px;flex:none;border-radius:8px;background:var(--brand);color:#151517;
-  display:grid;place-items:center}
-.mine-talk .send:hover{background:var(--brand-hi)}
-.mine-talk .send svg{width:18px;height:18px}
-.mine-all{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;padding:10px 12px;
-  border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
-  font-size:14px;font-weight:600;color:var(--ink);text-align:left}
+#tMine .rated-msg{position:static;margin-top:-4px;min-height:17px}
+#tMine.hit{animation:hit .7s ease-out}
+@media(prefers-reduced-motion:reduce){#tMine.hit{animation:none}}
+/* «Оставить комментарий» — только после оценки: аккуратная кнопка,
+   которая уводит к полю под вкладками, а не второе поле здесь. */
+.mine-all{display:flex;align-items:center;gap:10px;width:100%;margin-top:14px;padding:10px 12px;
+  border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  font-size:14px;font-weight:600;color:var(--ink);text-align:left;animation:modIn .5s ease-out}
+.mine-all[hidden]{display:none}
 .mine-all:hover{background:rgba(255,255,255,.1)}
 .mine-all svg{width:18px;height:18px;flex:none;color:var(--dim)}
-.mine-all b{font-weight:500;color:var(--dim)}
 .mine-all .car{margin-left:auto;font-size:18px;line-height:1;color:var(--dim)}
 
 /* ---------- заявка на обложку ---------- */
@@ -872,6 +919,16 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 .cov-size{position:absolute;left:0;right:0;bottom:0;padding:4px 8px;
   background:rgba(0,0,0,.62);color:#fff;font-family:var(--m);font-size:11px}
 .cov-note{margin:0 0 16px;font-size:12.5px;color:var(--dim)}
+.cov-note[hidden]{display:none}
+/* «Сообщить о неточности»: что не так — плашками, ниже пара слов. */
+.rep-what{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.rep-what button{padding:6px 12px;border-radius:999px;font-size:12.5px;color:var(--dim);
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
+.rep-what button:hover{color:var(--ink);border-color:rgba(255,255,255,.28)}
+.rep-what button[aria-checked="true"]{color:var(--ink);background:rgba(242,102,15,.16);border-color:var(--brand)}
+.field textarea{min-height:96px;padding:10px 12px;border-radius:7px;border:1px solid var(--line);background:var(--bg);
+  color:var(--ink);font:14px/1.5 var(--b);resize:vertical}
+.field textarea:focus{outline:none;border-color:var(--brand)}
 
 /* ---------- панель заявок ---------- */
 .adm-list{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin:12px 0}
@@ -928,14 +985,15 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 .talk-hd h2{margin:0;font:700 19px var(--d)}
 .talk-hd .cnt-b{min-width:24px;height:22px;padding:0 7px;border-radius:999px;
   background:var(--card-2);display:grid;place-items:center;font:600 11.5px var(--m);color:var(--dim)}
-.talk-hd select{margin-left:auto;background:var(--card-2);border:1px solid var(--line);
-  border-radius:6px;padding:6px 10px;font-size:13px;color:var(--dim);cursor:pointer}
+.talk-hd .dd{margin-left:auto;height:32px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+  border-radius:8px;padding:0 11px;font-size:13px;color:var(--ink)}
+.talk-hd .dd:hover,.talk-hd .dd.open{border-color:rgba(255,255,255,.24)}
 .talk-form{display:flex;gap:12px;align-items:flex-start;margin-bottom:8px}
 /* Поле в одну строку и растёт по мере текста; кнопка — в самом поле.
    Под полем — только выбор «комментарий / рецензия», без полосы. */
 .talk-main{flex:1;min-width:0}
-.talk-box{display:flex;align-items:flex-end;gap:6px;border:1px solid var(--line);border-radius:8px;
-  background:var(--bg);padding:0 5px 5px 0}
+.talk-box{display:flex;align-items:flex-end;gap:6px;border:1px solid rgba(255,255,255,.13);border-radius:10px;
+  background:rgba(255,255,255,.045);padding:0 5px 5px 0}
 .talk-box:focus-within{border-color:var(--brand)}
 .talk-box textarea{display:block;flex:1;min-width:0;min-height:42px;padding:10px 13px 5px;border:0;
   background:none;resize:none;font:14px/1.5 var(--b);color:var(--ink);overflow-y:auto}
@@ -945,6 +1003,9 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 .talk-box .send{width:34px;height:34px;flex:none;border-radius:7px;display:grid;place-items:center;
   background:var(--brand);color:#151517}
 .talk-box .send:hover{background:var(--brand-hi)}
+/* Рецензия короче 250 знаков или без своей оценки — кнопка серая, но
+   нажимается: по нажатию подсказка объясняет, чего не хватает. */
+.talk-box .send.wait,.talk-box .send.wait:hover{background:rgba(255,255,255,.14);color:rgba(255,255,255,.55);cursor:not-allowed}
 .talk-box .send svg{width:16px;height:16px}
 .talk-opts{display:flex;align-items:center;gap:10px;margin-top:7px}
 .kind{display:flex;gap:2px;padding:2px;border-radius:7px;background:rgba(255,255,255,.04)}
@@ -962,10 +1023,13 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
 .kind-hint button:hover{text-decoration:underline;text-underline-offset:3px}
 /* ---------- рецензия ----------
    Отдельная сущность среди комментариев: своя ссылка (#r=id), длинный
-   текст, оценка автора. В ленте — плашкой с золотой чертой и пометкой у
-   ника. Цвет свой: оранжевый значит «сделал ты сам», фиолетовый —
-   Twitch и роли, красный — ошибки. */
-.msg.review{margin:6px 0;padding:14px 14px 12px;border:1px solid rgba(225,176,77,.22);border-left:3px solid var(--rv);
+   текст, оценка автора. В ленте — плашкой с золотой чертой, без
+   пометки у ника: плашки хватает. Цвет свой: оранжевый значит «сделал
+   ты сам», фиолетовый — Twitch и роли, красный — ошибки.
+   Аватар рецензии стоит на той же вертикали, что у комментариев:
+   плашка выходит за край ленты ровно на свой отступ и черту. Иначе
+   рецензия сидела правее и читалась как ответ. */
+.msg.review{margin:6px -17px;padding:14px 14px 12px;border:1px solid rgba(225,176,77,.22);border-left:3px solid var(--rv);
   border-radius:8px;background:rgba(225,176,77,.055)}
 .msg.review + .msg:not(.reply){border-top:0}
 .rv-k{display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:1px 7px;border-radius:5px;vertical-align:1px;
@@ -992,14 +1056,35 @@ a.re{text-decoration:none}
   white-space:pre-wrap;overflow-wrap:anywhere}
 .msg .del{flex:none;color:var(--faint);font-size:13px;padding:5px 7px}
 .msg .del:hover{color:var(--like)}
+/* У рецензии слева от крестика — «открыть отдельно» и «ссылка на
+   рецензию» значками, а не строками под текстом. */
+.msg .ic{flex:none;width:28px;height:28px;display:grid;place-items:center;border-radius:6px;color:var(--faint);text-decoration:none}
+.msg .ic:hover{color:var(--ink);background:rgba(255,255,255,.08)}
+.msg .ic svg{width:15px;height:15px}
+/* Лайк комментария. Обезличенный: видно только число. Свой —
+   оранжевым, как сердечко трека. */
+.lk{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:0;font:500 12px var(--b);color:var(--faint)}
+.lk svg{width:14px;height:14px}
+.lk:hover:not(:disabled){color:var(--brand-hi)}
+.lk.on{color:var(--brand)}
+.lk.on svg{fill:currentColor}
+.lk:disabled{cursor:default}
+.lk b{font:600 11.5px var(--m)}
+.rv-foot .lk{margin:0 6px 0 0;font-size:14px}
+.rv-foot .lk svg{width:18px;height:18px}
+.lk b:empty{display:none}
+/* Пришли по уведомлению к ответу — он на миг подсвечен. */
+.msg.lit{animation:lit 2.4s ease-out}
+@keyframes lit{0%,30%{background:rgba(242,102,15,.16)}100%{background:transparent}}
+.msg{scroll-margin-top:100px}
 
 /* ---------- похожие ---------- */
 /* Столбец с явным minmax(0,…): иначе строку распирает длинное
    название, и список вылезает за панель. */
 .sim{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
-.sim a{display:flex;align-items:center;gap:11px;padding:7px;border-radius:6px;
-  background:var(--card-2);color:inherit;text-decoration:none}
-.sim a:hover{background:#3D3D45}
+.sim a{display:flex;align-items:center;gap:11px;padding:7px;border-radius:var(--r);
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:inherit;text-decoration:none}
+.sim a:hover{background:rgba(255,255,255,.1)}
 .sim .th{position:relative;width:48px;height:48px;flex:none;border-radius:5px;
   overflow:hidden;background:#1F1F22}
 .sim .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -1127,21 +1212,22 @@ a.re{text-decoration:none}
 .vid.float.au iframe{aspect-ratio:auto;height:152px!important}
 .dock[hidden]{display:none}
 .dock.mini .vid{visibility:hidden;pointer-events:none}
-.fl-bar{display:flex;align-items:center;gap:4px;height:40px;padding:0 6px 0 12px;
+.fl-bar{display:flex;align-items:center;gap:4px;height:44px;padding:0 6px 0 12px;
   background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.07)}
-.fl-t{min-width:0;flex:1;padding:0;text-align:left;font-size:12.5px;line-height:1.2;
+.fl-t{min-width:0;flex:1;padding:0;text-align:left;font-size:12.5px;line-height:1.25;
   color:var(--ink);display:flex;flex-direction:column}
-.fl-t small{font-size:10.5px;font-weight:600;color:var(--brand-hi)}
-.fl-t span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.fl-t:hover span{color:var(--brand-hi)}
+.fl-t b,.fl-t span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.fl-t b{font-weight:700}
+.fl-t span{font-size:11px;color:var(--dim)}
+.fl-t:hover b{color:var(--brand-hi)}
 .fl-b{width:30px;height:30px;flex:none;border-radius:7px;display:grid;place-items:center;
   color:var(--dim);font-size:13px}
 .fl-b:hover{background:rgba(255,255,255,.1);color:#fff}
 .fl-b svg{width:16px;height:16px}
-.fl-sw{flex:none;padding:4px 9px;border-radius:6px;font-size:11.5px;font-weight:600;
-  color:var(--dim);border:1px solid rgba(255,255,255,.14)}
-.fl-sw::before{content:'▶ ';font-size:8px;vertical-align:1px}
-.fl-sw:hover{color:#fff;border-color:rgba(255,255,255,.3)}
+.fl-sw{flex:none;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:7px;
+  font-size:12px;font-weight:600;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16)}
+.fl-sw::before{content:'';border-left:7px solid var(--brand);border-top:4.5px solid transparent;border-bottom:4.5px solid transparent}
+.fl-sw:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3)}
 @media(max-width:760px){
   .vid.float{right:12px;bottom:12px}
 }
@@ -1278,13 +1364,14 @@ a.re{text-decoration:none}
 .bs-go:hover{background:var(--brand-hi)}
 .bs-go svg{width:16px;height:16px}
 .suggest{position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:6;max-height:380px;overflow:auto;
-  padding:9px;text-align:left;background:#2A2A30;border:1px solid #515159;border-radius:9px;
-  box-shadow:0 20px 40px rgba(0,0,0,.38)}
+  padding:6px;text-align:left;background:var(--pop-bg);border:1px solid var(--pop-line);border-radius:var(--pop-r);
+  box-shadow:var(--pop-shadow);animation:popIn .14s ease-out}
+@keyframes popIn{from{opacity:0;transform:translateY(-4px)}}
 .suggest[hidden]{display:none}
-.sg-t{padding:4px 9px 7px;color:#85858E;font:500 10px var(--m);text-transform:uppercase;letter-spacing:.07em}
-.sg{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;border-radius:6px;
+.sg-t{padding:6px 11px 7px;color:var(--faint);font:500 10px var(--m);text-transform:uppercase;letter-spacing:.07em}
+.sg{display:flex;align-items:center;gap:10px;width:100%;padding:8px 11px;border-radius:8px;
   color:inherit;text-decoration:none}
-.sg:hover,.sg.sel{background:#393940}
+.sg:hover,.sg.sel{background:var(--pop-hover)}
 .sg .th{position:relative;width:37px;height:37px;flex:none;border-radius:5px;overflow:hidden;background:#34343b}
 .sg .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .sg .th .art-fb{font-size:15px}
@@ -1292,7 +1379,7 @@ a.re{text-decoration:none}
 .sg b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sg small{display:block;font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sg .rt{flex:none;font:600 11px var(--m);color:var(--tc)}
-.sg-all{display:block;width:100%;margin-top:5px;padding:11px 9px 5px;border-top:1px solid var(--line);
+.sg-all{display:block;width:100%;margin-top:5px;padding:11px 11px 5px;border-top:1px solid var(--pop-line);
   color:var(--brand-hi);font-size:12px;font-weight:600;text-align:left}
 .quick{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;
   margin-top:13px;color:var(--faint);font-size:12px}
@@ -1389,8 +1476,10 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
   border:1px solid rgba(145,70,255,.35);font-size:13px;color:#d9ccff}
 .cl-sug{display:flex;flex-direction:column;gap:2px;margin-top:-8px}
 .cl-sug:empty{display:none}
-.cl-sug button{text-align:left;padding:7px 10px;border-radius:6px;font-size:13.5px;color:var(--ink)}
-.cl-sug button:hover:not(:disabled){background:var(--card-2)}
+.cl-sug{padding:6px;background:var(--pop-bg);border:1px solid var(--pop-line);border-radius:var(--pop-r);
+  box-shadow:var(--pop-shadow);margin-bottom:14px;animation:popIn .14s ease-out}
+.cl-sug button{text-align:left;padding:8px 11px;border-radius:8px;font-size:13.5px;color:var(--ink)}
+.cl-sug button:hover:not(:disabled){background:var(--pop-hover)}
 .cl-sug button:disabled{opacity:.45;cursor:default}
 .cl-sug small{color:var(--faint);margin-left:6px}
 .cl-card{padding:14px 0;border-top:1px solid rgba(255,255,255,.065)}
@@ -1421,8 +1510,8 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
   background:var(--brand);border:2px solid var(--bar);pointer-events:none}
 .n-dot[hidden]{display:none}
 .bell-pop{position:absolute;right:-45px;top:46px;width:345px;max-height:min(460px,70vh);overflow-y:auto;
-  background:var(--card-2);border:1px solid #4a4a50;box-shadow:0 16px 44px #0008;border-radius:9px;
-  padding:16px 17px;z-index:55;font-size:13px;line-height:1.45}
+  background:var(--pop-bg);border:1px solid var(--pop-line);box-shadow:var(--pop-shadow);border-radius:var(--pop-r);
+  padding:16px 17px;z-index:55;font-size:13px;line-height:1.45;animation:popIn .14s ease-out}
 .bell-pop[hidden]{display:none}
 .bell-pop > strong{display:block;font-size:14px;margin-bottom:4px}
 .bell-pop .note-row{display:block;padding:10px 0}
@@ -1436,8 +1525,8 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
 .msg .re{display:inline-block;margin-top:5px;padding:0;font-size:12px;color:var(--faint)}
 .msg .re:hover{color:var(--brand-hi)}
 .re-form{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px 45px}
-.re-form textarea{flex:1 1 100%;min-height:60px;padding:9px 12px;border-radius:8px;border:1px solid var(--line);
-  background:var(--bg);color:var(--ink);font:inherit;font-size:13.5px;resize:vertical}
+.re-form textarea{flex:1 1 100%;min-height:60px;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.13);
+  background:rgba(255,255,255,.045);color:var(--ink);font:inherit;font-size:13.5px;resize:vertical}
 .re-form textarea:focus{outline:none;border-color:var(--brand)}
 .re-form .btn{min-height:34px;padding:6px 13px;font-size:13px}
 .who-link{color:var(--brand-hi);text-decoration:none;border-bottom:1px solid rgba(255,148,36,.35)}
@@ -1473,10 +1562,10 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
 .kv b{font:500 12px var(--m)}
 .kv .lnk{margin:0}
 .me-tools{display:flex;flex-wrap:wrap;gap:9px;margin:4px 0 14px}
-.me-tools input,.me-tools select{height:37px;padding:0 11px;border-radius:8px;border:1px solid var(--line);
+.me-tools input,.me-tools .dd{height:37px;padding:0 11px;border-radius:8px;border:1px solid var(--line);
   background:#151719;color:var(--ink);font-size:13px}
 .me-tools input{flex:1;min-width:200px}
-.me-tools input:focus,.me-tools select:focus{outline:none;border-color:var(--brand)}
+.me-tools input:focus,.me-tools .dd.open{outline:none;border-color:var(--brand)}
 .me-cnt{margin-top:12px;color:var(--faint);font-size:11.5px}
 
 @media(max-width:1000px){
@@ -1594,13 +1683,13 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
   padding:8px 11px;font-size:13px;color:var(--ink)}
 .st-add input::placeholder{color:var(--faint)}
 .st-add input:focus{outline:none;border-color:var(--brand)}
-.st-sug{position:absolute;left:0;top:calc(100% + 4px);z-index:30;width:max(100%,380px);
-  background:var(--card-2);border:1px solid var(--line);border-radius:8px;padding:4px;
-  box-shadow:0 18px 40px -10px #000}
+.st-sug{position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:max(100%,380px);
+  background:var(--pop-bg);border:1px solid var(--pop-line);border-radius:var(--pop-r);padding:6px;
+  box-shadow:var(--pop-shadow);animation:popIn .14s ease-out}
 .st-sug[hidden]{display:none}
 .st-sug button{display:flex;align-items:center;gap:10px;width:100%;padding:6px 8px;
-  border-radius:5px;text-align:left;min-width:0}
-.st-sug button.on,.st-sug button:hover{background:#44444C}
+  border-radius:8px;text-align:left;min-width:0}
+.st-sug button.on,.st-sug button:hover{background:var(--pop-hover)}
 .st-sug .st-img{width:34px;height:34px;flex:none;border-radius:4px;--fs:14px}
 .st-sug .st-tx{flex:1}
 .st-sug .rt{font:600 11.5px var(--m);color:var(--tc);white-space:nowrap}
@@ -1862,16 +1951,72 @@ body.st-air #stAir:hover{opacity:1}
 .cab :is(.near-row,.claim-info a):hover{color:var(--brand-hi)}
 .cab .muted{color:var(--dim)}
 .cab .faint{color:var(--faint)}
-.c-hero{background:linear-gradient(109deg,#2d2b2b 0%,#29292d 40%,#2a2a2e 100%);border:1px solid #343439;display:flex;align-items:center;gap:24px;min-height:165px;padding:21px 27px;border-radius:9px;position:relative;overflow:hidden;margin-top:14px}
-.c-hero::before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:linear-gradient(var(--brand),#664535);opacity:.95}
+.c-hero{background:linear-gradient(109deg,#2d2b2b 0%,#29292d 40%,#2a2a2e 100%);border:1px solid #343439;display:flex;align-items:center;gap:24px;min-height:165px;padding:21px 27px;border-radius:9px;position:relative;overflow:hidden}
+/* Верх кабинета и профиля: слева шапка с человечком и вкладки, справа
+   последние действия. Лента своей высоты строке не задаёт (contain:size)
+   — она длиннее шапки и прокручивается внутри, а избранное ниже идёт во
+   всю ширину. */
+.c-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,360px);gap:20px;align-items:stretch}
+.c-top-l{min-width:0}
+.c-top .feed-panel{contain:size;display:flex;flex-direction:column;margin-top:46px;margin-bottom:26px}
+.c-top .feed-panel[hidden]{display:none}
+.c-top .feed-list{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--card-2) transparent}
+.c-top:has(.feed-panel[hidden]){grid-template-columns:minmax(0,1fr)}
+/* Человечек гуляет по верхней кромке шапки, как над поиском на главной. */
+.c-hero-w{position:relative;padding-top:46px}
+.c-run{position:absolute;left:30px;right:30px;top:0;height:46px;z-index:2}
+.c-top + .c-tabs,.c-top-l .c-tabs{margin-bottom:26px}
+/* Плашка «привяжи плейлист» над кабинетом — её можно закрыть. */
+.sp-promo{display:flex;align-items:center;gap:14px;margin:14px 0 0;padding:12px 14px 12px 16px;border-radius:10px;
+  background:linear-gradient(100deg,rgba(30,215,96,.16),rgba(30,215,96,.05) 60%,rgba(255,255,255,.03));
+  border:1px solid rgba(30,215,96,.35)}
+.sp-promo[hidden]{display:none}
+.sp-promo svg.sp{width:30px;height:30px;flex:none}
+.sp-promo p{margin:0;flex:1;min-width:0;font-size:13.5px;font-weight:600;line-height:1.4}
+.sp-promo .main-btn{background:#1ED760;border-color:#1ED760;color:#0c1a10}
+.sp-promo .main-btn:hover{background:#3BE477;border-color:#3BE477;color:#0c1a10}
+.sp-promo .x{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:7px;color:var(--dim)}
+.sp-promo .x:hover{background:rgba(255,255,255,.1);color:#fff}
+.sp-box .sp-now{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+.sp-box .sp-now img{width:52px;height:52px;border-radius:6px;object-fit:cover;flex:none;background:#333}
+.sp-box .sp-now b{display:block;font-size:13.5px}
+.sp-box .sp-now small{display:block;color:var(--dim);font-size:11.5px}
+.sp-box .sp-row{display:flex;gap:8px;flex-wrap:wrap}
+.sp-box .sp-row input{flex:1 1 240px;margin:0!important}
+/* Подписки: кнопка в профиле и список в кабинете. */
+.follow-btn[aria-pressed="true"]{background:rgba(242,102,15,.14);border-color:rgba(242,102,15,.5);color:var(--brand-hi)}
+.hero-follow{font-size:11.5px;color:var(--dim)}
+.hero-follow::before{content:'·';margin:0 9px 0 2px;color:#616168}
+.near-row .on-dot{width:8px;height:8px;border-radius:50%;background:var(--t-atl);flex:none;box-shadow:0 0 0 2px rgba(74,222,128,.2)}
+/* Управление: инструменты команды сайта во вкладке кабинета. */
+.mg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-bottom:28px}
+.mg-card{display:flex;flex-direction:column;gap:8px;padding:18px;border-radius:10px;background:#29292e;border:1px solid #37373d;color:inherit;text-decoration:none}
+.mg-card:hover{border-color:rgba(242,102,15,.55)}
+.mg-card b{font-size:15px}
+.mg-card span{font-size:12.5px;color:var(--dim);line-height:1.5}
+.mg-card small{margin-top:auto;color:var(--brand-hi);font-weight:700;font-size:12px}
+.atmo-on .cab .mg-card{background:rgba(34,31,36,.52);border-color:rgba(255,255,255,.11)}
+.rp-row{display:flex;gap:13px;align-items:flex-start;padding:14px 0;border-top:1px solid rgba(255,255,255,.07)}
+.rp-row:first-child{border-top:0}
+.rp-row .track-art{width:46px;height:46px}
+.rp-row .rp-tx{flex:1;min-width:0}
+.rp-row .rp-tx a{color:inherit;text-decoration:none}
+.rp-row .rp-tx a:hover b{color:var(--brand-hi)}
+.rp-row .rp-tx b{font-size:13.5px}
+.rp-row .rp-tx p{margin:5px 0 0;font-size:13.5px;white-space:pre-wrap;overflow-wrap:anywhere}
+.rp-row .rp-tx small{display:block;color:var(--faint);font-size:11.5px;margin-top:4px}
+.rp-act{display:flex;gap:6px;flex:none}
+.rp-what{display:inline-block;margin-left:7px;padding:1px 7px;border-radius:5px;font:600 10.5px/1.6 var(--b);color:var(--brand-hi);
+  background:rgba(242,102,15,.12);border:1px solid rgba(242,102,15,.35);vertical-align:1px}
+.c-hero::before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--brand)}
 .hero-avatar{position:relative;flex:none;width:106px;height:106px}
-.hero-avatar img,.hero-avatar .ini{width:100%;height:100%;object-fit:cover;border-radius:18px;border:2px solid #bd9b7d;background:#34302d;display:grid;place-items:center;font:800 30px var(--d);color:#f5b087}
+.hero-avatar img,.hero-avatar .ini{width:100%;height:100%;object-fit:cover;border-radius:18px;border:2px solid var(--brand);background:#34302d;display:grid;place-items:center;font:800 30px var(--d);color:#f5b087}
 .music-symbol{position:absolute;right:-7px;bottom:-5px;border:2px solid var(--card);background:#292a2e;border-radius:6px;padding:4px;color:var(--brand);line-height:1;font-size:12px}
 .hero-text{min-width:0;flex:1}
 .hero-kicker{color:var(--faint);font-size:10px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;margin-bottom:4px}
 .hero-name{font-size:25px;font-weight:800;line-height:1.25;margin-bottom:5px;overflow-wrap:anywhere}
 .hero-name.none{color:var(--dim)}
-.hero-bio{font-size:12.5px;color:#bab8b9;margin-bottom:8px;max-width:680px}
+.hero-bio{font-size:12.5px;color:#D0CED0;margin-bottom:8px;max-width:680px}
 .hero-bio:empty{display:none}
 .hero-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px}
 .role-tag{font-size:10.5px;padding:2px 8px;background:#3a2b22;border:1px solid #7c4424;color:#eea36b;border-radius:5px;font-weight:700}
@@ -1888,7 +2033,7 @@ body.st-air #stAir:hover{opacity:1}
 .level-row{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:7px}
 .level-pill{color:var(--brand-hi);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.025em}
 .level-pill b{font-weight:800;font-size:16px;margin-left:4px}
-.xp-text{color:#b6afb0;font:11px var(--m)}
+.xp-text{color:var(--dim);font:11px var(--m)}
 .xp-text b{color:var(--ink);font-weight:700}
 .xp-track{height:6px;border-radius:8px;background:#444047;overflow:hidden}
 .xp-track>span{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,#ee6c25,#ffae55)}
@@ -1902,15 +2047,15 @@ body.st-air #stAir:hover{opacity:1}
 .soft-btn.bad{color:#ff9a9a}
 .c-tabs{display:flex;gap:34px;align-items:end;border-bottom:1px solid var(--line);margin:19px 0 26px;overflow:auto;scrollbar-width:none}
 .c-tabs::-webkit-scrollbar{display:none}
-.c-tab{padding:10px 0 12px;white-space:nowrap;border-bottom:2px solid transparent;color:#a5a5ae;font-size:13px;font-weight:700;transition:color .14s}
+.c-tab{padding:10px 0 12px;white-space:nowrap;border-bottom:2px solid transparent;color:#C8C8D0;font-size:13px;font-weight:700;transition:color .14s}
 .cab .c-tab:hover{color:#fff}
 .c-tab[aria-selected="true"]{border-bottom-color:var(--brand);color:#fff}
 .c-tab .tab-n{margin-left:6px;padding:0 6px;border-radius:9px;background:var(--brand);color:#16100d;font-size:10.5px}
 .section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:17px}
 .section-title h2{font-weight:800;font-size:18px;line-height:1.2;margin:0}
 .section-title .section-sub{display:block;color:var(--dim);font-size:12px;margin-top:6px;font-weight:400;letter-spacing:0}
-.text-link{color:#d7a487;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;white-space:nowrap}
-.text-link:hover,.cab a.text-link:hover{color:var(--brand-hi)}
+.text-link{color:var(--brand-hi);display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;white-space:nowrap}
+.text-link:hover,.cab a.text-link:hover{color:#FFB15E}
 .text-link svg{height:14px;width:14px}
 .mutedline{font-size:11px;color:var(--faint)}
 .feature-grid{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(345px,.83fr);gap:20px;margin-bottom:31px;align-items:stretch}
@@ -1921,6 +2066,7 @@ body.st-air #stAir:hover{opacity:1}
 .feed-panel{min-width:0;background:#29292e;border:1px solid #37373d;border-radius:10px;padding:21px 19px 12px;overflow:hidden}
 .feed-panel .music-main-top{margin:0 0 12px}
 .feed-head-link{display:grid;place-items:center;color:var(--dim);padding:4px;border-radius:5px}
+.feed-panel .music-main-top small{font-size:11.5px;color:var(--faint);font-weight:500}
 .cab .feed-head-link:hover{color:var(--brand-hi);background:#ffffff12}
 .feed-head-link svg{width:16px;height:16px}
 .feed-list{display:flex;flex-direction:column}
@@ -1956,7 +2102,7 @@ body.st-air #stAir:hover{opacity:1}
 .small-tags{display:flex;flex-wrap:wrap;gap:7px}
 .small-tag{padding:6px 9px;border-radius:5px;background:#303036;font-size:11px;color:#d2d1d5}
 button.small-tag:hover{background:#3e3e45;color:#fff}
-.small-tag b{color:#d89d77;margin-left:4px;font-size:10px}
+.small-tag b{color:var(--brand-hi);margin-left:4px;font-size:10px}
 .t-note{font-size:11px;color:var(--faint);line-height:1.7;margin-top:12px;max-width:350px}
 .order-inline{background:#29292e;border:1px solid #38383e;border-radius:9px;padding:20px 20px 17px;margin-bottom:25px}
 .order-count{display:flex;align-items:baseline;gap:8px;margin:2px 0 11px}
@@ -1973,24 +2119,24 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
 .mini-order .rating-col{white-space:nowrap;font-size:10.5px;font-weight:700}
 .near-row{display:flex;gap:10px;align-items:center;border-top:1px solid #ffffff0e;padding:9px 0;font-size:12px}
 .near-row:first-child{border-top:0}
-.near-row img,.near-row .ini{width:30px;height:30px;border-radius:8px;object-fit:cover;flex:none;background:#34302d;display:grid;place-items:center;font-weight:800;font-size:11px;color:#f5b087}
+.near-row img,.near-row .ini{width:30px;height:30px;border-radius:8px;object-fit:cover;flex:none;background:#34302d;display:grid;place-items:center;font-weight:800;font-size:11px;color:var(--brand-hi)}
 .near-row b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .near-row span{font:10.5px var(--m);color:var(--dim);white-space:nowrap}
 .ach-strip{margin-top:17px;display:flex;align-items:stretch;gap:16px}
 .ach-item{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-.ach-icon{display:grid;place-items:center;width:41px;height:41px;flex:none;background:#333339;border:1px solid #494950;border-radius:9px;color:#d9b99b}
+.ach-icon{display:grid;place-items:center;width:41px;height:41px;flex:none;background:rgba(242,102,15,.12);border:1px solid rgba(242,102,15,.4);border-radius:9px;color:var(--brand-hi)}
 .ach-icon svg{width:21px;height:21px}
-.ach-icon.off{color:#82818b;background:#2a2a2f}
+.ach-icon.off{color:var(--faint);background:#2a2a2f;border-color:#494950}
 .ach-item strong{display:block;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ach-item small,.ach-card small{display:block;color:var(--dim);font-size:10.5px;margin-top:2px}
 .micro-track{background:#404046;border-radius:2px;height:3px;margin-top:6px;overflow:hidden;width:86px}
-.micro-track span{display:block;height:100%;background:#d38b61}
+.micro-track span{display:block;height:100%;background:var(--brand)}
 .tab-heading{display:flex;gap:15px;align-items:flex-end;justify-content:space-between;margin:0 0 18px}
 .tab-heading h2{font-size:21px;margin:0 0 4px}
 .tab-heading p{margin:0;font-size:12px;color:var(--dim)}
 .toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
-.c-field,.dropdown{height:38px;padding:0 12px;border-radius:7px;background:#29292d;border:1px solid #404048;color:#ddd;outline:none;font-size:12px}
-.c-field:focus,.dropdown:focus{border-color:var(--brand)}
+.c-field,.dropdown{height:38px;padding:0 12px;border-radius:9px;background:#29292d;border:1px solid #404048;color:var(--ink);outline:none;font-size:12.5px}
+.c-field:focus,.dropdown:focus,.dropdown.open,.dropdown:hover{border-color:var(--brand)}
 .toolbar .c-field{flex:1 1 240px;min-width:150px}
 .dropdown{flex:0 1 auto;max-width:180px}
 .toolbar-spacer{margin-left:auto}
@@ -2020,7 +2166,7 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
 .track-actions button[aria-pressed="true"] svg{fill:currentColor}
 .track-actions svg{width:17px;height:17px}
 .c-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:19px;margin:19px 0 25px}
-.music-main .c-cards{margin:0;gap:14px}
+.music-main .c-cards{margin:0;gap:18px}
 /* Оценки композитора в кабинете — по желанию, галочкой «показать рядом»:
    заказчик просил меньше сравнений с ним. */
 .c-cards:not(.cmp) .card .rt-c{display:none}
@@ -2114,7 +2260,8 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
 .atmo-on .cab .c-tabs{border-color:rgba(255,255,255,.1)}
 @media(max-width:1160px){.feature-grid{grid-template-columns:minmax(0,1.4fr) minmax(310px,.75fr)}.music-main .c-cards{gap:10px}.music-main{padding:19px}.feed-panel{padding:18px 14px}.feed-row{min-height:56px}}
 @media(max-width:1040px){.c-cards{grid-template-columns:repeat(4,minmax(0,1fr))}.taste-split{gap:18px}.track-genres{display:none}.ach-strip{gap:10px}}
-@media(max-width:860px){.feature-grid,.overview-grid{grid-template-columns:1fr}.feed-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}.music-main .c-cards{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:860px){.c-top{grid-template-columns:minmax(0,1fr)}.c-top .feed-panel{contain:none;margin-top:0;max-height:330px}
+  .feature-grid,.overview-grid{grid-template-columns:1fr}.feed-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}.music-main .c-cards{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(max-width:800px){.settings-grid{grid-template-columns:1fr}.o-right{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}.o-right .order-inline,.o-right .o-panel{margin:0}.hero-actions .soft-btn span{display:none}.hero-actions .soft-btn{padding:9px}.c-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:600px){
   .c-hero{padding:16px 13px;gap:12px;min-height:132px;align-items:flex-start}
@@ -2189,8 +2336,6 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
    <a href="https://farymastats.info/" target="_blank" rel="noopener noreferrer">стрим</a>
    <a href="#base" id="navBase">база треков</a>
    <a href="#fun" id="navFun">прикольчики</a>
-   <!-- Студию видят композитор и админы: роль приходит с сервера после входа. -->
-   <a href="#studio" id="navStudio" hidden>оценки</a>
    <a href="#">FAQ</a>
   </nav>
 
@@ -2240,8 +2385,7 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
    <h1 class="h1">база треков<small id="count">—</small></h1>
    <div class="hd-r">
     <span class="sortbtn">
-     <span class="car">▼</span>
-     <select id="sort" aria-label="Сортировка">
+     <select id="sort" aria-label="Сортировка" data-dd-right>
       <option value="new">последние добавленные</option>
       <option value="old">сначала старые</option>
       <option value="high">оценка сверху вниз</option>
@@ -2342,7 +2486,13 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
    <a href="#base">база треков</a><span class="sep">›</span><b id="uCrumb">профиль</b>
   </nav>
  </div>
- <section class="c-hero" id="uHero" aria-label="Профиль"></section>
+ <div class="c-top">
+  <div class="c-top-l">
+   <div class="c-hero-w"><div class="runway c-run" id="uRun"></div>
+    <section class="c-hero" id="uHero" aria-label="Профиль"></section></div>
+  </div>
+  <aside class="feed-panel" id="uFeed" aria-label="Последние действия" hidden></aside>
+ </div>
  <div id="uBody"></div>
 </div>
 
@@ -2365,8 +2515,16 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
   </nav>
  </div>
  <h1 class="fun-h">личный кабинет</h1>
- <section class="c-hero" id="meHero" aria-label="Профиль"></section>
- <nav class="c-tabs" id="meTabs" role="tablist" aria-label="Разделы личного кабинета"></nav>
+ <!-- Плашка «привяжи свой плейлист Spotify» — закрывается крестиком. -->
+ <div class="sp-promo" id="meSpPromo" hidden></div>
+ <div class="c-top">
+  <div class="c-top-l">
+   <div class="c-hero-w"><div class="runway c-run" id="meRun"></div>
+    <section class="c-hero" id="meHero" aria-label="Профиль"></section></div>
+   <nav class="c-tabs" id="meTabs" role="tablist" aria-label="Разделы личного кабинета"></nav>
+  </div>
+  <aside class="feed-panel" id="meFeed" aria-label="Последние действия"></aside>
+ </div>
  <div id="meTab" role="tabpanel"></div>
  <!-- Все достижения — окном, как в макете. -->
  <div class="c-overlay" id="mAch" hidden><div class="c-dialog" role="dialog" aria-modal="true" aria-label="Достижения">
@@ -2497,6 +2655,39 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
     <button type="button" class="btn ghost" id="covDrop" hidden>Убрать заявку</button>
     <button type="button" class="btn ghost" id="covCopy">Скопировать заявку</button>
     <button type="submit" class="btn">Сохранить</button>
+   </div>
+  </form>
+ </div>
+</div>
+
+<!-- Сообщить о неточности: не та обложка, год, название… Уходит в общую
+     базу, команда сайта разбирает во вкладке «управление» кабинета. -->
+<div class="modal" id="mReport" hidden>
+ <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="repTitle">
+  <button class="mx" data-close aria-label="Закрыть">✕</button>
+  <div class="mhd">
+   <div class="k" style="color:var(--brand)">неточность</div>
+   <h2 id="repTitle">Сообщить о неточности</h2>
+   <p id="repFor">—</p>
+  </div>
+  <form id="repForm">
+   <div class="rep-what" id="repWhat" role="radiogroup" aria-label="Что не так">
+    <button type="button" role="radio" data-what="cover" aria-checked="false">обложка</button>
+    <button type="button" role="radio" data-what="year" aria-checked="false">год или альбом</button>
+    <button type="button" role="radio" data-what="name" aria-checked="false">название или исполнитель</button>
+    <button type="button" role="radio" data-what="genre" aria-checked="false">жанр или тэги</button>
+    <button type="button" role="radio" data-what="link" aria-checked="false">ссылка или плеер</button>
+    <button type="button" role="radio" data-what="other" aria-checked="true">другое</button>
+   </div>
+   <div class="field">
+    <label for="repText">Что не так и как правильно</label>
+    <textarea id="repText" maxlength="500" required placeholder="Например: это ремастер 2007 года, оригинал вышел в 1973-м"></textarea>
+   </div>
+   <p class="cov-note" id="repCov" hidden>Есть правильная картинка? <button type="button" class="lnk-tw" id="repCovGo" style="color:var(--brand-hi)">предложить свою обложку по ссылке</button></p>
+   <div class="mact">
+    <button type="button" class="btn ghost" data-close>Отмена</button>
+    <span class="cnt" id="repCnt">0 / 500</span>
+    <button type="submit" class="btn">Отправить</button>
    </div>
   </form>
  </div>
@@ -12835,8 +13026,10 @@ function card(r) {
     '<div class="foot">' +
       '<span class="rt-c" style="--tc:' + tColor(r.rate) + '" data-tip="оценка композитора"><i class="tri"></i>' +
         esc(shortRate(r.rate)) + '</span>' +
-      '<span class="rt-u" data-tip="твоя оценка">' +
-        '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>' +
+      /* Вторая оценка — средняя зрителей, а не своя: своя видна
+         галочкой на обложке и шкалой на наведении. */
+      '<span class="rt-u" data-tip="оценка зрителей: пока никто не оценил">' +
+        '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="8" r="3.6"/><path d="M2 20.5c0-4 3.1-6.4 7-6.4s7 2.4 7 6.4z"/><circle cx="16.8" cy="9" r="3"/><path d="M17.4 14.2c2.9.4 4.6 2.6 4.6 5.6V20.5h-4.4c0-2.5-.4-4.5-1.8-6z" opacity=".75"/></svg>' +
         '<span class="mv">–</span></span>' +
       '<button class="play" aria-label="Слушать «' + esc(r.title) + '»" data-tip="Слушать здесь">' +
         '<svg viewBox="0 0 12 12" fill="currentColor"><path d="M2 1l9 5-9 5z"/></svg></button>' +
@@ -12855,8 +13048,6 @@ function card(r) {
   const rt = el.querySelector('.rt');
   const scale = el.querySelector('.scale');
   const mods = el.querySelector('.mods');
-  const mv = el.querySelector('.mv');
-  const rtu = el.querySelector('.rt-u');
 
   // Шкала слева направо снизу вверх: левый сегмент «кринж-контент»,
   // правый «гениально». TIERS перечислены от лучшего к худшему.
@@ -12920,8 +13111,6 @@ function card(r) {
       const i = t.mods.indexOf(v.m);
       mods.querySelector('[data-d="1"]').disabled = i <= 0;
       mods.querySelector('[data-d="-1"]').disabled = i < 0 || i >= t.mods.length - 1;
-      mv.textContent = shortRate({ tier: t.key, mod: v.m });
-      rtu.style.setProperty('--tc', TCOLOR[t.key]);
       el.classList.add('my');
     } else {
       segs.forEach(s => { s.querySelector('i').style.width = '0%'; });
@@ -12929,25 +13118,16 @@ function card(r) {
       rt.className = 'rt';
       rt.style.color = '';
       mods.classList.add('off');
-      mv.textContent = '–';
-      rtu.style.removeProperty('--tc');
       el.classList.remove('my');
     }
+    зрителиНаКарточке(el);
   }
 
   /* Оценку поставили — карточка на 0,7 секунды чуть вырастает и мягко
      светится цветом ступени, а под «перейти к треку» две секунды
      висит «оценка поставлена!». */
   function удар(tier) {
-    el.style.setProperty('--hc', TCOLOR[tier]);
-    el.classList.remove('hit');
-    void el.offsetWidth;
-    el.classList.add('hit');
-    const msg = el.querySelector('.rated-msg');
-    msg.textContent = 'оценка поставлена!';
-    msg.classList.add('on');
-    clearTimeout(el._удар);
-    el._удар = setTimeout(() => { msg.classList.remove('on'); el.classList.remove('hit'); }, 2000);
+    ударОценки(el, mods, el.querySelector('.rated-msg'), tier);
   }
 
   // MODS_ALL идёт от «++» к «- -», поэтому «выше» — шаг к началу списка
@@ -12989,6 +13169,48 @@ function card(r) {
   paint();
   счётНаКарточке(el);
   return el;
+}
+
+/* Оценку поставили — плашка на 0,7 секунды чуть вырастает и мягко
+   светится цветом ступени, под «перейти к треку» две секунды висит
+   «оценка поставлена!», а «−» и «+» после удара всплывают на место.
+   Одно и то же на карточке каталога и на странице трека. */
+function ударОценки(el, mods, msg, tier) {
+  el.style.setProperty('--hc', TCOLOR[tier]);
+  el.classList.remove('hit');
+  mods.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('hit');
+  mods.classList.add('pop');
+  msg.textContent = 'оценка поставлена!';
+  msg.classList.add('on');
+  clearTimeout(el._удар);
+  el._удар = setTimeout(() => { msg.classList.remove('on'); el.classList.remove('hit', 'pop'); mods.classList.remove('pop'); }, 2000);
+}
+
+/* ---------- средняя зрителей ----------
+   Открытые оценки остальных считает сервер (track_avgs); своя
+   прибавляется отсюда — она свежее серверной, и средняя меняется сразу
+   по щелчку. Скрытые оценки сюда не входят и не выдумываются. Порога
+   нет: и один голос показывается — числом голосов в подсказке. */
+let ШКАЛА_ОЦЕНОК = null;
+const ближайшая = балл => (ШКАЛА_ОЦЕНОК = ШКАЛА_ОЦЕНОК || SCALE_ORDER.map(l => parseRate(l)).filter(Boolean))
+  .reduce((a, b) => Math.abs(b.score - балл) < Math.abs(a.score - балл) ? b : a);
+function средняяЗрителей(key) {
+  const с = ОБЛ && ОБЛ.средние ? ОБЛ.средние.get(key) : null;
+  let n = с ? с.n : 0, сумма = с ? с.score * с.n : 0;
+  const мой = MY[key] ? баллМой(MY[key]) : null;
+  if (мой != null) { n++; сумма += мой; }
+  return n ? { n, балл: сумма / n, оценка: ближайшая(сумма / n) } : null;
+}
+function зрителиНаКарточке(el) {
+  const rtu = el.querySelector('.rt-u');
+  if (!rtu) return;
+  const ср = средняяЗрителей(el.dataset.key);
+  rtu.querySelector('.mv').textContent = ср ? shortRate(ср.оценка) : '–';
+  if (ср) rtu.style.setProperty('--tc', TCOLOR[ср.оценка.tier]); else rtu.style.removeProperty('--tc');
+  rtu.dataset.tip = ср ? 'оценка зрителей: ' + ср.оценка.label + ' · ' + число(ср.n) + ' ' + plural(ср.n, 'голос', 'голоса', 'голосов')
+                       : 'оценка зрителей: пока никто не оценил';
 }
 
 /* ---------- отрисовка ---------- */
@@ -13272,7 +13494,10 @@ function route() {
   if (location.hash === '#studio') return showStudio();
   const рец = location.hash.match(/^#r=(\d+)$/);
   if (рец) return showReview(Number(рец[1]));
-  const m = location.hash.match(/^#t=([\s\S]+)$/);
+  // «&c=id» — к какому комментарию прокрутить (из уведомления об ответе).
+  // Ключ в адресе закодирован целиком, своего «&» в нём не бывает.
+  const m = location.hash.match(/^#t=([^&]+)(?:&c=(\w+))?$/);
+  T.кКомменту = m && m[2] ? m[2] : null;
   let r = null;
   if (m) {
     let key = m[1];
@@ -13290,11 +13515,11 @@ function route() {
    стоит приветствие; база треков — сам каталог (#base) и страницы
    треков; прикольчики и кабинет — свои. */
 function навигация() {
-  // Студия — свой пункт шапки, его видят композитор и админы.
+  // Студия открывается из кабинета («управление») — подсвечен кабинет.
   const h = location.hash;
-  const где = h === '#fun' ? 'navFun' : h === '#studio' ? 'navStudio' : /^#me(\/|$)/.test(h) ? '' : h.startsWith('#u=') ? '-' :
+  const где = h === '#fun' ? 'navFun' : h === '#studio' || /^#me(\/|$)/.test(h) ? '' : h.startsWith('#u=') ? '-' :
               h === '' || h === '#' ? 'navHome' : 'navBase';
-  ['navHome', 'navBase', 'navFun', 'navStudio'].forEach(id => {
+  ['navHome', 'navBase', 'navFun'].forEach(id => {
     if (id === где) $(id).setAttribute('aria-current', 'page');
     else $(id).removeAttribute('aria-current');
   });
@@ -13328,6 +13553,7 @@ function showTrack(r) {
   drawTrack();
   if (тотЖе && ОБЛ && ОБЛ.sb) комментарииЗагрузить(r.key);
   window.scrollTo(0, 0);
+  if (T.кКомменту) { T.кКомментам = false; кКомментуПрокрутить(); }
   // Пришли облачком с карточки — сразу к комментариям. Ещё раз чуть
   // позже: плееры и обложка над ними дорисовываются и сдвигают ленту.
   if (T.кКомментам) {
@@ -13557,12 +13783,12 @@ function drawHero() {
           '<button class="act ic" id="tShare" data-tip="Поделиться" aria-label="Поделиться">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
             '<path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M5 14v5h14v-5"/></svg></button>' +
-          '<button class="act ic" id="tCover" data-tip="' +
-            (MYCOV[r.key] ? 'Заменить обложку' : 'Предложить обложку') + '" aria-label="' +
-            (MYCOV[r.key] ? 'Заменить обложку' : 'Предложить обложку') + '">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-            '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/>' +
-            '<path d="M4 17l5-5 4 4 3-2 4 4"/></svg></button>' +
+          /* Была «предложить обложку»; теперь шире — сообщить о любой
+             неточности. Обложку по-прежнему можно предложить: из этого
+             же окна и щелчком по пустой обложке. */
+          '<button class="act ic" id="tReport" data-tip="Сообщить о неточности" aria-label="Сообщить о неточности">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+            '<circle cx="12" cy="12" r="9.2"/><path d="M12 7.2v6.2"/><path d="M12 16.8h.01"/></svg></button>' +
         '</div>' +
       '</div>' +
       '<div class="hero-sc">' +
@@ -13571,8 +13797,8 @@ function drawHero() {
             разносы.map(x => '№' + x.streamNum + ' — ' + (x.rate ? x.rate.label : 'без оценки')).join(', ')) + '"' : '') + '>' +
           '<span>оценка композера</span>' +
           '<b>' + esc(r.rate ? r.rate.label : 'нет') + '</b>' +
-          '<small>' + (r.rate ? r.rate.score.toFixed(1) + ' из 10' : 'ещё не разобран') +
-            (разносы.length > 1 ? ' · эфир №' + r.streamNum : '') + '</small></div>' +
+          '<small>' + (r.rate ? '' : 'ещё не разобран') +
+            (разносы.length > 1 ? (r.rate ? '' : ' · ') + 'эфир №' + r.streamNum : '') + '</small></div>' +
         '<div class="sc nobody"><span>оценка пользователей</span><b>…</b><small></small></div>' +
       '</div>' +
     '</div>';
@@ -13632,8 +13858,7 @@ function drawHero() {
     });
   }));
 
-  $('tCover').classList.toggle('sent', !!MYCOV[r.key]);
-  $('tCover').addEventListener('click', () => openCover(r));
+  $('tReport').addEventListener('click', () => openReport(r));
 
   // Ссылка на трек, а не на эту страницу: страницу и так видно в адресе,
   // а поделиться обычно хотят самой музыкой.
@@ -13770,8 +13995,102 @@ const ПОДСКАЗКА = (() => {
   addEventListener('scroll', спрятать, { passive: true, capture: true });
   addEventListener('resize', спрятать);
 
-  return { спрятать };
+  /* Сказать что-то у кнопки самим — например, почему рецензия не уходит. */
+  const сказать = (т, текст) => {
+    т.dataset.tip = текст;
+    показать(т);
+    clearTimeout(уход);
+    уход = setTimeout(спрятать, ДЕРЖАТЬ);
+  };
+  return { спрятать, сказать };
 })();
+
+/* ---------- выпадашки ----------
+   Каждый select на странице подменяется своим списком — одного вида с
+   подсказками поиска и уведомлениями: браузерный подсвечивал пункты
+   голубым и рисовался по-своему в каждом браузере. Сам select остаётся
+   внутри спрятанным: значение и событие change идут через него, так что
+   код, который его слушает, разницы не замечает. Подменяются и те, что
+   дорисованы позже, — за этим следит наблюдатель. Стрелки, Enter,
+   Escape и щелчок мимо работают как у обычного списка. */
+function выпадашка(sel) {
+  if (sel.dataset.dd) return;
+  sel.dataset.dd = '1';
+  const обёртка = document.createElement('span');
+  обёртка.className = ('dd ' + sel.className + (sel.hasAttribute('data-dd-right') ? ' right' : '')).trim();
+  sel.className = '';
+  sel.tabIndex = -1;
+  sel.setAttribute('aria-hidden', 'true');
+  sel.replaceWith(обёртка);
+  const кнопка = document.createElement('button');
+  кнопка.type = 'button';
+  кнопка.className = 'dd-b';
+  кнопка.setAttribute('aria-haspopup', 'listbox');
+  кнопка.setAttribute('aria-expanded', 'false');
+  if (sel.getAttribute('aria-label')) кнопка.setAttribute('aria-label', sel.getAttribute('aria-label'));
+  const список = document.createElement('ul');
+  список.className = 'dd-l';
+  список.setAttribute('role', 'listbox');
+  обёртка.append(кнопка, список, sel);
+  let тек = -1;
+  const подпись = () => {
+    const o = sel.options[sel.selectedIndex];
+    кнопка.innerHTML = '<span>' + esc(o ? o.text : '') + '</span>';
+  };
+  const подсветить = прокрутить => [...список.children].forEach((li, i) => {
+    li.classList.toggle('cur', i === тек);
+    if (i === тек && прокрутить) li.scrollIntoView({ block: 'nearest' });
+  });
+  const открыть = () => {
+    document.querySelectorAll('.dd.open').forEach(d => d !== обёртка && d._закрыть());
+    список.innerHTML = [...sel.options].map((o, i) => '<li class="dd-o" role="option" data-i="' + i + '" aria-selected="' +
+      (i === sel.selectedIndex) + '">' + esc(o.text) + '</li>').join('');
+    обёртка.classList.add('open');
+    кнопка.setAttribute('aria-expanded', 'true');
+    тек = sel.selectedIndex;
+    подсветить(true);
+  };
+  const закрыть = () => { обёртка.classList.remove('open'); кнопка.setAttribute('aria-expanded', 'false'); };
+  const выбрать = i => {
+    закрыть();
+    кнопка.focus();
+    if (i === sel.selectedIndex || i < 0) return;
+    sel.selectedIndex = i;
+    подпись();
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+  обёртка._закрыть = закрыть;
+  обёртка._подпись = подпись;
+  кнопка.addEventListener('click', () => обёртка.classList.contains('open') ? закрыть() : открыть());
+  кнопка.addEventListener('keydown', e => {
+    const открыт = обёртка.classList.contains('open');
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!открыт) return открыть();
+      тек = Math.max(0, Math.min(sel.options.length - 1, тек + (e.key === 'ArrowDown' ? 1 : -1)));
+      подсветить(true);
+    } else if ((e.key === 'Enter' || e.key === ' ') && открыт) { e.preventDefault(); выбрать(тек); }
+    else if (e.key === 'Escape' && открыт) { e.preventDefault(); e.stopPropagation(); закрыть(); }
+    else if (e.key === 'Tab') закрыть();
+  });
+  // Щелчок по пункту не уводит фокус с кнопки — Escape и стрелки работают дальше.
+  список.addEventListener('mousedown', e => e.preventDefault());
+  список.addEventListener('mousemove', e => {
+    const li = e.target.closest('.dd-o');
+    if (li && +li.dataset.i !== тек) { тек = +li.dataset.i; подсветить(false); }
+  });
+  список.addEventListener('click', e => { const li = e.target.closest('.dd-o'); if (li) выбрать(+li.dataset.i); });
+  sel.addEventListener('change', подпись);
+  подпись();
+}
+document.addEventListener('click', e => {
+  document.querySelectorAll('.dd.open').forEach(d => { if (!d.contains(e.target)) d._закрыть(); });
+});
+const выпадашкиВсе = root => root.querySelectorAll('select:not([data-dd])').forEach(выпадашка);
+new MutationObserver(записи => {
+  if (записи.some(з => з.addedNodes.length)) выпадашкиВсе(document.body);
+}).observe(document.body, { childList: true, subtree: true });
+выпадашкиВсе(document.body);
 
 /* ---------- вкладки ---------- */
 /* Вкладка «О чём трек» стоит последней и появляется не у всех: пересказ
@@ -14109,24 +14428,32 @@ function наМесто(v) {
   if (ш) ш.remove();
 }
 
-/* Полоска над плавающим окном: что играет (щелчок — к треку), свернуть
-   в шапку, выключить. Свернуть можно только то, чем умеем управлять
-   из шапки, — у Яндекса и у плеера без пульта кнопки нет. */
+/* Полоска над плавающим окном: трек и исполнитель (щелчок — к треку),
+   переключиться на разнос или на оригинал, свернуть в шапку, выключить.
+   «Оригинал · YouTube» и «разнос №…» над окном не пишем: что играет,
+   видно в самом окне. Свернуть можно только то, чем умеем управлять из
+   шапки, — у Яндекса и у плеера без пульта кнопки нет. */
 function шапкаОкна(v, панель, з) {
   if (!v) return;
   const r = з ? з.r : панель._r;
-  const что = з ? чтоИграет(з) : панель._что === 'roast' ? 'разнос' : 'оригинал';
   let ш = v.querySelector('.fl-bar');
   if (!ш) {
     ш = document.createElement('div');
     ш.className = 'fl-bar';
     v.prepend(ш);
   }
-  const другое = панель._другое;   // только у плеера с карточки: разнос ⇄ оригинал
+  /* Разнос ⇄ оригинал. У плеера с карточки это знает сама панель, у
+     окна со страницы трека — по тому, что играет: оригинал — можно на
+     разнос, если есть запись; разнос — на оригинал, если есть плеер. */
+  const есть = оригиналы(r);
+  const другое = панель._другое !== undefined ? панель._другое
+    : з && з.вид === 'разнос' ? (есть.yt || есть.sp || есть.ya ? 'orig' : '')
+    : vkEmbed(r.vod, r.sec) ? 'roast' : '';
   ш.innerHTML =
-    '<button type="button" class="fl-t" data-tip="Открыть трек"><small>' + esc(что) + '</small>' +
-      '<span>' + esc((r.title || '—') + ' — ' + (r.artist || '—')) + '</span></button>' +
-    (другое ? '<button type="button" class="fl-sw" data-act="sw">' + (другое === 'roast' ? 'разнос' : 'оригинал') + '</button>' : '') +
+    '<button type="button" class="fl-t" data-tip="Открыть трек">' +
+      '<b>' + esc(имяСПрипиской(r.title).имя || r.title || '—') + '</b><span>' + esc(r.artist || '—') + '</span></button>' +
+    (другое ? '<button type="button" class="fl-sw" data-act="sw" data-tip="' + (другое === 'roast' ? 'Включить запись разноса' : 'Включить сам трек') + '">' +
+      (другое === 'roast' ? 'разнос' : 'оригинал') + '</button>' : '') +
     (з ? '<button type="button" class="fl-b" data-act="mini" aria-label="Свернуть в шапку" data-tip="Свернуть в шапку">' + ИК_В_ШАПКУ + '</button>' : '') +
     '<button type="button" class="fl-b" data-act="x" aria-label="Выключить" data-tip="Выключить">✕</button>';
   // К треку — сразу на «Разнос»: там окно и встанет обратно на место.
@@ -14146,7 +14473,7 @@ function шапкаОкна(v, панель, з) {
     плашкаЭфира();
   });
   const sw = ш.querySelector('[data-act="sw"]');
-  if (sw) sw.addEventListener('click', () => играйСКарточки(панель._r, другое));
+  if (sw) sw.addEventListener('click', () => { ПОДСКАЗКА.спрятать(); играйСКарточки(CAT.find(y => y.key === r.key) || r, другое); });
   ш.querySelector('[data-act="x"]').addEventListener('click', () => {
     ПОДСКАЗКА.спрятать();
     if (панель.parentElement === $('dock')) { if (з) try { з.игрок.pause(); } catch {}
@@ -14332,9 +14659,12 @@ function панельОригинала(r, duo) {
   pan.className = 'pan orig';
   pan.innerHTML =
     '<div class="pan-h"><h2>Оригинал трека</h2>' +
-      '<div class="plat" role="group" aria-label="Где слушать">' +
+      /* Только те площадки, что у трека есть: погашенные кнопки тех,
+         которых нет, только мешали выбирать. Spotify может доехать позже
+         (years.json) — тогда его кнопка появится на месте. */
+      '<div class="plat" role="group" aria-label="Где слушать"' + (ПЛОЩАДКИ.some(([k]) => есть[k]) ? '' : ' hidden') + '>' +
       ПЛОЩАДКИ.map(([k, имя]) => '<button type="button" data-k="' + k + '" aria-pressed="false"' +
-        (есть[k] ? '' : ' disabled') +
+        (есть[k] ? '' : ' hidden') +
         (k === 'sp' && есть[k] ? ' data-tip="Без ВПН и входа в аккаунт Spotify может не заиграть"' : '') +
         '>' + имя + '</button>').join('') +
     '</div></div>' +
@@ -14450,7 +14780,7 @@ function панельОригинала(r, duo) {
   };
 
   pan.querySelectorAll('.plat button').forEach(b => b.addEventListener('click', () => {
-    if (b.disabled || b.dataset.k === сейчас) return;
+    if (b.hidden || b.dataset.k === сейчас) return;
     try { localStorage.setItem(ПЛ_LS, b.dataset.k); } catch {}
     любимая = b.dataset.k;
     рисовать(b.dataset.k, false);
@@ -14468,9 +14798,10 @@ function панельОригинала(r, duo) {
     if (JSON.stringify(есть) === было) return;
     r = свежий;
     pan.querySelectorAll('.plat button').forEach(b => {
-      b.disabled = !есть[b.dataset.k];
+      b.hidden = !есть[b.dataset.k];
       if (b.dataset.k === 'sp' && есть.sp) b.dataset.tip = 'Без ВПН и входа в аккаунт Spotify может не заиграть';
     });
+    pan.querySelector('.plat').hidden = !ПЛОЩАДКИ.some(([k]) => есть[k]);
     const надо = выбрать();
     const играет = pan._звук && pan._звук.играет;
     if (надо !== сейчас && !играет) рисовать(надо, false);
@@ -14522,7 +14853,7 @@ function drawTalk() {
 
   box.innerHTML =
     '<div class="talk-hd"><h2>Комментарии</h2><span class="cnt-b">0</span>' +
-      '<select aria-label="Порядок комментариев">' +
+      '<select aria-label="Порядок комментариев" data-dd-right>' +
         '<option value="new">Сначала новые</option><option value="old">Сначала старые</option>' +
       '</select></div>' +
     /* Форма нарочно лёгкая: поле, кнопка и выбор «комментарий или
@@ -14539,7 +14870,7 @@ function drawTalk() {
         '<div class="talk-opts">' +
           '<div class="kind" role="radiogroup" aria-label="Что пишешь">' +
             '<button type="button" role="radio" data-kind="comment" aria-checked="true">комментарий</button>' +
-            '<button type="button" role="radio" data-kind="review" aria-checked="false" data-tip="Длинный разбор трека: у рецензии своя ссылка, и в ленте она выделена">' + ИК_ПЕРО + 'рецензия</button>' +
+            '<button type="button" role="radio" data-kind="review" aria-checked="false" data-tip="Разбор трека от 250 знаков: у рецензии своя ссылка, и в ленте она выделена. Сначала поставь треку оценку">' + ИК_ПЕРО + 'рецензия</button>' +
           '</div>' +
           '<span class="talk-left"></span>' +
         '</div>' +
@@ -14559,7 +14890,6 @@ function drawTalk() {
     подписьФормы(форма, форма.classList.contains('is-review') ? 'review' : 'comment');
     const список = лентаКомментариев(r.key);
     счёт.textContent = список.length;
-    счётКомментариев();
     лента.textContent = '';
     if (!список.length) {
       лента.innerHTML = '<p class="talk-empty">Пока нет комментариев. Начни обсуждение!</p>';
@@ -14574,16 +14904,19 @@ function drawTalk() {
       const el = document.createElement('article');
       const рец = м.вид === 'review' && !ответ;
       el.className = 'msg' + (ответ ? ' reply' : '') + (рец ? ' review' : '');
-      if (рец && м.id) el.id = 'rv-' + м.id;
+      // По id сюда прокручивает уведомление об ответе и «последние действия».
+      el.id = 'c-' + (м.id || 'l' + м.when);
+      // Лента могла перерисоваться, пока подсветка ещё горит, — не гасим её.
+      if (T.горит && T.горит.id === el.id && Date.now() < T.горит.до) el.classList.add('lit');
       const роль = РОЛИ[м.роль];
       const автор = рец ? оценкаАвтора(r.key, м.user_id, м.локально) : null;
+      const лайк = м.id ? лайкиКомм(r.key, м.id) : null;
       el.innerHTML =
         '<span class="ini">' + (м.аватар ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(м.аватар) + '">'
                                          : esc((м.who || '?').trim()[0].toUpperCase())) + '</span>' +
         '<div class="bd">' + (м.логин ? '<a class="who" href="#u=' + encodeURIComponent(м.логин) + '"><b>' + esc(м.who) + '</b></a>'
                                        : '<b>' + esc(м.who) + '</b>') +
           (роль ? '<span class="role ' + м.роль + '">' + роль + '</span>' : '') +
-          (рец ? '<span class="rv-k">' + ИК_ПЕРО + 'рецензия</span>' : '') +
           (рец && м.id ? '<a class="rv-time" href="#r=' + м.id + '" data-tip="Открыть рецензию отдельно"><time>' + когда(м.when) + '</time></a>'
                        : '<time>' + когда(м.when) + '</time>') +
           (м.локально && ОБЛ && ОБЛ.sb ? '<span class="only-me" data-tip="Этот комментарий лежит только в твоём браузере">видишь только ты</span>' : '') +
@@ -14591,10 +14924,14 @@ function drawTalk() {
           '<p' + (рец ? ' class="rv-text clamp"' : '') + '></p>' +
           '<div class="msg-act">' +
             (рец ? '<button class="rv-more" type="button" hidden>читать целиком</button>' : '') +
+            (лайк ? лайкHtml(лайк, м.свой, м.id) : '') +
             (м.id && можноОтвечать() ? '<button class="re" type="button">ответить</button>' : '') +
-            (рец && м.id ? '<a class="re" href="#r=' + м.id + '">открыть отдельно</a><button class="re rv-copy" type="button">ссылка на рецензию</button>' : '') +
           '</div></div>' +
+        /* «Открыть отдельно» и «ссылка на рецензию» — значками слева от
+           крестика, а не строками под текстом. */
         (м.можноБан ? '<button class="ban" type="button" data-tip="Закрыть автору комментарии">⊘</button>' : '') +
+        (рец && м.id ? '<a class="ic" href="#r=' + м.id + '" data-tip="Открыть рецензию отдельно" aria-label="Открыть рецензию отдельно">' + ИК_ОТКРЫТЬ + '</a>' +
+          '<button class="ic rv-copy" type="button" data-tip="Скопировать ссылку на рецензию" aria-label="Ссылка на рецензию">' + ИК_ССЫЛКА + '</button>' : '') +
         (м.можноУдалить ? '<button class="del" type="button" aria-label="Удалить">✕</button>' : '');
       el.querySelector('p').textContent = м.text;
       const ещё = el.querySelector('.rv-more');
@@ -14622,6 +14959,8 @@ function drawTalk() {
       });
       const ban = el.querySelector('.ban');
       if (ban) ban.addEventListener('click', () => закрытьКомментарии(м.user_id, м.who));
+      const lk = el.querySelector('.lk');
+      if (lk) lk.addEventListener('click', () => лайкнуть(r.key, м.id, lk));
       const re = el.querySelector('.re');
       if (re) re.addEventListener('click', () => формаОтвета(el, r, м.parent || м.id, м.who));
       return el;
@@ -14630,6 +14969,7 @@ function drawTalk() {
       лента.append(один(м, false));
       (ветки.get(м.id) || []).forEach(о => лента.append(один(о, true)));
     });
+    кКомментуПрокрутить();
   };
 
   box._рисовать = рисовать;
@@ -14641,7 +14981,20 @@ function drawTalk() {
   const поле = форма.querySelector('textarea');
   const подсказка = форма.querySelector('.kind-hint');
   const остаток = форма.querySelector('.talk-left');
+  const кнопка = форма.querySelector('.send');
   let вид = 'comment', отказ = false;
+  /* Рецензия — с оценкой и от 250 знаков. Пока не так, кнопка серая, но
+     нажимается: подсказка на ней говорит, чего не хватает. */
+  const нехватка = () => вид !== 'review' ? ''
+    : !MY[r.key] ? 'Поставь оценку треку, прежде чем публиковать рецензию'
+    : поле.value.trim().length < РЕЦЕНЗИЯ_МИН ? 'Рецензия должна содержать не менее ' + РЕЦЕНЗИЯ_МИН + ' символов' : '';
+  const состояние = () => {
+    const н = нехватка();
+    кнопка.classList.toggle('wait', !!н);
+    кнопка.setAttribute('aria-disabled', String(!!н));
+    кнопка.dataset.tip = н || 'Опубликовать (Ctrl+Enter)';
+  };
+  box._состояние = состояние;
   const сменитьВид = в => {
     вид = в;
     форма.querySelectorAll('[data-kind]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.kind === в)));
@@ -14656,7 +15009,9 @@ function drawTalk() {
     поле.style.height = Math.min(поле.scrollHeight + 2, 460) + 'px';
     const n = поле.value.trim().length;
     подсказка.hidden = !(вид === 'comment' && !отказ && n >= РЕЦЕНЗИЯ_ОТ);
-    остаток.textContent = вид === 'review' || n > ДЛИНА.comment * .8 ? число(n) + ' / ' + число(ДЛИНА[вид]) : '';
+    остаток.textContent = вид === 'review' && n < РЕЦЕНЗИЯ_МИН ? число(n) + ' · нужно от ' + РЕЦЕНЗИЯ_МИН
+      : вид === 'review' || n > ДЛИНА.comment * .8 ? число(n) + ' / ' + число(ДЛИНА[вид]) : '';
+    состояние();
   };
   форма.querySelector('.kind').addEventListener('click', e => {
     const b = e.target.closest('[data-kind]'); if (b) { сменитьВид(b.dataset.kind); поле.focus(); }
@@ -14673,6 +15028,8 @@ function drawTalk() {
   форма.addEventListener('submit', async e => {
     e.preventDefault();
     const text = поле.value.trim();
+    const н = нехватка();
+    if (н) return ПОДСКАЗКА.сказать(кнопка, н);
     if (!text) return;
     if (await опубликовать(r, text, null, вид)) { поле.value = ''; отказ = false; сменитьВид('comment'); }
   });
@@ -14691,6 +15048,7 @@ function лентаКомментариев(key) {
     const п = c.profiles || {};
     return { id: c.id, parent: c.parent_id || null, user_id: c.user_id, who: п.name || п.login || 'зритель', логин: п.login || '', аватар: п.avatar_url || '',
              роль: п.role, when: Date.parse(c.created_at), text: c.body, вид: c.kind || 'comment',
+             свой: c.user_id === мой,
              можноУдалить: c.user_id === мой || штат,
              можноБан: штат && c.user_id !== мой && (!п.role || п.role === 'user') };
   });
@@ -14700,10 +15058,67 @@ function лентаКомментариев(key) {
 }
 
 /* Длина: комментарий — пара абзацев, рецензия — разбор. Те же пределы
-   стоят в базе (comments_body_check). С 200 знаков комментарий
-   предлагают сделать рецензией. */
+   стоят в базе (comments_body_check, а нижний предел рецензии —
+   comment_guard). С 250 знаков комментарий предлагают сделать
+   рецензией: короче рецензия и не бывает. */
 const ДЛИНА = { comment: 1500, review: 6000 };
-const РЕЦЕНЗИЯ_ОТ = 200;
+const РЕЦЕНЗИЯ_МИН = 250;
+const РЕЦЕНЗИЯ_ОТ = РЕЦЕНЗИЯ_МИН;
+const ИК_ОТКРЫТЬ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>';
+const ИК_ССЫЛКА = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>';
+const ИК_СЕРДЦЕ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7.6-4.7-9.6-9.3C.9 8.3 3 4.5 6.9 4.5c2.2 0 3.7 1.2 5.1 3 1.4-1.8 2.9-3 5.1-3 3.9 0 6 3.8 4.5 7.2C19.6 16.3 12 21 12 21z"/></svg>';
+
+/* ---------- лайки комментариев ----------
+   Обезличенные: сервер отдаёт только число и то, стоит ли твой
+   (comment_likes_for). Свой комментарий лайкнуть нельзя — его сердечко
+   только показывает число. */
+const лайкиКомм = (key, id) => ((ОБЛ && ОБЛ.лайки[key]) || new Map()).get(id) || { n: 0, mine: false };
+const лайкHtml = (л, свой, id) => '<button type="button" class="lk' + (л.mine ? ' on' : '') + '" data-c="' + id + '"' + (свой ? ' disabled' : '') +
+  ' aria-pressed="' + л.mine + '" aria-label="' + (свой ? 'Лайки твоего комментария' : 'Нравится') + '"' +
+  (свой ? ' data-tip="Свой комментарий лайкнуть нельзя"' : '') + '>' + ИК_СЕРДЦЕ + '<b>' + (л.n ? число(л.n) : '') + '</b></button>';
+async function лайкиЗагрузить(key) {
+  if (!ОБЛ.sb) return;
+  const { data, error } = await ОБЛ.sb.rpc('comment_likes_for', { p_track: key });
+  if (error) return;
+  ОБЛ.лайки[key] = new Map((data || []).map(x => [Number(x.comment_id), { n: x.n || 0, mine: !!x.mine }]));
+}
+async function лайкнуть(key, id, кнопка) {
+  if (нужноВойти('лайк')) return;
+  if (!вошёл()) return toast('Вход ещё загружается — попробуй через пару секунд');
+  const м = ОБЛ.лайки[key] = ОБЛ.лайки[key] || new Map();
+  const был = м.get(id) || { n: 0, mine: false };
+  const стал = { n: Math.max(0, был.n + (был.mine ? -1 : 1)), mine: !был.mine };
+  const показать = л => document.querySelectorAll('.lk[data-c="' + id + '"]').forEach(b => {
+    b.classList.toggle('on', л.mine); b.setAttribute('aria-pressed', String(л.mine));
+    b.querySelector('b').textContent = л.n ? число(л.n) : '';
+  });
+  м.set(id, стал); показать(стал);
+  const { error } = стал.mine
+    ? await ОБЛ.sb.from('comment_likes').insert({ comment_id: id })
+    : await ОБЛ.sb.from('comment_likes').delete().eq('comment_id', id).eq('user_id', ОБЛ.user.id);
+  if (error && !(стал.mine && error.code === '23505')) {
+    м.set(id, был); показать(был);
+    toast(/own comment/.test(error.message) ? 'Свой комментарий лайкнуть нельзя'
+      : /comment_likes/.test(error.message) ? 'Лайки на сервере ещё не включены' : 'Не вышло: ' + error.message);
+  }
+}
+
+/* Пришли по уведомлению об ответе (#t=…&c=id) — к самому комментарию.
+   Лента дорисовывается, когда доедут комментарии с сервера, и плееры
+   выше двигают её: поэтому ещё раз чуть позже, если зритель не листал. */
+function кКомментуПрокрутить() {
+  const id = T.кКомменту;
+  if (!id) return;
+  const el = document.getElementById('c-' + id);
+  if (!el || $('tpage').hidden) return;
+  T.кКомменту = null;
+  T.горит = { id: el.id, до: Date.now() + 2400 };
+  const к = () => { const э = document.getElementById(T.горит.id) || el; э.scrollIntoView({ block: 'center' }); };
+  к();
+  el.classList.remove('lit'); void el.offsetWidth; el.classList.add('lit');
+  let y = window.scrollY;
+  [200, 600].forEach(мс => setTimeout(() => { if (Math.abs(window.scrollY - y) < 2 && !$('tpage').hidden) { к(); y = window.scrollY; } }, мс));
+}
 const ИК_ПЕРО = '<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 const ИК_ОТПРАВИТЬ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg>';
 const адресРецензии = id => location.href.split('#')[0] + '#r=' + id;
@@ -14761,11 +15176,16 @@ function формаОтвета(el, r, корень, кому) {
 async function опубликовать(r, text, корень, вид) {
   const рецензия = вид === 'review' && !корень;
   if (вошёл() && !(ОБЛ.проф && ОБЛ.проф.banned)) {
+    // Сервер принимает рецензию только от того, кто оценил трек, а оценка
+    // уезжает туда с задержкой — отвозим её сейчас.
+    if (рецензия) await оценкаНаСервер(r.key);
     const { error } = await ОБЛ.sb.from('comments').insert(Object.assign({ track_key: r.key, body: text },
       корень ? { parent_id: корень } : {}, рецензия ? { kind: 'review' } : {}));
     if (error) {
       toast(/too many/.test(error.message) ? 'Слишком часто — подожди пару минут'
           : /banned/.test(error.message) ? 'Тебе закрыли комментарии'
+          : /review too short/.test(error.message) ? 'Рецензия должна содержать не менее ' + РЕЦЕНЗИЯ_МИН + ' символов'
+          : /review needs rating/.test(error.message) ? 'Поставь оценку треку, прежде чем публиковать рецензию'
           : рецензия && /kind/.test(error.message) ? 'Рецензии на сервере ещё не включены — сохрани текст и попробуй позже'
           : 'Не удалось опубликовать: ' + error.message);
       return false;
@@ -14781,6 +15201,15 @@ async function опубликовать(r, text, корень, вид) {
   const лента = $('tTalk');
   if (лента._рисовать) лента._рисовать();
   return true;
+}
+
+/* Одна оценка — на сервер сразу, не дожидаясь общей сверки. */
+async function оценкаНаСервер(k) {
+  const v = MY[k];
+  if (!v || !вОблако(k) || !вошёл() || (ОБЛ_СНИМОК.rates || {})[k] === видОценки(v)) return;
+  const { error } = await ОБЛ.sb.from('ratings').upsert({ user_id: ОБЛ.user.id, track_key: k, tier: v.t, mod: v.m || '',
+    rated_at: new Date(v.w || Date.now()).toISOString() }, { onConflict: 'user_id,track_key' });
+  if (!error && ОБЛ_СНИМОК.владелец === ОБЛ.user.id) { ОБЛ_СНИМОК.rates[k] = видОценки(v); saveСнимок(); }
 }
 
 /* «сегодня, 14:20» вместо голой даты: комментарии свежие, и полная
@@ -14944,26 +15373,29 @@ function drawMine() {
      у вошедшего она по умолчанию открыта. */
   const видна = вошёл() && !(ОБЛ.проф && ОБЛ.проф.ratings_public === false)
     ? 'видна другим зрителям' : 'видна только тебе';
+  /* Как на карточке каталога: посередине «оцени этот трек!», на
+     наведении — название ступени, «−» и «+» по бокам — когда оценка
+     есть. Поля комментария здесь больше нет: после оценки появляется
+     кнопка «оставить комментарий», и она ведёт к полю под вкладками. */
   box.innerHTML =
     '<h2>Твоя оценка<small>' + видна + '</small></h2>' +
-    '<div class="big-scale"></div>' +
-    '<div class="rate-line"><span class="val">—</span>' +
-      '<span class="rate-mods">' +
-        '<button type="button" data-d="-1" aria-label="Понизить оценку">−</button>' +
-        '<button type="button" data-d="1" aria-label="Повысить оценку">+</button>' +
-      '</span></div>' +
-    '<form class="mine-talk">' +
-      '<textarea rows="2" maxlength="1500" placeholder="Пара слов о треке…" aria-label="Комментарий"></textarea>' +
-      '<button type="submit" class="send" aria-label="Отправить комментарий" data-tip="Отправить (Ctrl+Enter)">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button>' +
-    '</form>' +
-    '<button type="button" class="mine-all">' +
+    '<div class="mine-rate">' +
+      '<div class="mods off">' +
+        '<button type="button" class="mod" data-d="-1" aria-label="Понизить оценку">−</button>' +
+        '<div class="rt"></div>' +
+        '<button type="button" class="mod" data-d="1" aria-label="Повысить оценку">+</button>' +
+      '</div>' +
+      '<div class="big-scale"></div>' +
+      '<span class="rated-msg" aria-live="polite"></span>' +
+    '</div>' +
+    '<button type="button" class="mine-all" hidden>' +
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3v4l5-4h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>' +
-      'Все комментарии <b></b><span class="car">›</span></button>';
+      'Оставить комментарий<span class="car">›</span></button>';
 
   const scale = box.querySelector('.big-scale');
-  const val = box.querySelector('.val');
-  const mods = box.querySelector('.rate-mods');
+  const rt = box.querySelector('.rt');
+  const mods = box.querySelector('.mods');
+  const идти = box.querySelector('.mine-all');
 
   // Шкала слева направо снизу вверх — как на карточке.
   const up = [...TIERS].reverse();
@@ -14972,9 +15404,6 @@ function drawMine() {
     b.type = 'button'; b.className = 'seg';
     b.innerHTML = '<i></i>';
     b.setAttribute('aria-label', 'Поставить «' + t.key + '»');
-    /* Отклик тот же, что на карточке в каталоге: наведённая ступень и
-       всё ниже неё заливаются белым, а строкой ниже — её название.
-       Подсказка с тем же названием поэтому не нужна. */
     b.addEventListener('mouseenter', () => примерить(t));
     b.addEventListener('focus', () => примерить(t));
     b.addEventListener('click', () => {
@@ -14983,6 +15412,7 @@ function drawMine() {
       const держим = cur && cur.t === t.key && t.mods.includes(cur.m);
       MY[r.key] = { t: t.key, m: держим ? cur.m : '', w: Date.now() };
       save(); paint(); drawDist(); учёт('rate');
+      ударОценки(box, mods, box.querySelector('.rated-msg'), t.key);
     });
     scale.append(b);
     return b;
@@ -14992,8 +15422,10 @@ function drawMine() {
 
   function примерить(t) {
     draw(t.key, '', '#fff');
-    val.textContent = t.key;
-    val.style.setProperty('--tc', '#fff');
+    rt.textContent = t.key;
+    rt.className = 'rt named';
+    rt.style.color = '#fff';
+    mods.classList.add('off');
   }
 
   function draw(tier, mod, color) {
@@ -15012,23 +15444,29 @@ function drawMine() {
     if (v) {
       const t = TIERS.find(x => x.key === v.t) || TIERS[0];
       draw(v.t, v.m, TCOLOR[t.key]);
-      val.textContent = t.key + modLabel(v.m);
-      val.style.setProperty('--tc', TCOLOR[t.key]);
+      rt.textContent = t.key + modLabel(v.m);
+      rt.className = 'rt named';
+      rt.style.color = TCOLOR[t.key];
+      mods.classList.remove('off');
       const i = t.mods.indexOf(v.m);
       mods.querySelector('[data-d="1"]').disabled = i <= 0;
       mods.querySelector('[data-d="-1"]').disabled = i < 0 || i >= t.mods.length - 1;
       if (заголовок) { заголовок.textContent = t.key + modLabel(v.m); заголовок.style.setProperty('--tc', TCOLOR[t.key]); }
     } else {
       segs.forEach(s => { s.querySelector('i').style.width = '0%'; });
-      val.textContent = 'не поставлена';
-      val.style.removeProperty('--tc');
-      mods.querySelectorAll('button').forEach(b => { b.disabled = true; });
+      rt.textContent = 'оцени этот трек!';
+      rt.className = 'rt';
+      rt.style.color = '';
+      mods.classList.add('off');
       if (заголовок) { заголовок.textContent = 'не поставлена'; заголовок.style.setProperty('--tc', 'var(--faint)'); }
     }
+    идти.hidden = !v;
+    // Рецензию без оценки не опубликовать — кнопке под лентой надо знать.
+    if ($('tTalk')._состояние) $('tTalk')._состояние();
   }
 
   mods.addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b || b.disabled) return;
+    const b = e.target.closest('.mod'); if (!b || b.disabled) return;
     if (нужноВойти()) return;
     const v = MY[r.key]; if (!v) return;
     const t = TIERS.find(x => x.key === v.t); if (!t) return;
@@ -15039,34 +15477,14 @@ function drawMine() {
   });
   paint();
 
-  /* Комментарий — тут же, под оценкой: поставил и сразу сказал почему.
-     Ложится в тот же список, что и форма внизу, а кнопка ниже ведёт к
-     нему — к комментариям под вкладками. */
-  const форма = box.querySelector('.mine-talk');
-  форма.addEventListener('submit', async e => {
-    e.preventDefault();
-    const поле = форма.querySelector('textarea');
-    const text = поле.value.trim();
-    if (!text) return;
-    if (await опубликовать(r, text)) {
-      поле.value = '';
-      toast(вошёл() && !(ОБЛ.проф && ОБЛ.проф.banned) ? 'Комментарий опубликован' : 'Комментарий добавлен');
-    }
-  });
-  форма.querySelector('textarea').addEventListener('keydown', e => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) форма.requestSubmit();
-  });
-  box.querySelector('.mine-all').addEventListener('click', () => {
-    $('tTalk').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-  счётКомментариев();
+  идти.addEventListener('click', () => кПолюКомментария());
 }
 
-function счётКомментариев() {
-  if (!T.r) return;
-  const n = лентаКомментариев(T.r.key).length;
-  const b = document.querySelector('#tMine .mine-all b');
-  if (b) b.textContent = n ? '(' + n + ')' : '';
+/* К полю комментария под вкладками — и сразу в него. */
+function кПолюКомментария() {
+  const поле = document.querySelector('#tTalk .talk-form textarea');
+  $('tTalk').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (поле) setTimeout(() => поле.focus({ preventScroll: true }), 450);
 }
 
 /* ---------- интересные факты ----------
@@ -15240,26 +15658,25 @@ function drawDist() {
   if (ОБЛ && ОБЛ.sb && !(r.key in ОБЛ.голоса)) голосаЗагрузить(r.key);
 }
 
-/* В шапке трека — средняя зрителей, но только от трёх голосов: один-два
-   голоса — это не «оценка пользователей», а чьё-то мнение. */
-const ГОЛОСОВ_МИН = 3;
+/* В шапке трека — средняя зрителей. Порога больше нет: заказчик
+   попросил показывать её и от одного голоса — сколько их, написано
+   строкой ниже. Число «из 10» не пишем, как и у композитора. */
 function оценкаЗрителейВШапке(голоса) {
-  const sc = document.querySelector('#tHero .sc.nobody');
+  const sc = document.querySelector('#tHero .sc.nobody, #tHero .sc.users');
   if (!sc) return;
-  if (голоса.length < ГОЛОСОВ_МИН) {
+  if (!голоса.length) {
+    sc.className = 'sc nobody';
     sc.style.removeProperty('--tc');
-    sc.innerHTML = '<span>оценка пользователей</span><b>мало голосов</b><small>' +
-      (голоса.length ? число(голоса.length) + ' ' + plural(голоса.length, 'голос', 'голоса', 'голосов') + ', нужно от ' + ГОЛОСОВ_МИН : 'пока никто не оценил') + '</small>';
+    sc.innerHTML = '<span>оценка пользователей</span><b>пока нет</b><small>никто не оценил</small>';
     sc.dataset.tip = 'Видны голоса тех, кто открыл свои оценки в настройках профиля, и твой.';
     return;
   }
   const ср = голоса.reduce((a, v) => a + баллМой(v), 0) / голоса.length;
-  const ближ = SCALE_ORDER.map(l => parseRate(l)).filter(Boolean)
-    .sort((a, b) => Math.abs(a.score - ср) - Math.abs(b.score - ср))[0];
+  const ближ = ближайшая(ср);
+  sc.className = 'sc users';
   sc.style.setProperty('--tc', TCOLOR[ближ.tier]);
   sc.innerHTML = '<span>оценка пользователей</span><b>' + esc(ближ.label) + '</b><small>' +
-    ср.toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + ' из 10 · ' + число(голоса.length) + ' ' +
-    plural(голоса.length, 'голос', 'голоса', 'голосов') + '</small>';
+    число(голоса.length) + ' ' + plural(голоса.length, 'голос', 'голоса', 'голосов') + '</small>';
   sc.dataset.tip = 'Средняя по голосам тех, кто открыл свои оценки, и твоему.';
 }
 
@@ -15328,6 +15745,47 @@ function предпросмотр(u) {
 }
 
 const covJson = (key, url) => JSON.stringify({ key, url });
+
+/* ---------- сообщить о неточности ----------
+   Не та обложка, ремастер вместо оригинала, опечатка в названии. Уходит
+   в общую базу (reports), команда сайта разбирает во вкладке
+   «управление» кабинета. Пишет вошедший: так есть кого переспросить. */
+let REP_R = null;
+function openReport(r) {
+  if (нужноВойти('неточность')) return;
+  if (!ОБЛ.sb) return toast('Сообщить о неточности можно на сайте, когда есть связь с сервером');
+  REP_R = r;
+  $('repFor').textContent = (r.title || '—') + ' — ' + (r.artist || '—');
+  $('repText').value = '';
+  repВыбрать(coverOf(r) ? 'other' : 'cover');
+  счётНеточности();
+  $('mReport').hidden = false;
+  $('repText').focus();
+}
+function repВыбрать(что) {
+  $('repWhat').querySelectorAll('[data-what]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.what === что)));
+  $('repCov').hidden = что !== 'cover';
+}
+function счётНеточности() { $('repCnt').textContent = $('repText').value.trim().length + ' / 500'; }
+$('repText').addEventListener('input', счётНеточности);
+$('repWhat').addEventListener('click', e => { const b = e.target.closest('[data-what]'); if (b) repВыбрать(b.dataset.what); });
+$('repCovGo').addEventListener('click', () => { $('mReport').hidden = true; if (REP_R) openCover(REP_R); });
+$('repForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const текст = $('repText').value.trim();
+  if (!REP_R || !текст) return;
+  if (!вошёл()) return toast('Вход ещё загружается — попробуй через пару секунд');
+  const что = ($('repWhat').querySelector('[aria-checked="true"]') || {}).dataset?.what || 'other';
+  const кн = $('repForm').querySelector('[type="submit"]');
+  кн.disabled = true;
+  const { error } = await ОБЛ.sb.from('reports').insert({ track_key: REP_R.key, what: что, body: текст });
+  кн.disabled = false;
+  if (error) return toast(/too many/.test(error.message) ? 'Слишком много сообщений за час — подожди немного'
+    : /banned/.test(error.message) ? 'Тебе закрыли комментарии и сообщения'
+    : /reports/.test(error.message) ? 'Сообщения о неточностях на сервере ещё не включены' : 'Не удалось: ' + error.message);
+  $('mReport').hidden = true;
+  toast('Спасибо! Команда сайта проверит и поправит');
+});
 
 let FACT_R = null;   // трек, про который пишут факт
 
@@ -16120,15 +16578,7 @@ function шить(box) {
    ради этого перерисовывать незачем. Чужой человечек ведёт в его
    профиль (#u=логин). */
 function полоса() {
-  const все = онлайн().slice(0, 14);
-  const html = все.map((ч, i) => {
-    const стиль = 'style="--c:' + esc(ч.цвет) + ';--d0:-' + (i * 11) + 's;--t:' + (40 + i * 7 % 23) + 's"';
-    const тело = '<span class="nick">' + esc(ч.ник) + '</span>' +
-      '<span class="spr"><i class="hd0"></i><i class="bd0"></i><i class="lg l"></i><i class="lg r"></i></span>';
-    return ч.я
-      ? '<a class="walker you" href="#me" ' + стиль + ' data-tip="Это ты. Открыть личный кабинет">' + тело + '</a>'
-      : '<a class="walker" href="#u=' + encodeURIComponent(ч.логин) + '" ' + стиль + ' data-tip="' + esc(ч.ник) + ' — открыть профиль">' + тело + '</a>';
-  }).join('');
+  const html = онлайн().slice(0, 14).map(человечекHtml).join('');
   if ($('runway').innerHTML !== html) $('runway').innerHTML = html;
 }
 
@@ -16321,7 +16771,9 @@ const сравнимые = list => list.filter(x => x.r.rate);
    «настройки», «заявки». Вид — макета, данные — настоящие, а обложки и
    карточки треков — наши, те же, что в каталоге (card()). */
 const МЕНЮ = [['', 'обзор'], ['ratings', 'мои оценки'], ['favs', 'избранное'], ['orders', 'мои заказы'],
-              ['settings', 'настройки'], ['claims', 'заявки']];
+              ['settings', 'настройки'], ['claims', 'заявки'], ['manage', 'управление']];
+/* «Управление» — инструменты команды сайта: модерам, админам и композитору. */
+const штатСайта = () => ['moder', 'admin', 'owner'].includes(мояРоль());
 
 /* Значки макета. */
 const ИКО = {
@@ -16395,14 +16847,19 @@ function showMe() {
 }
 
 function drawMe() {
-  const вкладка = (location.hash.match(/^#me\/(\w+)/) || [])[1] || '';
+  let вкладка = (location.hash.match(/^#me\/(\w+)/) || [])[1] || '';
+  // Управление без роли — обычный обзор. Роль приезжает позже входа:
+  // облакоРисовать() перерисует вкладку, когда она доедет.
+  if (вкладка === 'manage' && !штатСайта()) вкладка = '';
   const list = мойСписок();
   ава();
   meHero();
+  промоSpotify();
   $('mAch').hidden = true;
-  $('meTabs').innerHTML = МЕНЮ.map(([k, name]) =>
+  $('meTabs').innerHTML = МЕНЮ.filter(([k]) => k !== 'manage' || штатСайта()).map(([k, name]) =>
     '<a class="c-tab" role="tab" href="#me' + (k ? '/' + k : '') + '" aria-selected="' + (k === вкладка) + '">' + name +
-    (k === 'claims' && ОБЛ && ОБЛ.ждут ? ' <b class="tab-n">' + ОБЛ.ждут + '</b>' : '') + '</a>').join('');
+    (k === 'manage' && ОБЛ && делКоманды() ? ' <b class="tab-n">' + делКоманды() + '</b>' : '') + '</a>').join('');
+  лентаНарисовать($('meFeed'), list, true);
 
   const box = $('meTab');
   if (вкладка === 'ratings') return meRatings(box, list);
@@ -16410,6 +16867,7 @@ function drawMe() {
   if (вкладка === 'orders') return meOrders(box);
   if (вкладка === 'settings') return meSettings(box);
   if (вкладка === 'claims') return meClaims(box);
+  if (вкладка === 'manage') return meManage(box);
   meOverview(box, list);
 }
 
@@ -16457,16 +16915,34 @@ function meHero() {
       : 'Сервер входа сейчас не отвечает — всё твоё пока сохраняется в этом браузере.') + '</span></div>';
 
   $('meHero').innerHTML = аваHtml(img, ник, ПРОФ.цвет) +
-    '<div class="hero-text"><div class="hero-kicker">Мой профиль</div>' +
+    '<div class="hero-text">' +
       '<div class="hero-name' + (ник ? '' : ' none') + '">' + esc(ник || 'без ника') + '</div>' +
       '<div class="hero-bio">' + esc(ПРОФ.о || (ник ? '' : 'Войди через Twitch или впиши ник в настройках.')) + '</div>' +
-      '<div class="hero-meta">' + мета + '</div>' + вход + уровеньHtml(мойОпыт()) + '</div>' +
+      '<div class="hero-meta">' + мета + (вошёл() && ОБЛ.подписки ? '<span class="hero-follow">' + подписчикиСлово(ОБЛ.подписки.на_меня.length) + '</span>' : '') +
+      '</div>' + вход + уровеньHtml(мойОпыт()) + '</div>' +
     '<div class="hero-actions">' +
-      (логин ? '<a class="soft-btn" href="#u=' + encodeURIComponent(логин) + '" data-tip="Посмотреть публичный профиль">' +
-        ико('eye') + '<span>Как меня видят</span></a>' : '') +
       '<a class="soft-btn" href="#me/settings" data-tip="Настройки" aria-label="Настройки">' + ико('edit') + '</a></div>';
   аваЗапас($('meHero'), ник);
+  // Свой человечек гуляет по кромке шапки — как над поиском на главной.
+  человечекНаШапке($('meRun'), { ник: ник || 'это ты', цвет: ПРОФ.цвет || ЦВЕТА[0], я: true });
 }
+
+/* Человечек по верхней кромке шапки профиля: в кабинете — свой, в
+   чужом профиле — его хозяин. Разметка и шаг — те же, что на главной. */
+function человечекHtml(ч, i = 0) {
+  const стиль = 'style="--c:' + esc(ч.цвет) + ';--d0:-' + (i * 11) + 's;--t:' + (40 + i * 7 % 23) + 's"';
+  const тело = '<span class="nick">' + esc(ч.ник) + '</span>' +
+    '<span class="spr"><i class="hd0"></i><i class="bd0"></i><i class="lg l"></i><i class="lg r"></i></span>';
+  return ч.я
+    ? '<a class="walker you" href="#me" ' + стиль + ' data-tip="Это ты. Открыть личный кабинет">' + тело + '</a>'
+    : '<a class="walker" href="#u=' + encodeURIComponent(ч.логин) + '" ' + стиль + ' data-tip="' + esc(ч.ник) + ' — открыть профиль">' + тело + '</a>';
+}
+function человечекНаШапке(box, ч) {
+  if (!box) return;
+  const html = ч ? человечекHtml(ч) : '';
+  if (box.innerHTML !== html) box.innerHTML = html;
+}
+const подписчикиСлово = n => число(n) + ' ' + plural(n, 'подписчик', 'подписчика', 'подписчиков');
 
 /* Наши карточки каталога — в сетку кабинета, кусками по 60. */
 function сеткаКарточек(el, list, по = 60) {
@@ -16625,51 +17101,63 @@ function meOverview(box, list) {
     '<button type="button" class="text-link" data-ach-all>все достижения ' + ико('arrow') + '</button></div>' +
     '<div class="ach-strip">' + три.map(достижениеHtml).join('') + '</div></section>';
 
-  box.innerHTML = '<div class="feature-grid">' +
-      '<section class="music-main"><div class="music-main-top"><h2>избранные треки</h2>' +
-        '<a class="text-link" href="#me/favs">всё избранное (' + число(любимые.length) + ') ' + ико('arrow') + '</a></div>' +
-        (любимые.length ? '<div class="c-cards cmp" data-cards></div>'
-          : '<div class="c-empty">В избранном пока нет треков. Добавь понравившиеся сердечком на обложке в <a href="#base">каталоге</a>.</div>') +
-      '</section>' +
-      '<aside class="feed-panel"><div class="music-main-top"><h2>последние действия</h2>' +
-        '<a class="feed-head-link" href="#me/ratings" data-clear aria-label="Все мои оценки">' + ико('arrow') + '</a></div>' +
-        '<div class="feed-list" data-feed></div></aside></div>' +
+  /* Избранное — во всю ширину, пять карточек того же размера, что в
+     каталоге. Последние действия переехали наверх, к шапке. */
+  box.innerHTML =
+    '<section class="music-main" style="margin-bottom:31px"><div class="music-main-top"><h2>избранные треки</h2>' +
+      '<a class="text-link" href="#me/favs">всё избранное (' + число(любимые.length) + ') ' + ико('arrow') + '</a></div>' +
+      (любимые.length ? '<div class="c-cards cmp" data-cards></div>'
+        : '<div class="c-empty">В избранном пока нет треков. Добавь понравившиеся сердечком на обложке в <a href="#base">каталоге</a>.</div>') +
+    '</section>' +
     '<div class="overview-grid"><div class="o-left">' + вкус + достиж + '</div>' +
       '<aside class="o-right">' + заказыКратко(вошёл() ? мойЗаказы() : null, true) +
+        (вошёл() ? '<section class="o-panel" data-follow><div class="section-title"><h2>подписки</h2></div>' +
+          '<p class="mutedline">загружаю…</p></section>' : '') +
         (вошёл() ? '<section class="o-panel" data-near><div class="section-title"><h2>близкие по вкусу</h2></div>' +
           '<p class="mutedline">считаю…</p></section>' : '') + '</aside></div>';
   шить(box);
   сеткаКарточек(box.querySelector('[data-cards]'), любимые.slice(0, 5), 5);
-  лентаНарисовать(box.querySelector('[data-feed]'), list);
+  подпискиНарисовать(box.querySelector('[data-follow]'));
   близкиеНарисовать(box.querySelector('[data-near]'));
 }
 
-/* Последние действия: свои оценки (у которых есть время) и комментарии. */
+/* Последние действия: оценки (у которых есть время) и комментарии. В
+   кабинете — свои, в профиле — того зрителя, только открытое. Стрелки
+   у шапки ленты нет: вести «все действия» некуда. Комментарий ведёт к
+   нему самому в ленте трека, рецензия — на свою страницу. */
+function лентаКаркас(el, текст) {
+  el.innerHTML = '<div class="music-main-top"><h2>последние действия</h2></div>' +
+    '<div class="feed-list">' + (текст ? '<div class="feed-none">' + текст + '</div>' : '') + '</div>';
+  return el.querySelector('.feed-list');
+}
+function лентаСобрать(список, ряды, пусто) {
+  const все = список.sort((a, b) => b.ts - a.ts).slice(0, 8);
+  ряды.innerHTML = все.length ? все.map(строкаЛенты).join('') : '<div class="feed-none">' + пусто + '</div>';
+  шить(ряды);
+}
 async function лентаНарисовать(el, list) {
+  if (!el) return;
   const по = new Map(CAT.map(r => [r.key, r]));
-  const рис = комм => {
-    const все = list.filter(x => x.v.w).map(x => ({ тип: 'rate', ts: x.v.w, r: x.r, v: x.v }))
-      .concat(комм).sort((a, b) => b.ts - a.ts).slice(0, 5);
-    el.innerHTML = все.length ? все.map(строкаЛенты).join('')
-      : '<div class="feed-none">Здесь появятся твои оценки и комментарии.</div>';
-    шить(el);
-  };
+  const ряды = лентаКаркас(el);
+  const оценки = list.filter(x => x.v.w).map(x => ({ тип: 'rate', ts: x.v.w, r: x.r, v: x.v }));
   const здесь = [];
   Object.entries(TALK).forEach(([k, л]) => (л || []).forEach(c => {
     const r = по.get(k);
-    if (r && c.when) здесь.push({ тип: 'talk', ts: c.when, r, текст: c.text });
+    if (r && c.when) здесь.push({ тип: 'talk', ts: c.when, r, текст: c.text, к: 'l' + c.when });
   }));
-  рис(здесь);
+  const пусто = 'Здесь появятся твои оценки и комментарии.';
+  лентаСобрать(оценки.concat(здесь), ряды, пусто);
   if (!вошёл()) return;
-  const { data, error } = await ОБЛ.sb.from('comments').select('track_key,body,created_at')
-    .eq('user_id', ОБЛ.user.id).order('created_at', { ascending: false }).limit(5);
-  if (error || !el.isConnected) return;
-  рис(здесь.concat((data || []).map(c => ({ тип: 'talk', ts: Date.parse(c.created_at), r: по.get(c.track_key), текст: c.body }))
-    .filter(x => x.r)));
+  const r = await комментарииЗрителя(ОБЛ.user.id);
+  if (r.error || !ряды.isConnected) return;
+  лентаСобрать(оценки.concat(здесь, комментВЛенту(r.data, по)), ряды, пусто);
 }
+const комментВЛенту = (data, по) => (data || []).map(c => ({ тип: c.kind === 'review' ? 'review' : 'talk', ts: Date.parse(c.created_at),
+  r: по.get(c.track_key), текст: c.body, к: c.id })).filter(x => x.r);
 function строкаЛенты(a) {
-  return '<a class="feed-row" href="' + trackHref(a.r) + '"><span class="feed-art">' + covHtml(a.r) + '</span>' +
-    '<span class="feed-copy"><span class="feed-category">' + (a.тип === 'rate' ? 'Оценка' : 'Комментарий') + ' · ' +
+  const куда = a.тип === 'review' && a.к ? '#r=' + a.к : trackHref(a.r) + (a.тип !== 'rate' && a.к ? '&c=' + a.к : '');
+  return '<a class="feed-row" href="' + куда + '"><span class="feed-art">' + covHtml(a.r) + '</span>' +
+    '<span class="feed-copy"><span class="feed-category">' + (a.тип === 'rate' ? 'Оценка' : a.тип === 'review' ? 'Рецензия' : 'Комментарий') + ' · ' +
       датаКороткая(a.ts) + '</span><span class="feed-title">' + esc(a.r.title || '—') + '</span>' +
       (a.тип === 'rate'
         ? '<span class="feed-extra">' + esc(a.r.artist || '—') + ' <b style="color:' + TCOLOR[a.v.t] + '">' + esc(a.v.t + modLabel(a.v.m)) + '</b></span>'
@@ -16699,10 +17187,9 @@ async function близкиеНарисовать(el) {
 
 /* Щелчки обзора и других вкладок — одним обработчиком на весь кабинет. */
 $('meTab').addEventListener('click', e => {
-  const t = e.target.closest('[data-tier],[data-genre],[data-clear],[data-ach-all],[data-fav],[data-csv]');
+  const t = e.target.closest('[data-tier],[data-genre],[data-clear],[data-ach-all],[data-fav]');
   if (!t) return;
   if (t.hasAttribute('data-ach-all')) return достиженияОкно();
-  if (t.hasAttribute('data-csv')) return оценкиВCsv(мойСписок());
   if (t.hasAttribute('data-fav')) return сердцеЩёлк(t);
   if (t.dataset.tier || t.dataset.genre || t.hasAttribute('data-clear')) {
     Object.assign(КБ, { q: '', tier: t.dataset.tier || '', genre: t.dataset.genre || '' });
@@ -16745,8 +17232,7 @@ function рядОценки(x, cmp) {
     '<div class="track-actions">' + сердце(r) + '</div></div>';
 }
 function meRatings(box, list) {
-  const шапка = '<div class="tab-heading"><div><h2>мои оценки</h2><p>Твоя музыкальная коллекция: искать, пересматривать и переоценивать.</p></div>' +
-    (list.length ? '<button type="button" class="soft-btn" data-csv>' + ико('download') + ' Скачать CSV</button>' : '') + '</div>';
+  const шапка = '<div class="tab-heading"><div><h2>мои оценки</h2><p>Твоя музыкальная коллекция: искать, пересматривать и переоценивать.</p></div></div>';
   if (!list.length) {
     box.innerHTML = шапка + '<div class="c-empty">' + ико('search') + 'Оценок пока нет. Их ставят в <a href="#base">каталоге</a>, ' +
       'на обложке, или на странице трека.</div>';
@@ -16918,6 +17404,223 @@ function meOrders(box) {
   рисовать();
 }
 
+/* ---------- подписки ----------
+   Не дружба, а подписка: взаимности не нужно, как у Twitch. Свои
+   подписки и подписчиков видит только сам зритель, другим — числа
+   (follow_stats). Подписаться можно в профиле зрителя. */
+async function подпискиЗагрузить() {
+  if (!вошёл()) return null;
+  const поля = 'created_at,profiles!follows_{}_fkey(id,name,login,avatar_url,color)';
+  const [a, b] = await Promise.all([
+    ОБЛ.sb.from('follows').select(поля.replace('{}', 'followee')).eq('follower', ОБЛ.user.id).order('created_at', { ascending: false }),
+    ОБЛ.sb.from('follows').select(поля.replace('{}', 'follower')).eq('followee', ОБЛ.user.id).order('created_at', { ascending: false })
+  ]);
+  ОБЛ.подписки = a.error || b.error ? null
+    : { мои: a.data.map(x => x.profiles).filter(Boolean), на_меня: b.data.map(x => x.profiles).filter(Boolean) };
+  return ОБЛ.подписки;
+}
+const человек = x => '<a class="near-row" href="#u=' + encodeURIComponent(x.login || '') + '">' +
+  (x.avatar_url ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(x.avatar_url) + '">' : '<span class="ini">' + esc(буквы(x.name || x.login)) + '</span>') +
+  '<b>' + esc(x.name || x.login) + '</b>' +
+  ((ОБЛ.онлайн || []).some(o => o.user_id === x.id) ? '<i class="on-dot" data-tip="Сейчас на сайте"></i>' : '') + '</a>';
+async function подпискиНарисовать(el) {
+  if (!el || !вошёл()) return;
+  const п = await подпискиЗагрузить();
+  if (!el.isConnected) return;
+  const низ = el.querySelector('.mutedline');
+  if (!п) { низ.textContent = 'Подписки на сервере ещё не включены.'; return; }
+  el.querySelector('h2').innerHTML = 'подписки' + (п.мои.length ? ' <span class="mutedline">' + число(п.мои.length) + '</span>' : '');
+  низ.outerHTML = (п.мои.length ? '<div>' + п.мои.slice(0, 12).map(человек).join('') + '</div>'
+      : '<p class="mutedline">Ты пока ни на кого не подписан. Подписаться можно в профиле зрителя — кнопкой «подписаться».</p>') +
+    '<p class="t-note">' + (п.на_меня.length
+      ? 'На тебя подписаны: ' + п.на_меня.slice(0, 6).map(x => '<a class="text-link" href="#u=' + encodeURIComponent(x.login || '') + '">' + esc(x.name || x.login) + '</a>').join(', ') +
+        (п.на_меня.length > 6 ? ' и ещё ' + число(п.на_меня.length - 6) : '')
+      : 'На тебя пока никто не подписан.') + '</p>';
+  el.querySelectorAll('img').forEach(im => im.addEventListener('error', () => im.remove()));
+  meHero();
+}
+async function подписаться(id, вкл) {
+  const { error } = вкл
+    ? await ОБЛ.sb.from('follows').insert({ followee: id })
+    : await ОБЛ.sb.from('follows').delete().eq('follower', ОБЛ.user.id).eq('followee', id);
+  if (error && !(вкл && error.code === '23505')) {
+    toast(/too many/.test(error.message) ? 'Слишком много подписок'
+      : /follows/.test(error.message) ? 'Подписки на сервере ещё не включены' : 'Не вышло: ' + error.message);
+    return false;
+  }
+  ОБЛ.подписки = null;
+  return true;
+}
+
+/* ---------- плейлист Spotify ----------
+   Плашка над кабинетом зовёт привязать плейлист; закрыл — больше не
+   зовёт. В профиле хранится только id плейлиста. Сверку плейлиста с
+   базой делает сервер — у страницы нет ключа Spotify, а без него
+   список треков плейлиста не прочитать. */
+const ЗНАЧОК_SP = '<svg class="sp" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#1ED760"/><g stroke="#121212" stroke-width="1.8" stroke-linecap="round" fill="none"><path d="M7 9.6c3.4-1 7.2-.7 10 1"/><path d="M7.7 12.7c2.9-.8 6-.5 8.4.9"/><path d="M8.4 15.6c2.4-.6 4.9-.3 6.7.7"/></g></svg>';
+const плейлистИз = t => {
+  const s = String(t || '').trim();
+  const m = s.match(/open\.spotify\.com\/(?:intl-[a-z-]+\/)?(?:user\/[^/]+\/)?playlist\/([A-Za-z0-9]{10,40})/) || s.match(/^spotify:playlist:([A-Za-z0-9]{10,40})$/) ||
+            s.match(/^([A-Za-z0-9]{22})$/);
+  return m ? m[1] : '';
+};
+let КАБ_ФОКУС = '';
+function промоSpotify() {
+  const el = $('meSpPromo');
+  const п = вошёл() ? ОБЛ.проф : null;
+  const звать = !!п && 'spotify_playlist' in п && !п.spotify_playlist && !ПРОФ.спНет;
+  el.hidden = !звать;
+  if (!звать) return;
+  el.innerHTML = ЗНАЧОК_SP + '<p>Привяжи свой Spotify-плейлист, чтобы автоматически подтянуть все свои треки к аккаунту!</p>' +
+    '<a class="main-btn" href="#me/settings" data-sp-go>Привязать</a>' +
+    '<button type="button" class="x" data-sp-x aria-label="Больше не показывать" data-tip="Больше не показывать">✕</button>';
+}
+$('meSpPromo').addEventListener('click', e => {
+  if (e.target.closest('[data-sp-x]')) { ПРОФ.спНет = true; saveПроф(); $('meSpPromo').hidden = true; ПОДСКАЗКА.спрятать(); }
+  else if (e.target.closest('[data-sp-go]')) {
+    КАБ_ФОКУС = 'spUrl';
+    if (location.hash === '#me/settings') { e.preventDefault(); drawMe(); }
+  }
+});
+function spotifyБлок(п) {
+  const id = п && п.spotify_playlist;
+  return '<section class="settings-box sp-box" id="spBox" style="margin-top:24px"><div class="section-title"><h2>плейлист Spotify</h2></div>' +
+    (!п ? '<p class="setting-help" style="margin:0 0 14px">Плейлист привязывается к аккаунту — после входа через Twitch.</p>' +
+          (ОБЛ && ОБЛ.sb ? '<button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '')
+    : !('spotify_playlist' in п) ? '<p class="setting-help" style="margin:0">Привязка плейлиста на сервере ещё не включена.</p>'
+    : id ? '<div class="sp-now" data-sp-now><img alt="" src="" hidden><div><b>плейлист привязан</b><small>' + esc(id) + '</small></div></div>' +
+        '<p class="setting-hint" style="margin:0 0 14px">Сверку плейлиста с базой треков делает сервер сайта: треки, которые есть в архиве, подтянутся к аккаунту, когда она пройдёт.</p>' +
+        '<div class="sp-row"><a class="soft-btn" href="https://open.spotify.com/playlist/' + esc(id) + '" target="_blank" rel="noopener noreferrer">' + ико('external') + ' Открыть в Spotify</a>' +
+        '<button type="button" class="soft-btn bad" data-sp-off>Отвязать</button></div>'
+    : '<label class="form-label" for="spUrl">Ссылка на плейлист</label>' +
+      '<div class="sp-row"><input type="text" id="spUrl" placeholder="https://open.spotify.com/playlist/…" autocomplete="off">' +
+        '<button type="button" class="main-btn" data-sp-on>' + ЗНАЧОК_SP.replace('class="sp"', 'class="sp" style="width:16px;height:16px"') + ' Привязать</button></div>' +
+      '<p class="setting-hint" style="margin:10px 0 0">Плейлист должен быть открытым. Треки из него, которые есть в архиве, подтянутся к аккаунту — сверку делает сервер сайта.</p>') +
+    '</section>';
+}
+function spotifyПодключить(box) {
+  const el = box.querySelector('#spBox');
+  if (!el) return;
+  const сохранить = async id => {
+    const { error } = await ОБЛ.sb.from('profiles').update({ spotify_playlist: id }).eq('id', ОБЛ.user.id);
+    if (error) return toast(/spotify_playlist/.test(error.message) ? 'Привязка плейлиста на сервере ещё не включена' : 'Не удалось: ' + error.message);
+    ОБЛ.проф.spotify_playlist = id;
+    toast(id ? 'Плейлист привязан' : 'Плейлист отвязан');
+    meSettings(box);
+    промоSpotify();
+  };
+  const on = el.querySelector('[data-sp-on]');
+  if (on) {
+    const поле = el.querySelector('#spUrl');
+    const дать = () => { const id = плейлистИз(поле.value); if (!id) return toast('Нужна ссылка на плейлист: open.spotify.com/playlist/…'); сохранить(id); };
+    on.addEventListener('click', дать);
+    поле.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); дать(); } });
+  }
+  const off = el.querySelector('[data-sp-off]');
+  if (off) off.addEventListener('click', () => сохранить(null));
+  // Название и обложку плейлиста отдаёт oEmbed Spotify — ключ для него не нужен.
+  const now = el.querySelector('[data-sp-now]');
+  if (now) fetch('https://open.spotify.com/oembed?url=' + encodeURIComponent('https://open.spotify.com/playlist/' + ОБЛ.проф.spotify_playlist),
+      { signal: AbortSignal.timeout ? AbortSignal.timeout(7000) : undefined })
+    .then(r => r.ok ? r.json() : null).then(j => {
+      if (!j || !now.isConnected) return;
+      if (j.title) now.querySelector('b').textContent = j.title;
+      now.querySelector('small').textContent = 'плейлист привязан';
+      const im = now.querySelector('img');
+      if (j.thumbnail_url) { im.src = j.thumbnail_url; im.hidden = false; }
+    }).catch(() => {});
+}
+
+/* ---------- управление ----------
+   Инструменты команды сайта во вкладке кабинета (раньше студия была
+   пунктом шапки, а назначение ролей — в настройках). Модеру —
+   неточности и закрытые комментарии; админу и композитору — ещё студия,
+   заявки на привязку, обложки с фактами и команда. Это вид, а не
+   защита: что можно, решает сервер. */
+const ЧТО_НЕ_ТАК = { cover: 'обложка', year: 'год или альбом', name: 'название или исполнитель', genre: 'жанр или тэги',
+                    link: 'ссылка или плеер', other: 'другое' };
+const делКоманды = () => (ОБЛ.ждут || 0) + (ОБЛ.неточностей || 0);
+function meManage(box) {
+  const старший = ['admin', 'owner'].includes(мояРоль());
+  box.innerHTML = '<div class="tab-heading"><div><h2>управление</h2><p>Инструменты команды сайта.</p></div></div>' +
+    '<div class="mg-grid">' +
+      (студияМожно() ? '<a class="mg-card" href="#studio"><b>Студия оценок</b><span>Экран для стрима: очередь эфира, пластинка на сцене и шкала. Оценённое сразу встаёт в каталог.</span><small>открыть студию →</small></a>' : '') +
+      (старший ? '<a class="mg-card" href="#covers"><b>Обложки и факты</b><span>Собрать присланные обложки и факты в covers.json и facts.json, вписать обложку трекам без неё.</span><small>открыть панель →</small></a>' : '') +
+    '</div>' +
+    '<section class="o-panel" data-reports><div class="section-title"><h2>сообщения о неточностях</h2></div><p class="mutedline">загружаю…</p></section>' +
+    (старший ? '<section class="o-panel" data-review></section>' : '') +
+    '<section class="o-panel" data-banned><div class="section-title"><h2>закрытые комментарии</h2></div><p class="mutedline">загружаю…</p></section>' +
+    (старший ? '<section class="o-panel"><div class="section-title"><h2>команда сайта</h2></div><div id="meTeam"><p class="me-cnt">загружаю…</p></div></section>' : '');
+  командаНарисовать($('meTeam'));
+  неточностиНарисовать(box.querySelector('[data-reports]'));
+  закрытыеНарисовать(box.querySelector('[data-banned]'));
+  if (старший) разборЗаявок(box.querySelector('[data-review]'));
+}
+async function неточностиНарисовать(el) {
+  if (!el) return;
+  const { data, error } = await ОБЛ.sb.from('reports')
+    .select('id,track_key,what,body,status,created_at,decided_at,profiles!reports_user_id_fkey(name,login)')
+    .order('created_at', { ascending: false }).limit(200);
+  if (!el.isConnected) return;
+  const низ = el.querySelector('.mutedline');
+  if (error) { низ.textContent = /reports/.test(error.message) ? 'Сообщения о неточностях на сервере ещё не включены.' : 'Не удалось загрузить: ' + error.message; return; }
+  const по = new Map(CAT.map(r => [r.key, r]));
+  const открытые = data.filter(x => x.status === 'open');
+  const решённые = data.filter(x => x.status !== 'open').slice(0, 20);
+  ОБЛ.неточностей = открытые.length;
+  meHeroTabs();
+  const ряд = x => {
+    const r = по.get(x.track_key);
+    const п = x.profiles || {};
+    return '<div class="rp-row" data-id="' + x.id + '">' +
+      (r ? '<a class="track-art" href="' + trackHref(r) + '" tabindex="-1" aria-hidden="true">' + covHtml(r) + '</a>' : '') +
+      '<div class="rp-tx">' + (r ? '<a href="' + trackHref(r) + '"><b>' + esc(r.title || '—') + '</b> — ' + esc(r.artist || '—') + '</a>'
+          : '<b>' + esc(x.track_key) + '</b>') +
+        '<span class="rp-what">' + esc(ЧТО_НЕ_ТАК[x.what] || x.what) + '</span>' +
+        '<p>' + esc(x.body) + '</p>' +
+        '<small>' + (п.login ? '<a class="text-link" href="#u=' + encodeURIComponent(п.login) + '">' + esc(п.name || п.login) + '</a> · ' : '') +
+          когда(Date.parse(x.created_at)) + (x.decided_at ? ' · исправлено ' + когда(Date.parse(x.decided_at)) : '') + '</small></div>' +
+      '<div class="rp-act">' + (x.status === 'open'
+        ? '<button type="button" class="soft-btn" data-rp="done">' + ико('check') + ' исправлено</button>'
+        : '<button type="button" class="soft-btn" data-rp="open">вернуть</button>') +
+        '<button type="button" class="soft-btn bad" data-rp="del" aria-label="Удалить">' + ико('close') + '</button></div></div>';
+  };
+  низ.outerHTML = (открытые.length ? '<div>' + открытые.map(ряд).join('') + '</div>' : '<p class="mutedline">Новых сообщений нет.</p>') +
+    (решённые.length ? '<details class="disclosure"><summary>Исправленные — последние ' + решённые.length + '</summary><div>' + решённые.map(ряд).join('') + '</div></details>' : '');
+  el.querySelector('h2').innerHTML = 'сообщения о неточностях' + (открытые.length ? ' <span class="mutedline">' + открытые.length + '</span>' : '');
+  шить(el);
+  el.addEventListener('click', async e => {
+    const b = e.target.closest('[data-rp]'); if (!b) return;
+    const id = Number(b.closest('.rp-row').dataset.id);
+    b.disabled = true;
+    const { error } = b.dataset.rp === 'del'
+      ? await ОБЛ.sb.from('reports').delete().eq('id', id)
+      : await ОБЛ.sb.rpc('resolve_report', { p_id: id, p_done: b.dataset.rp === 'done' });
+    if (error) { b.disabled = false; return toast('Не вышло: ' + error.message); }
+    el.innerHTML = '<div class="section-title"><h2>сообщения о неточностях</h2></div><p class="mutedline">загружаю…</p>';
+    const копия = el.cloneNode(true);
+    el.replaceWith(копия);
+    неточностиНарисовать(копия);
+  });
+}
+async function закрытыеНарисовать(el) {
+  if (!el) return;
+  const { data, error } = await ОБЛ.sb.from('profiles').select('id,name,login,avatar_url').eq('banned', true).order('name').limit(200);
+  if (!el.isConnected) return;
+  const низ = el.querySelector('.mutedline');
+  if (error) { низ.textContent = 'Не удалось загрузить: ' + error.message; return; }
+  низ.outerHTML = data.length ? '<div>' + data.map(x => '<div class="kv"><span>' + человек(x) + '</span>' +
+      '<button type="button" class="soft-btn" data-unban="' + esc(x.id) + '">вернуть комментарии</button></div>').join('') + '</div>'
+    : '<p class="mutedline">Никому не закрыты. Закрыть можно значком ⊘ у комментария.</p>';
+  el.querySelectorAll('img').forEach(im => im.addEventListener('error', () => im.remove()));
+  el.querySelectorAll('[data-unban]').forEach(b => b.addEventListener('click', async () => {
+    const { error } = await ОБЛ.sb.rpc('set_ban', { p_user: b.dataset.unban, p_banned: false });
+    if (error) return toast('Не вышло: ' + error.message);
+    toast('Комментарии снова открыты');
+    b.closest('.kv').remove();
+  }));
+}
+
 /* ---------- настройки ---------- */
 function meSettings(box) {
   let цвет = ПРОФ.цвет || ЦВЕТА[0];
@@ -16944,6 +17647,7 @@ function meSettings(box) {
       '<div class="colors-row" id="meSw">' + ЦВЕТА.map(c => '<button type="button" style="--c:' + c + '" data-c="' + c + '"' +
         ' aria-label="Цвет ' + c + '" aria-pressed="' + (c === цвет) + '"></button>').join('') + '</div>' +
       '<button class="main-btn" type="submit">' + ико('check') + ' Сохранить изменения</button></form></section>' +
+    spotifyБлок(п) +
     '<aside><div class="section-title"><h2>публичный профиль</h2></div>' + (п
       ? флажок('prRates', п.ratings_public !== false, 'Показывать мои оценки',
           'Другие пользователи увидят мои оценки треков — в профиле, в «оценках зрителей» и в «близких по вкусу». По умолчанию они открыты.') +
@@ -16951,6 +17655,8 @@ function meSettings(box) {
         флажок('prHide', !!п.hide_online, 'Не показывать меня в человечках', 'На главной тебя не будет видно, даже когда ты на сайте.') +
         ('twitch_hidden' in п ? флажок('prTw', !!п.twitch_hidden, 'Скрыть ссылку на мой Twitch',
           'В кабинете и в публичном профиле не будет ссылки на твой канал.') : '') +
+        ('activity_hidden' in п ? флажок('prAct', !!п.activity_hidden, 'Не показывать мои последние действия',
+          'В публичном профиле не будет ленты твоих последних оценок и комментариев.') : '') +
         (п.login ? '<a class="soft-btn" href="#u=' + encodeURIComponent(п.login) + '" style="margin-top:14px">' + ико('external') + ' Предпросмотр профиля</a>' : '')
       : '<div class="setting-help"><p>Публичный профиль появляется после входа через Twitch: ник и аватар оттуда, пара слов о себе, ' +
           'оценки и избранное — если их не скрыть.</p><p>Без входа ник, оценки и комментарии лежат в этом браузере, и другие их не видят.</p></div>' +
@@ -16960,11 +17666,14 @@ function meSettings(box) {
         '<div class="acc-row"><div><b>Twitch' + (п.login ? ' · ' + esc(п.login) : '') + '</b><small>Оценки, сердечки, цвет и пара слов о себе лежат в базе сайта ' +
           'и приезжают на любое устройство, где ты вошёл.</small></div><button type="button" class="soft-btn" data-logout>Выйти</button></div>' +
         '<div class="acc-row bad"><div><b>Удалить аккаунт</b><small>Сотрёт из базы профиль, оценки, сердечки, комментарии и заявки. Вернуть будет нельзя.</small></div>' +
-          '<button type="button" class="soft-btn bad" id="prDel">Удалить…</button></div></section>' : '') +
-    (['admin', 'owner'].includes(мояРоль())
-      ? '<section class="settings-box" style="margin-top:24px"><div class="section-title"><h2>команда сайта</h2></div><div id="meTeam"><p class="me-cnt">загружаю…</p></div></section>' : '');
-  командаНарисовать($('meTeam'));
+          '<button type="button" class="soft-btn bad" id="prDel">Удалить…</button></div></section>' : '');
   приватностьПодключить(box);
+  spotifyПодключить(box);
+  if (КАБ_ФОКУС) {
+    const f = $(КАБ_ФОКУС);
+    КАБ_ФОКУС = '';
+    if (f) { f.scrollIntoView({ block: 'center' }); f.focus({ preventScroll: true }); }
+  }
   $('stBg').addEventListener('change', async e => {
     const el = e.target;
     ПРОФ.фон = el.checked; saveПроф();
@@ -17043,7 +17752,7 @@ const ВХОД_LS = 'faryma-after-login';
    упал бы с ReferenceError. var к тому времени просто undefined. */
 var ОБЛ = { sb: null, user: null, проф: null, состояние: 'грузится', ошибка: '',
             онлайн: [], пишем: false, ещё: false, таймер: 0, сказали: false,
-            комм: {}, моихКомм: null, заявки: null, ждут: 0,
+            комм: {}, лайки: {}, моихКомм: null, заявки: null, ждут: 0,
             голоса: {}, владельцы: null, увед: null, новых: 0 };
 
 /* Роли раздаёт сервер по логину Twitch (role_grants в schema.sql):
@@ -17108,7 +17817,8 @@ async function облакоСессия(сессия) {
   ОБЛ.состояние = 'вошёл';
   ОБЛ.ошибка = '';
   // Голоса, взятые до входа, могли включать свой же открытый — как чужой.
-  ОБЛ.голоса = {};
+  // Лайки — то же: «мой» у них зависит от того, кто спрашивал.
+  ОБЛ.голоса = {}; ОБЛ.лайки = {};
   if (T.r) голосаЗагрузить(T.r.key);
   const m = u.user_metadata || {};
   ПРОФ.twitch = { ник: m.nickname || m.name || '', аватар: m.avatar_url || m.picture || '' };
@@ -17120,6 +17830,8 @@ async function облакоСессия(сессия) {
   if (куда && куда !== location.hash) location.hash = куда;
   await профильИзБазы();
   уведомленияЗагрузить();
+  // Число подписчиков — в шапке кабинета.
+  подпискиЗагрузить().then(() => { if (!$('mpage').hidden) meHero(); });
   await сверитьВсё();
   отметиться();
   счётчикиЗагрузить();
@@ -17129,7 +17841,7 @@ function облакоВышел() {
   const был = ОБЛ.состояние === 'вошёл';
   ОБЛ.user = null;
   ОБЛ.проф = null;
-  ОБЛ.увед = null; ОБЛ.новых = 0; ОБЛ.заявки = null; ОБЛ.голоса = {};
+  ОБЛ.увед = null; ОБЛ.новых = 0; ОБЛ.заявки = null; ОБЛ.голоса = {}; ОБЛ.подписки = null; ОБЛ.лайки = {};
   ОБЛ.состояние = 'гость';
   ОБЛ.ошибка = '';
   if (ПРОФ.twitch) { delete ПРОФ.twitch; saveПроф(); }
@@ -17160,7 +17872,14 @@ document.addEventListener('click', e => {
    Если входа нет вовсе (файл с диска, сервер не ответил), шкала
    работает как раньше, в браузер: иначе без сети страница стала бы
    бесполезной, а войти всё равно нельзя. */
-function нужноВойти() {
+/* Зачем входить — своими словами для каждого случая. */
+const ВОЙТИ_ЗАЧЕМ = {
+  оценка: ['оценка', 'Оценки ставят те, кто вошёл через Twitch: так оценка остаётся за тобой на любом устройстве и попадает в твою статистику в личном кабинете.'],
+  лайк: ['лайк', 'Лайкать комментарии и рецензии могут те, кто вошёл через Twitch.'],
+  подписка: ['подписка', 'Подписываться на зрителей могут те, кто вошёл через Twitch: подписки живут в твоём личном кабинете.'],
+  неточность: ['неточность', 'Сообщить о неточности могут те, кто вошёл через Twitch: так команде сайта есть кого переспросить.']
+};
+function нужноВойти(что = 'оценка') {
   if (!ОБЛ || ОБЛ.состояние === 'вошёл' || ОБЛ.состояние === 'нет') return false;
   /* Пока библиотека входа грузится, вошедший выглядит гостем, и первые
      секунды после открытия ему на щелчок по шкале выпадало «войди».
@@ -17171,6 +17890,9 @@ function нужноВойти() {
     try { if (localStorage.getItem('faryma-auth')) return false; } catch {}
   }
   const m = $('mLogin');
+  const [метка, зачем] = ВОЙТИ_ЗАЧЕМ[что] || ВОЙТИ_ЗАЧЕМ.оценка;
+  m.querySelector('.mhd .k').textContent = метка;
+  m.querySelector('.mhd p').textContent = зачем;
   m.querySelector('.tw-in').innerHTML = ЗНАЧОК_TW + 'Войти через Twitch';
   m.hidden = false;
   m.querySelector('.tw-in').focus();
@@ -17189,7 +17911,7 @@ function облакоСбой(e) {
 /* ---------- профиль ---------- */
 async function профильИзБазы() {
   const { data, error } = await профильПо('id', ОБЛ.user.id,
-    'name,login,avatar_url,color,bio,role,banned,ratings_public,favs_public,hide_online,created_at,bg_avatar,twitch_hidden,name_custom');
+    'name,login,avatar_url,color,bio,role,banned,ratings_public,favs_public,hide_online,created_at,bg_avatar,twitch_hidden,name_custom,activity_hidden,spotify_playlist');
   if (error) return облакоСбой(error);
   ОБЛ.проф = data;
   const к = await ОБЛ.sb.from('comments').select('id', { count: 'exact', head: true }).eq('user_id', ОБЛ.user.id);
@@ -17408,16 +18130,18 @@ function облакоРисовать(сВкладкой) {
   if (T.r && $('tTalk')._рисовать) $('tTalk')._рисовать();
   if (!$('page').hidden && CAT.length) главная();
   if (!$('mpage').hidden && CAT.length) {
-    if (сВкладкой && !$('meTab').contains(document.activeElement)) drawMe();
-    else meHero();
+    // Роль доехала или ушла — вкладка «управление» появляется или пропадает.
+    const вкладкиСтарые = !!document.querySelector('#meTabs a[href="#me/manage"]') !== штатСайта();
+    if ((сВкладкой || вкладкиСтарые) && !$('meTab').contains(document.activeElement)) drawMe();
+    else { meHero(); промоSpotify(); }
   }
 }
 
-/* Кнопка студии в шапке — по роли. Роль доехала, а открыт адрес
-   студии — показываем её; роль ушла (вышел) — уходим из студии. */
+/* Студия — по роли; вход в неё теперь во вкладке «управление» кабинета.
+   Роль доехала, а открыт адрес студии — показываем её; роль ушла
+   (вышел) — уходим из студии. */
 function студияДоступ() {
   const можно = студияМожно();
-  $('navStudio').hidden = !можно;
   if (location.hash !== '#studio' || !CAT.length) return;
   if (можно && $('spage').hidden) route();
   else if (!можно && !роль_ждём()) route();
@@ -17432,7 +18156,7 @@ async function комментарииЗагрузить(key) {
   const спросить = вид => ОБЛ.sb.from('comments')
     .select('id,body,created_at,user_id,parent_id,' + (вид ? 'kind,' : '') + 'profiles(name,login,avatar_url,role)')
     .eq('track_key', key).order('created_at').limit(500);
-  let { data, error } = await спросить(!ОБЛ.безВида);
+  let [{ data, error }] = await Promise.all([спросить(!ОБЛ.безВида), лайкиЗагрузить(key)]);
   if (error && !ОБЛ.безВида && /kind/.test(error.message || '')) {
     ОБЛ.безВида = true;
     ({ data, error } = await спросить(false));
@@ -17539,23 +18263,25 @@ async function заявкиМои() {
     const к = await ОБЛ.sb.from('claims').select('id', { count: 'exact', head: true }).eq('status', 'pending');
     ОБЛ.ждут = к.error ? 0 : к.count;
   }
+  if (штатСайта()) {
+    const к = await ОБЛ.sb.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'open');
+    ОБЛ.неточностей = к.error ? 0 : к.count;
+  }
 }
 
 /* ---------- заявки ----------
    Своя история заявок и форма новой — у всех вошедших. У админа и
    композитора выше — заявки зрителей на разбор. */
 async function meClaims(box) {
-  const staff = ['admin', 'owner'].includes(мояРоль());
-  const шапка = '<div class="tab-heading"><div><h2>заявки</h2><p>' + (staff
-    ? 'Заявки зрителей на привязку заказов и твоя история заявок' : 'История заявок на привязку своих заказов') + '</p></div></div>';
+  const шапка = '<div class="tab-heading"><div><h2>заявки</h2><p>История заявок на привязку своих заказов' +
+    (['admin', 'owner'].includes(мояРоль()) ? '. Заявки зрителей — во вкладке <a class="text-link" href="#me/manage">«управление»</a>' : '') + '</p></div></div>';
   if (!вошёл()) {
     box.innerHTML = шапка + '<div class="c-empty">Заявку на привязку своих заказов подают после входа через Twitch.' +
       (ОБЛ && ОБЛ.sb ? '<br><button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '') + '</div>';
     return;
   }
-  box.innerHTML = шапка + (staff ? '<div data-review></div>' : '') + '<div data-mine' + (staff ? ' style="margin-top:34px"' : '') + '></div>';
+  box.innerHTML = шапка + '<div data-mine></div>';
   моиЗаявки(box.querySelector('[data-mine]'));
-  if (staff) await разборЗаявок(box.querySelector('[data-review]'));
 }
 
 const СТАТУС = { approved: ['одобрено', '', 'check'], pending: ['ждёт', ' pending', 'clock'], rejected: ['отклонена', ' bad', 'close'] };
@@ -17696,12 +18422,13 @@ async function разборЗаявок(el) {
 }
 /* Число ждущих на вкладке — без перерисовки самой вкладки. */
 function meHeroTabs() {
-  const a = document.querySelector('#meTabs a[href="#me/claims"]');
+  const a = document.querySelector('#meTabs a[href="#me/manage"]');
   if (!a) return;
   let b = a.querySelector('.tab-n');
-  if (!ОБЛ.ждут) { if (b) b.remove(); return; }
+  const n = делКоманды();
+  if (!n) { if (b) b.remove(); return; }
   if (!b) { b = document.createElement('b'); b.className = 'tab-n'; a.append(' ', b); }
-  b.textContent = ОБЛ.ждут;
+  b.textContent = n;
 }
 
 /* ---------- кто заказал: ссылкой на профиль ----------
@@ -17758,8 +18485,12 @@ function уведомленияСтроки(u, сколько) {
     const текст = n.kind === 'claim'
       ? (n.status === 'approved' ? 'Заявку на <b>' + esc(n.claim) + '</b> одобрили — заказы привязаны'
                                  : 'Заявку на <b>' + esc(n.claim) + '</b> отклонили') + (n.answer ? ': «' + esc(n.answer) + '»' : '')
+      : n.kind === 'follow' ? 'Новый подписчик — <b>' + esc(n.who || n.who_login) + '</b>'
       : 'Ответ от <b>' + esc(n.who || n.who_login) + '</b>' + (t ? ' к «' + esc(t.title) + '»' : '') + ': «' + esc(обрезать(n.body, 90)) + '»';
-    const куда = n.kind === 'claim' ? '#me/orders' : (t ? trackHref(t) : '#me');
+    // Ответ — прямо к нему в ленте трека, а не просто на страницу трека.
+    const куда = n.kind === 'claim' ? '#me/orders'
+      : n.kind === 'follow' ? '#u=' + encodeURIComponent(n.who_login || '')
+      : (t ? trackHref(t) + (n.comment_id ? '&c=' + n.comment_id : '') : '#me');
     return '<a class="note-row' + (n.fresh ? ' fresh' : '') + '" href="' + куда + '"><span>' + текст + '</span><time>' +
       когда(Date.parse(n.at)) + '</time></a>';
   }).join('');
@@ -17786,11 +18517,11 @@ function колоколСписок() {
   const u = вошёл() ? ОБЛ.увед : null;
   let html = '<strong>Уведомления</strong>';
   if (!вошёл()) {
-    html += '<p class="bell-none">Сюда приходят ответы на твои комментарии и решения по заявкам на заказы. ' +
+    html += '<p class="bell-none">Сюда приходят ответы на твои комментарии, новые подписчики и решения по заявкам на заказы. ' +
       'Видны тем, кто вошёл через Twitch.</p>' +
       (ОБЛ && ОБЛ.sb ? '<button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '');
   } else if (!u) html += '<p class="bell-none">Загружаем…</p>';
-  else if (!u.length) html += '<p class="bell-none">За месяц ничего нового: ни ответов на твои комментарии, ни решений по заявкам.</p>';
+  else if (!u.length) html += '<p class="bell-none">За месяц ничего нового: ни ответов на твои комментарии, ни подписчиков, ни решений по заявкам.</p>';
   else html += уведомленияСтроки(u, 20);
   $('bellPop').innerHTML = html;
 }
@@ -17809,23 +18540,6 @@ function колоколПульт() {
   window.addEventListener('hashchange', закрыть);
 }
 
-/* ---------- выгрузить мои оценки ---------- */
-function оценкиВCsv(list) {
-  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-  const строки = [['исполнитель', 'трек', 'моя оценка', 'оценка композитора', 'эфир', 'дата эфира', 'когда оценил', 'ключ']]
-    .concat(list.slice().sort((a, b) => (b.v.w || 0) - (a.v.w || 0)).map(x => [x.r.artist, x.r.title,
-      x.v.t + modLabel(x.v.m), x.r.rate ? x.r.rate.label : '', x.r.streamNum ?? '', x.r.date ? дата(x.r.date) : '',
-      x.v.w ? день(x.v.w) : '', x.r.key]));
-  // BOM впереди — иначе Excel откроет кириллицу кракозябрами.
-  const csv = '﻿' + строки.map(r => r.map(q).join(',')).join('\r\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  a.download = 'мои-оценки-' + день() + '.csv';
-  document.body.append(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  toast('Выгружено ' + число(list.length) + ' ' + plural(list.length, 'оценка', 'оценки', 'оценок'));
-}
-
 /* ---------- публичный профиль и удаление аккаунта ---------- */
 function приватностьПодключить(box) {
   const сохранить = async (поле, el, да, нет) => {
@@ -17841,7 +18555,8 @@ function приватностьПодключить(box) {
   [['#prRates', 'ratings_public', 'Оценки теперь видны другим', 'Оценки снова видишь только ты'],
    ['#prFavs', 'favs_public', 'Избранное теперь видно в профиле', 'Избранное больше никому не видно'],
    ['#prHide', 'hide_online', 'На главной тебя больше не видно', 'Тебя снова видно на главной'],
-   ['#prTw', 'twitch_hidden', 'Ссылки на Twitch в профиле больше нет', 'Ссылка на Twitch снова в профиле']].forEach(([sel, поле, да, нет]) => {
+   ['#prTw', 'twitch_hidden', 'Ссылки на Twitch в профиле больше нет', 'Ссылка на Twitch снова в профиле'],
+   ['#prAct', 'activity_hidden', 'Последних действий в профиле больше не видно', 'Последние действия снова видны в профиле']].forEach(([sel, поле, да, нет]) => {
     const el = box.querySelector(sel);
     if (el) el.addEventListener('change', () => сохранить(поле, el, да, нет));
   });
@@ -17889,8 +18604,8 @@ function showUser(login) {
 
 /* Поля профиля. Часть появилась позже остальных: пока схему не
    перезапустили, база про них не знает — тогда спрашиваем без них. */
-const ПОЛЯ_ПРОФИЛЯ = 'id,name,login,avatar_url,color,bio,role,ratings_public,favs_public,created_at,bg_avatar,twitch_hidden';
-const ПОЛЯ_ПОЗЖЕ = [',bg_avatar', ',twitch_hidden', ',name_custom', ',favs_public'];
+const ПОЛЯ_ПРОФИЛЯ = 'id,name,login,avatar_url,color,bio,role,ratings_public,favs_public,created_at,bg_avatar,twitch_hidden,activity_hidden';
+const ПОЛЯ_ПОЗЖЕ = [',bg_avatar', ',twitch_hidden', ',name_custom', ',favs_public', ',activity_hidden', ',spotify_playlist'];
 async function профильПо(поле, значение, поля = ПОЛЯ_ПРОФИЛЯ) {
   const r = await ОБЛ.sb.from('profiles').select(поля).eq(поле, значение).maybeSingle();
   const лишнее = r.error && r.error.code === '42703' && ПОЛЯ_ПОЗЖЕ.find(x => поля.includes(x));
@@ -17907,6 +18622,8 @@ async function drawUser(login) {
   };
   $('uCrumb').textContent = l || 'профиль';
   $('uBody').innerHTML = '';
+  $('uFeed').hidden = true;
+  человечекНаШапке($('uRun'), null);
   if (!ОБЛ.sb) return пусто(ОБЛ.состояние === 'грузится' ? 'загружаю…'
     : 'Профили зрителей видны только на сайте, когда есть связь с сервером.');
   пусто('загружаю…');
@@ -17919,31 +18636,74 @@ async function drawUser(login) {
   $('uCrumb').textContent = ник;
   const с = new Date(п.created_at);
   $('uHero').innerHTML = аваHtml(п.avatar_url, ник, п.color) +
-    '<div class="hero-text"><div class="hero-kicker">' + (это ? 'Так тебя видят другие' : 'Профиль зрителя') + '</div>' +
+    '<div class="hero-text">' + (это ? '<div class="hero-kicker">Так тебя видят другие</div>' : '') +
       '<div class="hero-name">' + esc(ник) + '</div><div class="hero-bio">' + esc(п.bio || '') + '</div>' +
       '<div class="hero-meta">' + (РОЛИ[п.role] ? '<span class="role-tag ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '') +
         '<span class="hero-since">на сайте с ' + МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span>' +
+        '<span class="hero-follow" data-followers hidden></span>' +
         (п.twitch_hidden ? '' : '<a class="twitch-link" href="https://www.twitch.tv/' + encodeURIComponent(п.login) + '" target="_blank" rel="noopener noreferrer">Twitch · ' +
           esc(п.login) + ' ↗</a>') + '</div><div data-lvl></div></div>' +
-    (это ? '<div class="hero-actions"><a class="soft-btn" href="#me/settings">' + ико('edit') + '<span>Настройки</span></a></div>' : '');
+    (это ? '<div class="hero-actions"><a class="soft-btn" href="#me/settings">' + ико('edit') + '<span>Настройки</span></a></div>'
+      : '<div class="hero-actions"><button type="button" class="soft-btn follow-btn" data-sub aria-pressed="false" hidden>' +
+          ико('heart') + '<span>подписаться</span></button></div>');
   аваЗапас($('uHero'), ник);
+  человечекНаШапке($('uRun'), { ник, цвет: п.color || цветПо(п.id), логин: п.login, я: это });
   // Фон из аватара хозяин профиля включает у себя — и он виден всем, кто зашёл.
   фон(п.bg_avatar && п.avatar_url ? п.avatar_url : '');
 
   const открытоИзбранное = п.favs_public !== false && 'favs_public' in п;
-  const [cl, cm, rt, fv, xp] = await Promise.all([
+  const [cl, cm, rt, fv, xp, fs] = await Promise.all([
     ОБЛ.sb.from('claims').select('name,shown').eq('user_id', п.id).eq('status', 'approved'),
     комментарииЗрителя(п.id),
     п.ratings_public ? оценкиЗрителя(п.id) : Promise.resolve(null),
     открытоИзбранное ? ОБЛ.sb.from('favs').select('track_key,created_at').eq('user_id', п.id).order('created_at', { ascending: false }).limit(200)
       : Promise.resolve(null),
-    ОБЛ.sb.rpc('user_xp', { p_user: п.id })
+    ОБЛ.sb.rpc('user_xp', { p_user: п.id }),
+    ОБЛ.sb.rpc('follow_stats', { p_user: п.id })
   ]);
   if (location.hash !== адрес) return;
   const по = new Map(CAT.map(r => [r.key, r]));
   // Уровень считает сервер — по тем же правилам, что кабинет.
   const опыт = xp && !xp.error && (Array.isArray(xp.data) ? xp.data[0] : xp.data);
   if (опыт) $('uHero').querySelector('[data-lvl]').outerHTML = уровеньHtml(уровень(опыт.ratings || 0, опыт.comments || 0));
+
+  /* Подписка. Числа считает сервер (follow_stats), кто подписан — видно
+     только самому зрителю. Гостю кнопка зовёт войти. */
+  const подп = fs && !fs.error && (Array.isArray(fs.data) ? fs.data[0] : fs.data);
+  if (подп) {
+    const число_ = $('uHero').querySelector('[data-followers]');
+    let n = подп.followers || 0;
+    const надпись = () => { число_.hidden = false; число_.textContent = подписчикиСлово(n); };
+    надпись();
+    const к = $('uHero').querySelector('[data-sub]');
+    if (к) {
+      let мой = !!подп.mine && вошёл();
+      const вид = () => { к.hidden = false; к.setAttribute('aria-pressed', String(мой));
+        к.querySelector('span').textContent = мой ? 'ты подписан' : 'подписаться';
+        к.dataset.tip = мой ? 'Отписаться' : 'Профиль появится в твоём кабинете, в «подписках»'; };
+      вид();
+      к.addEventListener('click', async () => {
+        if (нужноВойти('подписка')) return;
+        if (!вошёл()) return toast('Вход ещё загружается — попробуй через пару секунд');
+        к.disabled = true;
+        const ok = await подписаться(п.id, !мой);
+        к.disabled = false;
+        if (!ok) return;
+        мой = !мой; n += мой ? 1 : -1;
+        вид(); надпись();
+        toast(мой ? 'Подписка на ' + ник + ' оформлена' : 'Подписка на ' + ник + ' снята');
+      });
+    }
+  }
+
+  /* Последние действия — справа от шапки, если зритель их не скрыл:
+     открытые оценки и комментарии. */
+  if (!п.activity_hidden) {
+    const действия = (rt || []).filter(x => x.rated_at).map(x => ({ тип: 'rate', ts: Date.parse(x.rated_at), r: по.get(x.track_key),
+      v: { t: x.tier, m: x.mod } })).filter(x => x.r).concat(комментВЛенту(cm && cm.data, по));
+    $('uFeed').hidden = false;
+    лентаСобрать(действия, лентаКаркас($('uFeed')), 'Пока ничего: ни открытых оценок, ни комментариев.');
+  }
 
   // Избранное — если не скрыто.
   const любимые = fv && !fv.error ? (fv.data || []).map(x => по.get(x.track_key)).filter(Boolean) : null;
@@ -17994,7 +18754,7 @@ async function drawUser(login) {
     (кс.length ? '<div>' + кс.map(c => {
       const r = по.get(c.track_key);
       const рец = c.kind === 'review';
-      return '<a class="note-row" href="' + (рец ? '#r=' + c.id : trackHref(r)) + '"><span>' +
+      return '<a class="note-row" href="' + (рец ? '#r=' + c.id : trackHref(r) + '&c=' + c.id) + '"><span>' +
         (рец ? '<span class="rv-k" style="margin:0 7px 0 0">' + ИК_ПЕРО + 'рецензия</span>' : '') +
         '<b>' + esc(r.title) + '</b> — ' + esc(обрезать(c.body, 120)) + '</span>' +
         '<time>' + когда(Date.parse(c.created_at)) + '</time></a>';
@@ -18049,7 +18809,8 @@ async function drawReview(id) {
   const [o, отв] = await Promise.all([
     вошёл() && c.user_id === ОБЛ.user.id ? Promise.resolve({ data: null })
       : ОБЛ.sb.from('ratings').select('tier,mod').eq('user_id', c.user_id).eq('track_key', c.track_key).maybeSingle(),
-    ОБЛ.sb.from('comments').select('id', { count: 'exact', head: true }).eq('parent_id', id)
+    ОБЛ.sb.from('comments').select('id', { count: 'exact', head: true }).eq('parent_id', id),
+    лайкиЗагрузить(c.track_key)
   ]);
   if (location.hash !== адрес) return;
   if (вошёл() && c.user_id === ОБЛ.user.id) автор = MY[c.track_key] || null;
@@ -18085,13 +18846,16 @@ async function drawReview(id) {
         (роль ? '<span class="role ' + п.role + '">' + роль + '</span>' : '') +
         '<time>' + когда(Date.parse(c.created_at)) + '</time></div></div>' +
     '<div class="rv-body">' + абзацы.map(a => '<p>' + esc(a) + '</p>').join('') + '</div>' +
-    '<div class="rv-foot"><button type="button" class="act" id="rCopy">скопировать ссылку</button>' +
+    '<div class="rv-foot">' + лайкHtml(лайкиКомм(c.track_key, id), вошёл() && c.user_id === ОБЛ.user.id, id) +
+      '<button type="button" class="act" id="rCopy">скопировать ссылку</button>' +
       (r ? '<a class="act" href="' + trackHref(r) + '" data-talk>' + (ответов
         ? ответов + ' ' + plural(ответов, 'ответ', 'ответа', 'ответов') + ' — на странице трека' : 'ответить на странице трека') + '</a>' : '') +
     '</div>';
   const im = $('rMain').querySelector('.ini img');
   if (im) im.addEventListener('error', () => { im.parentNode.textContent = ник.trim()[0].toUpperCase(); });
   $('rCopy').addEventListener('click', () => копия(адресРецензии(id), 'Ссылка на рецензию скопирована'));
+  const lk = $('rMain').querySelector('.lk');
+  if (lk) lk.addEventListener('click', () => лайкнуть(c.track_key, id, lk));
   const к = $('rMain').querySelector('[data-talk]');
   if (к) к.addEventListener('click', () => { T.кКомментам = true; });
 }
@@ -18125,10 +18889,11 @@ async function оценкиЗрителя(uid) {
    прибавляются свои, оставленные в браузере. */
 async function счётчикиЗагрузить() {
   if (!ОБЛ.sb) return;
-  const { data, error } = await ОБЛ.sb.rpc('track_counts');
-  if (error) return;
-  ОБЛ.счёт = new Map((data || []).map(x => [x.track_key, { f: x.favs || 0, c: x.comments || 0 }]));
-  счётчикиНаКарточках(document);
+  const [к, с] = await Promise.all([ОБЛ.sb.rpc('track_counts'), ОБЛ.sb.rpc('track_avgs')]);
+  if (!к.error) ОБЛ.счёт = new Map((к.data || []).map(x => [x.track_key, { f: x.favs || 0, c: x.comments || 0 }]));
+  // Средняя зрителей (функция появилась позже: пока схему не перезапустили, её нет — и ладно).
+  if (!с.error) ОБЛ.средние = new Map((с.data || []).map(x => [x.track_key, { n: x.n || 0, score: Number(x.score) || 0 }]));
+  if (!к.error || !с.error) счётчикиНаКарточках(document);
 }
 function счётТрека(key) {
   const s = ОБЛ && ОБЛ.счёт ? ОБЛ.счёт.get(key) : null;
@@ -18140,6 +18905,7 @@ function счётНаКарточке(el) {
   if (f) { f.textContent = n.f ? число(n.f) : ''; f.parentNode.classList.toggle('wide', !!n.f); }
   if (c) { c.textContent = n.c ? число(n.c) : ''; c.parentNode.classList.toggle('wide', !!n.c);
     c.parentNode.setAttribute('aria-label', n.c ? 'Комментарии: ' + n.c : 'Комментарии'); }
+  зрителиНаКарточке(el);
 }
 function счётчикиНаКарточках(root) {
   if (root) root.querySelectorAll('.card[data-key]').forEach(счётНаКарточке);
