@@ -2007,7 +2007,8 @@ body.st-air #stAir:hover{opacity:1}
 .rp-row .rp-tx small{display:block;color:var(--faint);font-size:11.5px;margin-top:4px}
 .rp-act{display:flex;gap:6px;flex:none}
 .pl-head{display:flex;align-items:center;gap:12px;margin:0 0 14px}
-.pl-head svg.sp{width:34px;height:34px;flex:none}
+.pl-head svg{width:34px;height:34px;flex:none}
+.sp-now .sp-row{flex-wrap:nowrap}
 .pl-head b{display:block;font-size:15px}
 .pl-head small{display:block;color:var(--dim);font-size:12px}
 .pl-wait{animation:plPulse 1.6s ease-in-out infinite}
@@ -17507,10 +17508,10 @@ let КАБ_ФОКУС = '';
 function промоSpotify() {
   const el = $('meSpPromo');
   const п = вошёл() ? ОБЛ.проф : null;
-  const звать = !!п && 'spotify_playlist' in п && !п.spotify_playlist && !ПРОФ.спНет;
+  const звать = !!п && 'spotify_playlist' in п && !п.spotify_playlist && !п.youtube_playlist && !ПРОФ.спНет;
   el.hidden = !звать;
   if (!звать) return;
-  el.innerHTML = ЗНАЧОК_SP + '<p>Привяжи свой Spotify-плейлист, чтобы автоматически подтянуть все свои треки к аккаунту!</p>' +
+  el.innerHTML = ЗНАЧОК_SP + '<p>Привяжи свой плейлист Spotify или YouTube, чтобы автоматически подтянуть все свои треки к аккаунту!</p>' +
     '<a class="main-btn" href="#me/settings" data-sp-go>Привязать</a>' +
     '<button type="button" class="x" data-sp-x aria-label="Больше не показывать" data-tip="Больше не показывать">✕</button>';
 }
@@ -17521,30 +17522,48 @@ $('meSpPromo').addEventListener('click', e => {
     if (location.hash === '#me/settings') { e.preventDefault(); drawMe(); }
   }
 });
+/* Плейлист YouTube: «…?list=ID», «music.youtube.com/playlist?list=ID» или
+   сам ID. «Смотреть позже» и «Понравившиеся» всегда закрыты — их не берём. */
+const ютубПлейлистИз = t => {
+  const s = String(t || '').trim();
+  let id = '';
+  try { id = new URL(s).searchParams.get('list') || ''; } catch {}
+  if (!id && /^(PL|OL|RD|UU|FL)[A-Za-z0-9_-]{10,62}$/.test(s)) id = s;
+  return /^[A-Za-z0-9_-]{10,64}$/.test(id) ? id : '';
+};
+const ПЛЕЙЛИСТЫ = [
+  ['sp', 'spotify_playlist', 'Spotify', id => 'https://open.spotify.com/playlist/' + id, id => 'https://open.spotify.com/oembed?url=' + encodeURIComponent('https://open.spotify.com/playlist/' + id)],
+  ['yt', 'youtube_playlist', 'YouTube', id => 'https://www.youtube.com/playlist?list=' + id, id => 'https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/playlist?list=' + id)]
+];
 function spotifyБлок(п) {
-  const id = п && п.spotify_playlist;
-  return '<section class="settings-box sp-box" id="spBox" style="margin-top:24px"><div class="section-title"><h2>плейлист Spotify</h2></div>' +
+  const привязаны = п ? ПЛЕЙЛИСТЫ.filter(([, поле]) => п[поле]) : [];
+  const можно = п && ПЛЕЙЛИСТЫ.some(([, поле]) => поле in п);
+  const свободны = п ? ПЛЕЙЛИСТЫ.filter(([, поле]) => поле in п && !п[поле]) : [];
+  return '<section class="settings-box sp-box" id="spBox" style="margin-top:24px"><div class="section-title"><h2>мой плейлист</h2></div>' +
     (!п ? '<p class="setting-help" style="margin:0 0 14px">Плейлист привязывается к аккаунту — после входа через Twitch.</p>' +
           (ОБЛ && ОБЛ.sb ? '<button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '')
-    : !('spotify_playlist' in п) ? '<p class="setting-help" style="margin:0">Привязка плейлиста на сервере ещё не включена.</p>'
-    : id ? '<div class="sp-now" data-sp-now><img alt="" src="" hidden><div><b>плейлист привязан</b><small>' + esc(id) + '</small></div></div>' +
-        '<p class="setting-hint" style="margin:0 0 14px">Что из него уже разнесли, а что ещё нет, — во вкладке <a class="text-link" href="#me/playlist">«мой плейлист»</a>.</p>' +
-        '<div class="sp-row"><a class="soft-btn" href="https://open.spotify.com/playlist/' + esc(id) + '" target="_blank" rel="noopener noreferrer">' + ико('external') + ' Открыть в Spotify</a>' +
-        '<button type="button" class="soft-btn bad" data-sp-off>Отвязать</button></div>'
-    : '<label class="form-label" for="spUrl">Ссылка на плейлист</label>' +
-      '<div class="sp-row"><input type="text" id="spUrl" placeholder="https://open.spotify.com/playlist/…" autocomplete="off">' +
-        '<button type="button" class="main-btn" data-sp-on>' + ЗНАЧОК_SP.replace('class="sp"', 'class="sp" style="width:16px;height:16px"') + ' Привязать</button></div>' +
-      '<p class="setting-hint" style="margin:10px 0 0">Плейлист должен быть открытым. Сайт сверит его с архивом: что композитор уже разнёс — с оценкой, что ещё нет — с прогнозом и кнопкой «хочу заказать».</p>') +
+    : !можно ? '<p class="setting-help" style="margin:0">Привязка плейлиста на сервере ещё не включена.</p>'
+    : привязаны.map(([к, поле, имя, адрес]) => '<div class="sp-now" data-sp-now="' + к + '"><img alt="" src="" hidden><div><b>' + имя + ': плейлист привязан</b><small>' + esc(п[поле]) + '</small></div>' +
+          '<div class="sp-row" style="margin-left:auto"><a class="soft-btn" href="' + esc(адрес(п[поле])) + '" target="_blank" rel="noopener noreferrer" aria-label="Открыть в ' + имя + '" data-tip="Открыть в ' + имя + '">' + ико('external') + '</a>' +
+          '<button type="button" class="soft-btn bad" data-sp-off="' + к + '">Отвязать</button></div></div>').join('') +
+      (привязаны.length ? '<p class="setting-hint" style="margin:0 0 14px">Что из него уже разнесли, а что ещё нет, — во вкладке <a class="text-link" href="#me/playlist">«мой плейлист»</a>.</p>' : '') +
+      (свободны.length ? '<label class="form-label" for="spUrl">Ссылка на плейлист ' + свободны.map(x => x[2]).join(' или ') + '</label>' +
+        '<div class="sp-row"><input type="text" id="spUrl" placeholder="' + (свободны.length > 1 ? 'open.spotify.com/playlist/… или youtube.com/playlist?list=…'
+          : свободны[0][0] === 'sp' ? 'https://open.spotify.com/playlist/…' : 'https://www.youtube.com/playlist?list=…') + '" autocomplete="off">' +
+          '<button type="button" class="main-btn" data-sp-on>Привязать</button></div>' +
+        '<p class="setting-hint" style="margin:10px 0 0">Плейлист должен быть открытым (у YouTube подойдёт и «доступ по ссылке»). Сайт сверит его с архивом: что композитор уже разнёс — с оценкой, что ещё нет — с кнопкой «хочу заказать».</p>' : '')) +
     '</section>';
 }
 function spotifyПодключить(box) {
   const el = box.querySelector('#spBox');
   if (!el) return;
-  const сохранить = async id => {
-    const { error } = await ОБЛ.sb.from('profiles').update({ spotify_playlist: id }).eq('id', ОБЛ.user.id);
-    if (error) return toast(/spotify_playlist/.test(error.message) ? 'Привязка плейлиста на сервере ещё не включена' : 'Не удалось: ' + error.message);
-    ОБЛ.проф.spotify_playlist = id;
+  const сохранить = async (к, id) => {
+    const поле = ПЛЕЙЛИСТЫ.find(x => x[0] === к)[1];
+    const { error } = await ОБЛ.sb.from('profiles').update({ [поле]: id }).eq('id', ОБЛ.user.id);
+    if (error) return toast(new RegExp(поле).test(error.message) ? 'Привязка плейлиста на сервере ещё не включена' : 'Не удалось: ' + error.message);
+    ОБЛ.проф[поле] = id;
     toast(id ? 'Плейлист привязан' : 'Плейлист отвязан');
+    if (id) РЗ_ПЛ.источник = к;
     промоSpotify();
     // Привязали — сразу к тому, ради чего: что из него разнесли.
     if (id && location.hash !== '#me/playlist') location.hash = '#me/playlist';
@@ -17553,23 +17572,30 @@ function spotifyПодключить(box) {
   const on = el.querySelector('[data-sp-on]');
   if (on) {
     const поле = el.querySelector('#spUrl');
-    const дать = () => { const id = плейлистИз(поле.value); if (!id) return toast('Нужна ссылка на плейлист: open.spotify.com/playlist/…'); сохранить(id); };
+    const дать = () => {
+      const п = ОБЛ.проф;
+      const sp = плейлистИз(поле.value), yt = sp ? '' : ютубПлейлистИз(поле.value);
+      if (sp && 'spotify_playlist' in п) return сохранить('sp', sp);
+      if (yt && 'youtube_playlist' in п) return сохранить('yt', yt);
+      toast(/[?&]list=(WL|LL)\b/.test(поле.value) ? '«Смотреть позже» и «Понравившиеся» YouTube всегда закрыты — собери треки в обычный плейлист'
+        : 'Нужна ссылка на плейлист: open.spotify.com/playlist/… или youtube.com/playlist?list=…');
+    };
     on.addEventListener('click', дать);
     поле.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); дать(); } });
   }
-  const off = el.querySelector('[data-sp-off]');
-  if (off) off.addEventListener('click', () => сохранить(null));
-  // Название и обложку плейлиста отдаёт oEmbed Spotify — ключ для него не нужен.
-  const now = el.querySelector('[data-sp-now]');
-  if (now) fetch('https://open.spotify.com/oembed?url=' + encodeURIComponent('https://open.spotify.com/playlist/' + ОБЛ.проф.spotify_playlist),
-      { signal: AbortSignal.timeout ? AbortSignal.timeout(7000) : undefined })
-    .then(r => r.ok ? r.json() : null).then(j => {
-      if (!j || !now.isConnected) return;
-      if (j.title) now.querySelector('b').textContent = j.title;
-      now.querySelector('small').textContent = 'плейлист привязан';
-      const im = now.querySelector('img');
-      if (j.thumbnail_url) { im.src = j.thumbnail_url; im.hidden = false; }
-    }).catch(() => {});
+  el.querySelectorAll('[data-sp-off]').forEach(b => b.addEventListener('click', () => сохранить(b.dataset.spOff, null)));
+  // Название и обложку плейлиста отдаёт oEmbed площадки — ключ не нужен.
+  el.querySelectorAll('[data-sp-now]').forEach(now => {
+    const [, поле, имя, , oembed] = ПЛЕЙЛИСТЫ.find(x => x[0] === now.dataset.spNow);
+    fetch(oembed(ОБЛ.проф[поле]), { signal: AbortSignal.timeout ? AbortSignal.timeout(7000) : undefined })
+      .then(r => r.ok ? r.json() : null).then(j => {
+        if (!j || !now.isConnected) return;
+        if (j.title) now.querySelector('b').textContent = j.title;
+        now.querySelector('small').textContent = имя + ' · плейлист привязан';
+        const im = now.querySelector('img');
+        if (j.thumbnail_url) { im.src = j.thumbnail_url; im.hidden = false; }
+      }).catch(() => {});
+  });
 }
 
 /* ============================================================
@@ -17589,7 +17615,7 @@ function spotifyПодключить(box) {
 const РАЗНЕСЁТ = { сервер: 'https://server-production-ae29.up.railway.app', код: 'https://laitsberg.github.io/razneset/' };
 const таймаут = мс => AbortSignal.timeout ? AbortSignal.timeout(мс) : undefined;
 let РЗ = null;
-const РЗ_ПЛ = { id: '', данные: null, ошибка: '', грузим: null, вид: 'todo', показано: 100, q: '' };
+const РЗ_ПЛ = { id: '', источник: '', данные: null, ошибка: '', грузим: null, вид: 'todo', показано: 100, q: '' };
 
 function разнесётКод() {
   return РЗ || (РЗ = Promise.all([
@@ -17604,17 +17630,40 @@ function разнесётКод() {
    Ремастер, сингл и альбомная версия дают один ключ — это одна песня. */
 const ключПесни = (n, t) => (n.nameNorm((t.artists[0] || {}).name || '') + '|' + n.titleNorm(t.title)).slice(0, 300);
 
-async function плейлистЗагрузить(id, заново) {
-  if (!заново && РЗ_ПЛ.id === id && (РЗ_ПЛ.грузим || РЗ_ПЛ.данные)) return РЗ_ПЛ.грузим || РЗ_ПЛ.данные;
-  Object.assign(РЗ_ПЛ, { id, данные: null, ошибка: '', показано: 100 });
+/* Ролики YouTube → треки для сверки. Сначала по самому ролику: у
+   большей части архива ссылка на ютуб, и совпадение по id — без
+   догадок. Остальное — по заголовку ролика, разобранному на исполнителя
+   и название (заголовокЮтуба), той же сверкой razneset, что у Spotify. */
+function роликиВТреки(код, ролики) {
+  const поРолику = new Map();
+  CAT.forEach(r => { if (!r.mine && !r.студия) разы(r).forEach(x => { if (x.ytId && !поРолику.has(x.ytId)) поРолику.set(x.ytId, r); }); });
+  const точно = [], треки = [];
+  ролики.forEach(v => {
+    const r = поРолику.get(v.id);
+    const имя = заголовокЮтуба({ title: v.title || '', author_name: v.channel || '' });
+    const трек = { id: '', yt: v.id, title: имя.title || v.title, artists: имя.artist ? [{ id: '', name: имя.artist }] : [], ms: v.ms };
+    // узнан по ролику — подписываем как в архиве, а не заголовком ролика
+    if (r) точно.push({ track: Object.assign(трек, { title: r.title, artists: r.artist ? [{ id: '', name: r.artist }] : трек.artists }), каталог: r, ratings: [] });
+    else треки.push(трек);
+  });
+  return { точно, треки };
+}
+
+async function плейлистЗагрузить(id, заново, источник = 'sp') {
+  const ключ = источник + ':' + id;
+  if (!заново && РЗ_ПЛ.id === ключ && (РЗ_ПЛ.грузим || РЗ_ПЛ.данные)) return РЗ_ПЛ.грузим || РЗ_ПЛ.данные;
+  Object.assign(РЗ_ПЛ, { id: ключ, данные: null, ошибка: '', показано: 100 });
   const ход = (async () => {
     const [код, ответ] = await Promise.all([разнесётКод(),
-      fetch(РАЗНЕСЁТ.сервер + '/playlist?url=' + encodeURIComponent(id), { signal: таймаут(90000) })]);
+      fetch(РАЗНЕСЁТ.сервер + (источник === 'yt' ? '/youtube' : '/playlist') + '?url=' + encodeURIComponent(id), { signal: таймаут(90000) })]);
     const j = await ответ.json().catch(() => ({}));
-    if (!ответ.ok) throw new Error(j.error || 'Сервер плейлистов ответил ' + ответ.status);
-    const делёж = код.p.splitLibrary(код.ix, j.tracks || []);
+    if (!ответ.ok) throw new Error(ответ.status === 404 && источник === 'yt' && !j.error
+      ? 'Сервер плейлистов YouTube ещё не умеет — его обновление ещё не выложено.' : j.error || 'Сервер плейлистов ответил ' + ответ.status);
+    const ют = источник === 'yt' ? роликиВТреки(код, j.tracks || []) : null;
+    const делёж = код.p.splitLibrary(код.ix, ют ? ют.треки : j.tracks || []);
+    if (ют) делёж.rated = ют.точно.concat(делёж.rated);
     делёж.todo.forEach(x => { x.ключ = ключПесни(код.n, x.track); });
-    return Object.assign({ имя: j.name || 'плейлист', всего: j.total || (j.tracks || []).length, код }, делёж);
+    return Object.assign({ имя: j.name || 'плейлист', всего: j.total || (j.tracks || []).length, код, источник }, делёж);
   })();
   РЗ_ПЛ.грузим = ход;
   ход.then(д => { if (РЗ_ПЛ.грузим === ход) РЗ_ПЛ.данные = д; },
@@ -17698,11 +17747,14 @@ const артистыСп = т => т.artists.map(a => a.name).join(', ') || '—'
 const заглушкаСп = (т, оценка) => '<span class="track-art"><span class="art-fb" style="--tc:' + (оценка ? TCOLOR[оценка.tier] : 'var(--faint)') + '">' +
   esc(initials({ artist: (т.artists[0] || {}).name, title: т.title })) + '</span></span>';
 function рядРазнесли(код, x) {
-  const т = x.track, m = x.ratings[0];
+  const т = x.track;
+  // Узнан по самому ролику — оценка и эфир прямо из нашего каталога.
+  const m = x.каталог ? { l: x.каталог.rate ? x.каталог.rate.label : '', s: x.каталог.streamNum } : x.ratings[0];
+  if (x.каталог && разы(x.каталог).length > 1) x.ratings = разы(x.каталог);
   const оц = parseRate(m.l);
-  const r = строкаКаталога(код, m);
+  const r = x.каталог || строкаКаталога(код, m);
   const к = r ? trackHref(r) : '';
-  const дата_ = m.d ? m.d.split('-').reverse().join('.') : '';
+  const дата_ = x.каталог ? дата(x.каталог.date) : m.d ? m.d.split('-').reverse().join('.') : '';
   return '<div class="track-row">' + (r ? '<a class="track-art" href="' + к + '" tabindex="-1" aria-hidden="true">' + covHtml(r) + '</a>' : заглушкаСп(т, оц)) +
     (r ? '<a class="track-identity" href="' + к + '">' : '<span class="track-identity">') +
       '<strong>' + esc(т.title) + '</strong><small>' + esc(артистыСп(т)) + '</small>' + (r ? '</a>' : '</span>') +
@@ -17726,10 +17778,16 @@ function рядНеРазнесли(x, сколько) {
 
 async function mePlaylist(box) {
   const п = вошёл() ? ОБЛ.проф : null;
-  const id = п && п.spotify_playlist;
-  const шапка = '<div class="tab-heading"><div><h2>мой плейлист</h2><p>Что из твоего плейлиста Spotify композитор уже разнёс, а что ещё нет.</p></div>' +
-    (id ? '<div class="sp-row"><button type="button" class="soft-btn" data-pl-again>обновить</button>' +
-      '<a class="soft-btn" href="#me/settings">другой плейлист</a></div>' : '') + '</div>';
+  // Привязано оба — переключатель Spotify / YouTube; выбор помним до конца захода.
+  const есть = п ? ПЛЕЙЛИСТЫ.filter(([, поле]) => п[поле]) : [];
+  if (!есть.some(x => x[0] === РЗ_ПЛ.источник)) РЗ_ПЛ.источник = есть.length ? есть[0][0] : '';
+  const источник = РЗ_ПЛ.источник;
+  const id = источник ? п[ПЛЕЙЛИСТЫ.find(x => x[0] === источник)[1]] : '';
+  const шапка = '<div class="tab-heading"><div><h2>мой плейлист</h2><p>Что из твоего плейлиста композитор уже разнёс, а что ещё нет.</p></div>' +
+    (id ? '<div class="sp-row">' + (есть.length > 1 ? '<div class="switch-group" role="group" aria-label="Какой плейлист">' +
+        есть.map(([к, , имя]) => '<button type="button" data-pl-src="' + к + '" class="' + (к === источник ? 'active' : '') + '" aria-pressed="' + (к === источник) + '">' + имя + '</button>').join('') + '</div>' : '') +
+      '<button type="button" class="soft-btn" data-pl-again>обновить</button>' +
+      '<a class="soft-btn" href="#me/settings">' + (есть.length > 1 ? 'плейлисты' : 'другой плейлист') + '</a></div>' : '') + '</div>';
   if (!п) {
     box.innerHTML = шапка + '<div class="c-empty">Плейлист привязывается к аккаунту — после входа через Twitch.' +
       (ОБЛ && ОБЛ.sb ? '<br><button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '') + '</div>';
@@ -17744,7 +17802,8 @@ async function mePlaylist(box) {
     if (!box.isConnected || location.hash !== '#me/playlist') return;
     if (РЗ_ПЛ.ошибка) {
       box.innerHTML = шапка + '<div class="c-empty">' + esc(РЗ_ПЛ.ошибка) +
-        '<br><span class="mutedline">Плейлист должен быть открытым: в Spotify — «…» → «Сделать общедоступным».</span>' +
+        '<br><span class="mutedline">' + (источник === 'yt' ? 'Плейлист должен быть открытым или доступным по ссылке: на YouTube — «…» у плейлиста → «Доступ».'
+          : 'Плейлист должен быть открытым: в Spotify — «…» → «Сделать общедоступным».') + '</span>' +
         '<br><button type="button" class="soft-btn" data-pl-again style="margin-top:14px">ещё раз</button></div>';
       return;
     }
@@ -17757,12 +17816,14 @@ async function mePlaylist(box) {
     плейлистНарисовать(box, шапка, д);
   };
   box.onclick = e => {
+    const src = e.target.closest('[data-pl-src]');
+    if (src) { if (src.dataset.plSrc !== РЗ_ПЛ.источник) { РЗ_ПЛ.источник = src.dataset.plSrc; РЗ_ПЛ.вид = 'todo'; mePlaylist(box); } return; }
     if (!e.target.closest('[data-pl-again]')) return;
     e.preventDefault();
-    плейлистЗагрузить(id, true).catch(() => {}).finally(рис);
+    плейлистЗагрузить(id, true, источник).catch(() => {}).finally(рис);
     рис();
   };
-  const ждать = РЗ_ПЛ.id === id && РЗ_ПЛ.данные ? null : плейлистЗагрузить(id).catch(() => {});
+  const ждать = РЗ_ПЛ.id === источник + ':' + id && РЗ_ПЛ.данные ? null : плейлистЗагрузить(id, false, источник).catch(() => {});
   рис();
   await Promise.all([ждать, ОБЛ.желания ? null : желанияЗагрузить()]);
   if (ждать || !ОБЛ.желания) рис();
@@ -17772,7 +17833,7 @@ async function плейлистНарисовать(box, шапка, д) {
   const d = д.dropped;
   const скрыто = [[d.short, 'коротких'], [d.version, 'минусовок и караоке'], [d.dup, 'повторов'], [d.noArtist, 'без артиста']].filter(([n]) => n);
   box.innerHTML = шапка +
-    '<div class="pl-head">' + ЗНАЧОК_SP + '<div><b>' + esc(д.имя) + '</b><small>' + число(д.всего) + ' ' + plural(д.всего, 'трек', 'трека', 'треков') +
+    '<div class="pl-head">' + (д.источник === 'yt' ? ПЛ_ЗНАЧОК.yt : ЗНАЧОК_SP) + '<div><b>' + esc(д.имя) + '</b><small>' + число(д.всего) + ' ' + plural(д.всего, 'трек', 'трека', 'треков') +
       (скрыто.length ? ' · не показаны: ' + скрыто.map(([n, w]) => n + ' ' + w).join(', ') : '') + '</small></div></div>' +
     '<div class="toolbar"><div class="switch-group" role="group" aria-label="Что показать">' +
       [['todo', 'ещё не разнесли', д.todo.length], ['rated', 'уже разнесли', д.rated.length]].map(([v, n, c]) =>
@@ -17809,7 +17870,7 @@ async function плейлистНарисовать(box, шапка, д) {
     const ключ = b.closest('[data-key]').dataset.key;
     const x = д.todo.find(y => y.ключ === ключ); if (!x) return;
     b.disabled = true;
-    await хочу(x.track, ключ, b.getAttribute('aria-pressed') !== 'true');
+    await хочу(x.track, ключ, b.getAttribute('aria-pressed') !== 'true', x.track.yt);
     b.disabled = false;
     рисовать();
   });
@@ -18332,7 +18393,7 @@ function облакоСбой(e) {
 /* ---------- профиль ---------- */
 async function профильИзБазы() {
   const { data, error } = await профильПо('id', ОБЛ.user.id,
-    'name,login,avatar_url,color,bio,role,banned,ratings_public,favs_public,hide_online,created_at,bg_avatar,twitch_hidden,name_custom,activity_hidden,spotify_playlist,wishes_public');
+    'name,login,avatar_url,color,bio,role,banned,ratings_public,favs_public,hide_online,created_at,bg_avatar,twitch_hidden,name_custom,activity_hidden,spotify_playlist,youtube_playlist,wishes_public');
   if (error) return облакоСбой(error);
   ОБЛ.проф = data;
   const к = await ОБЛ.sb.from('comments').select('id', { count: 'exact', head: true }).eq('user_id', ОБЛ.user.id);
@@ -19038,7 +19099,7 @@ function showUser(login) {
 /* Поля профиля. Часть появилась позже остальных: пока схему не
    перезапустили, база про них не знает — тогда спрашиваем без них. */
 const ПОЛЯ_ПРОФИЛЯ = 'id,name,login,avatar_url,color,bio,role,ratings_public,favs_public,created_at,bg_avatar,twitch_hidden,activity_hidden,wishes_public';
-const ПОЛЯ_ПОЗЖЕ = [',bg_avatar', ',twitch_hidden', ',name_custom', ',favs_public', ',activity_hidden', ',spotify_playlist', ',wishes_public'];
+const ПОЛЯ_ПОЗЖЕ = [',bg_avatar', ',twitch_hidden', ',name_custom', ',favs_public', ',activity_hidden', ',spotify_playlist', ',youtube_playlist', ',wishes_public'];
 async function профильПо(поле, значение, поля = ПОЛЯ_ПРОФИЛЯ) {
   const r = await ОБЛ.sb.from('profiles').select(поля).eq(поле, значение).maybeSingle();
   const лишнее = r.error && r.error.code === '42703' && ПОЛЯ_ПОЗЖЕ.find(x => поля.includes(x));
