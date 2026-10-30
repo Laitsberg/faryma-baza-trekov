@@ -40,6 +40,10 @@
 --   reports  — «сообщить о неточности» со страницы трека. Видят автор
 --              и команда сайта, разбирают во вкладке «управление».
 --   track_avgs — средняя оценка зрителей для карточек каталога.
+--   wishes   — «хочу заказать»: треки, которых ещё нет в архиве. Двое
+--              хотят одно и то же — оба видят друг друга (wish_mates) и
+--              могут заказать вместе. Видны, пока хозяин не скрыл
+--              (wishes_public).
 --
 -- «Automatically expose new tables» при создании проекта выключен,
 -- поэтому доступ к каждой таблице ниже выдаётся явно (grant).
@@ -95,6 +99,8 @@ alter table public.profiles add column if not exists spotify_playlist text;
 alter table public.profiles drop constraint if exists profiles_spotify_playlist_check;
 alter table public.profiles add constraint profiles_spotify_playlist_check
   check (spotify_playlist is null or spotify_playlist ~ '^[A-Za-z0-9]{10,40}$');
+-- Показывать ли другим, что хочешь заказать. Без этого совпадения не найти.
+alter table public.profiles add column if not exists wishes_public boolean not null default true;
 alter table public.profiles enable row level security;
 
 drop policy if exists profiles_read on public.profiles;
@@ -108,7 +114,7 @@ create policy profiles_update_own on public.profiles
 revoke all on public.profiles from anon, authenticated;
 grant select on public.profiles to anon, authenticated;
 grant update (color, bio, ratings_public, favs_public, hide_online, bg_avatar, twitch_hidden,
-               activity_hidden, spotify_playlist) on public.profiles to authenticated;
+               activity_hidden, spotify_playlist, wishes_public) on public.profiles to authenticated;
 
 -- Twitch отдаёт: name — логин, nickname — отображаемое имя,
 -- avatar_url / picture — аватар, provider_id — id на Twitch.
@@ -722,9 +728,85 @@ end $$;
 revoke execute on function public.resolve_report(bigint, boolean) from public, anon;
 grant execute on function public.resolve_report(bigint, boolean) to authenticated;
 
+-- ---------- хочу заказать ----------
+-- Трек узнаётся по ключу песни (song_key: нормированные первый артист и
+-- название — их считает страница кодом razneset, тем же, что сверяет
+-- плейлист с архивом) и по треку Spotify. Ремастер, сингл и альбомная
+-- версия одной песни дают один ключ, поэтому совпадают.
+create table if not exists public.wishes (
+  user_id     uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  song_key    text not null check (char_length(song_key) between 2 and 300),
+  sp_id       text check (sp_id ~ '^[A-Za-z0-9]{22}$'),
+  title       text not null check (char_length(title) between 1 and 300),
+  artist      text not null check (char_length(artist) between 1 and 300),
+  created_at  timestamptz not null default now(),
+  primary key (user_id, song_key)
+);
+create index if not exists wishes_song on public.wishes (song_key);
+create index if not exists wishes_sp on public.wishes (sp_id) where sp_id is not null;
+alter table public.wishes enable row level security;
+
+create or replace function public.wish_guard()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  new.created_at := now();
+  if (select count(*) from public.wishes where user_id = new.user_id) >= 500 then
+    raise exception 'too many wishes';
+  end if;
+  return new;
+end $$;
+revoke execute on function public.wish_guard() from public, anon, authenticated;
+drop trigger if exists wishes_guard on public.wishes;
+create trigger wishes_guard before insert on public.wishes
+  for each row execute function public.wish_guard();
+
+drop policy if exists wishes_own on public.wishes;
+create policy wishes_own on public.wishes
+  for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+drop policy if exists wishes_public_read on public.wishes;
+create policy wishes_public_read on public.wishes
+  for select to anon, authenticated
+  using (exists (select 1 from public.profiles p where p.id = wishes.user_id and p.wishes_public));
+revoke all on public.wishes from anon, authenticated;
+grant select, delete on public.wishes to authenticated;
+grant insert (song_key, sp_id, title, artist) on public.wishes to authenticated;
+grant select on public.wishes to anon;
+
+-- Кто ещё хочет то же, что я: по каждому своему желанию — другие
+-- зрители с тем же ключом песни или тем же треком Spotify (только
+-- открывшие свои желания).
+create or replace function public.wish_mates()
+returns table (song_key text, user_id uuid, name text, login text, avatar_url text)
+language sql stable security definer set search_path = '' as $$
+  select distinct m.song_key, p.id, p.name, p.login, p.avatar_url
+    from public.wishes m
+    join public.wishes o on o.user_id <> m.user_id
+                        and (o.song_key = m.song_key or (m.sp_id is not null and o.sp_id = m.sp_id))
+    join public.profiles p on p.id = o.user_id and p.wishes_public
+   where m.user_id = (select auth.uid())
+$$;
+revoke execute on function public.wish_mates() from public, anon;
+grant execute on function public.wish_mates() to authenticated;
+
+-- Сколько других хотят каждую из этих песен — для списка «ещё не
+-- разнесли», чтобы видно было и то, что ты сам ещё не отметил.
+create or replace function public.wish_counts(p_keys text[])
+returns table (song_key text, n int)
+language sql stable security definer set search_path = '' as $$
+  select w.song_key, count(*)::int
+    from public.wishes w
+    join public.profiles p on p.id = w.user_id and p.wishes_public
+   where w.song_key = any (p_keys[1:2000]) and w.user_id is distinct from (select auth.uid())
+   group by w.song_key
+$$;
+revoke execute on function public.wish_counts(text[]) from public;
+grant execute on function public.wish_counts(text[]) to anon, authenticated;
+
 -- ---------- уведомления ----------
 -- Что нового у зрителя: решения по его заявкам, ответы на его
--- комментарии и новые подписчики за последний месяц. «Новое» — позже,
+-- комментарии, новые подписчики и те, кто захотел заказать то же, что
+-- он (позже него), за последний месяц. «Новое» — позже,
 -- чем он в последний раз открывал уведомления. У ответа — его id: по
 -- уведомлению страница трека прокручивается прямо к нему.
 -- Набор столбцов менялся, а «or replace» его поменять не может.
@@ -752,6 +834,14 @@ language sql stable security definer set search_path = '' as $$
     from public.follows f
     join public.profiles p on p.id = f.follower, me
    where f.followee = me.id and f.created_at > now() - interval '30 days'
+  union all
+  select 'wish', o.created_at, m.song_key, m.artist || ' — ' || m.title, p.name, p.login, null, null, null,
+         o.created_at > me.seen, null
+    from public.wishes m
+    join public.wishes o on o.user_id <> m.user_id and o.created_at > m.created_at
+                        and (o.song_key = m.song_key or (m.sp_id is not null and o.sp_id = m.sp_id))
+    join public.profiles p on p.id = o.user_id and p.wishes_public, me
+   where m.user_id = me.id and o.created_at > now() - interval '30 days'
   order by 2 desc
   limit 50
 $$;
