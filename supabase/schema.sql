@@ -99,6 +99,11 @@ alter table public.profiles add column if not exists spotify_playlist text;
 alter table public.profiles drop constraint if exists profiles_spotify_playlist_check;
 alter table public.profiles add constraint profiles_spotify_playlist_check
   check (spotify_playlist is null or spotify_playlist ~ '^[A-Za-z0-9]{10,40}$');
+-- Привязанный плейлист YouTube — тоже только id (из ?list=…).
+alter table public.profiles add column if not exists youtube_playlist text;
+alter table public.profiles drop constraint if exists profiles_youtube_playlist_check;
+alter table public.profiles add constraint profiles_youtube_playlist_check
+  check (youtube_playlist is null or youtube_playlist ~ '^[A-Za-z0-9_-]{10,64}$');
 -- Показывать ли другим, что хочешь заказать. Без этого совпадения не найти.
 alter table public.profiles add column if not exists wishes_public boolean not null default true;
 alter table public.profiles enable row level security;
@@ -114,7 +119,7 @@ create policy profiles_update_own on public.profiles
 revoke all on public.profiles from anon, authenticated;
 grant select on public.profiles to anon, authenticated;
 grant update (color, bio, ratings_public, favs_public, hide_online, bg_avatar, twitch_hidden,
-               activity_hidden, spotify_playlist, wishes_public) on public.profiles to authenticated;
+               activity_hidden, spotify_playlist, youtube_playlist, wishes_public) on public.profiles to authenticated;
 
 -- Twitch отдаёт: name — логин, nickname — отображаемое имя,
 -- avatar_url / picture — аватар, provider_id — id на Twitch.
