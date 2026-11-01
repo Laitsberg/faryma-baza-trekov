@@ -1390,20 +1390,35 @@ a.re{text-decoration:none}
 .quick button:hover{border-color:var(--brand);color:var(--brand-hi)}
 .home-rate{display:flex;justify-content:center;margin-top:20px}
 .home-rate .btn{text-decoration:none}
-/* Режим оценки (#rate): тэги в шапке — не кнопки, уводить из режима им некуда. */
+/* ---------- режим оценки (#rate) ----------
+   Окно поверх каталога, одной колонкой в 640px — как виджет
+   рекомендаций у StopGame. z-index ниже .modal (60): окно входа должно
+   вставать над ним. Под окном страница не прокручивается. */
+.rate-ov{position:fixed;inset:0;z-index:55;overflow-y:auto;overscroll-behavior:contain;
+  background:rgba(10,10,12,.9);padding:24px 16px 48px}
+.rate-ov[hidden]{display:none}
+html.rate-on{overflow:hidden}
+.rate-box{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+#oSet .pan-h{padding-right:34px}
+#oSet .mx{right:10px;top:12px}
+#oSet .pan-h{margin-bottom:8px}
+#oSet .pan-h h2{margin-right:auto}
+#oSet .pan-h .btn{min-height:34px;padding:6px 14px}
+#oSet .pan-h .plat{margin-left:0}
+#oSet .btn b{font:600 11px var(--m);color:var(--brand-hi)}
+#oSet .note .lnk{margin:0 0 0 4px;font-size:12.5px}
+#oFilt .pan-h .btn{margin-left:auto}
+.o-done{display:flex;justify-content:flex-end;margin-top:16px}
+/* Рельс каталога, перенесённый в окно: без липкости и своей прокрутки. */
+#oFilt .rail{position:static;max-height:none;overflow:visible;padding:0;background:none;display:flex}
+#oNav{margin-left:0;justify-content:flex-end}
+/* Тэги в шапке — не кнопки: уводить из режима им некуда. */
 #opage .tags span{font-size:13px;color:#D2D2D9}
-#oHero[hidden],#oPlay[hidden],#oMine[hidden],#oSet[hidden],#oEmpty[hidden]{display:none}
+#oHero[hidden],#oPlay[hidden],#oMine[hidden],#oSet[hidden],#oEmpty[hidden],#oFilt[hidden],#oNav[hidden]{display:none}
 #oEmpty .btn{margin-top:14px}
-/* Одной узкой колонкой, как виджет рекомендаций у StopGame: во всю
-   ширину каталога один трек выглядел пустырём — справа узкая колонка,
-   слева плеер на пол-экрана. Шапка трека — в том виде, что у страницы
-   трека на телефоне: обложка квадратиком, рядом название, оценки в ряд.
-   Порядок: шапка, своя оценка, плеер, настройки — шкала остаётся на
-   первом экране и на телефоне. */
-#opage{max-width:640px}
-#opage .tp-grid{display:flex;flex-direction:column;align-items:stretch;gap:14px}
-#opage .tp-col{display:contents}
-#oEmpty{order:0}#oHero{order:1}#oMine{order:2}#oPlay{order:3}#oSet{order:4}
+/* Шапка трека — в том виде, что у страницы трека на телефоне: обложка
+   квадратиком, рядом название, оценки в ряд. Сразу под ней плеер —
+   заказчик: «после названия трека», — а не внизу. */
 #opage .hero-in{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px 14px;padding:14px}
 #opage .hero-b{display:contents}
 #opage .hero-cov{grid-row:1/span 2;width:104px;height:104px}
@@ -1415,6 +1430,11 @@ a.re{text-decoration:none}
 #opage .hero-sc{width:auto;flex-direction:row}
 #opage .sc{flex:1;min-width:0;padding:9px 12px}
 #opage .sc b{font-size:17px}
+/* Шкала — квадратиками, как на карточке каталога, а не растянутыми
+   прямоугольниками: заказчик. */
+#oMine .big-scale{justify-content:center;gap:8px}
+#oMine .big-scale .seg{flex:none;width:40px;height:40px}
+@media (max-width:760px){.rate-ov{padding:10px 8px 40px}}
 
 .feats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:35px;text-align:left}
 .feat{display:flex;flex-direction:column;min-height:261px;padding:19px 19px 17px;border-radius:9px;
@@ -2568,25 +2588,25 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
 
 <!-- Рецензия отдельной страницей (#r=id): на неё можно дать ссылку,
      а не на трек, где она теряется среди комментариев. Рисует JS. -->
-<!-- Режим оценки (#rate): треки по одному — шапка, плеер оригинала и
-     «твоя оценка» со страницы трека. Рисует JS (showRate). -->
-<div class="tpage" id="opage" hidden>
- <div class="tp-top">
-  <nav class="crumbs" aria-label="Где я"><a href="#">главная</a><span class="sep">›</span><b>режим оценки</b></nav>
-  <div class="tp-nav">
+<!-- Режим оценки (#rate): окно поверх каталога, треки по одному — шапка,
+     плеер оригинала и «твоя оценка» со страницы трека. Рисует JS (showRate). -->
+<div class="rate-ov" id="opage" hidden role="dialog" aria-modal="true" aria-label="Режим оценки">
+ <div class="rate-box">
+  <section class="pan" id="oSet"></section>
+  <section class="pan" id="oFilt" hidden>
+   <div class="pan-h"><h2>Фильтры<small id="oFiltN"></small></h2><button type="button" class="btn" data-o="готово">Готово</button></div>
+   <!-- сюда встаёт рельс каталога; «Готово» и под ним: на телефоне он длинный -->
+   <div class="o-done"><button type="button" class="btn" data-o="готово">Готово</button></div>
+  </section>
+  <section class="pan" id="oEmpty" hidden></section>
+  <section class="hero" id="oHero"></section>
+  <div id="oPlay"></div>
+  <section class="pan mine-pan" id="oMine"></section>
+  <!-- «Пропустить» — под оценкой, как у StopGame: сверху оно отодвигало
+       шкалу за край экрана. -->
+  <div class="tp-nav" id="oNav">
    <button type="button" id="oPrev">◀ назад</button>
    <button type="button" id="oNext">пропустить ▶</button>
-  </div>
- </div>
- <div class="tp-grid">
-  <div class="tp-col">
-   <section class="pan" id="oEmpty" hidden></section>
-   <section class="hero" id="oHero"></section>
-   <div id="oPlay"></div>
-  </div>
-  <div class="tp-col">
-   <section class="pan mine-pan" id="oMine"></section>
-   <section class="pan" id="oSet"></section>
   </div>
  </div>
 </div>
@@ -13577,7 +13597,7 @@ const время = sec => {
 /* ---------- маршрут ---------- */
 function route() {
   навигация();
-  if (location.hash === '#rate') return showRate();
+  if (location.hash === '#rate') { showCatalog(); return showRate(); }
   уходИзОценки();
   if (location.hash === '#covers') return showAdmin();
   if (location.hash === '#fun') return showFun();
@@ -20693,18 +20713,21 @@ function уходИзСтудии() {
 /* ============================================================
    РЕЖИМ ОЦЕНКИ (#rate)
    ------------------------------------------------------------
-   Кнопка на главной. Треки по одному: шапка трека, плеер оригинала,
-   «твоя оценка» — всё те же элементы, что на странице трека, нового
-   вида оценки здесь нет (просьба заказчика). Поставил оценку — тот же
-   удар, и через мгновение следующий трек.
+   Кнопка на главной открывает окно поверх каталога. Треки по одному:
+   шапка трека, сразу под ней плеер оригинала, ниже «твоя оценка» —
+   всё те же элементы, что на странице трека, нового вида оценки здесь
+   нет (просьба заказчика). Поставил оценку — тот же удар, и через
+   мгновение следующий трек.
 
    Какие треки — решает отбор каталога: без галочек идут все, в порядке
-   и с сортировкой каталога; уже оценённые не предлагаются. «Случайные»
+   и с сортировкой каталога; уже оценённые не предлагаются. Отбор
+   настраивается прямо из окна: кнопка «Фильтры» переносит в окно сам
+   рельс каталога (не копию), «Готово» возвращает его на место. «Случайные»
    берут следующий наугад из того же отбора. Пропущенные в этот заход
    больше не всплывают, пока их не вернут; «назад» возвращает и их. */
 const ОЦ_LS = 'faryma-rate-order';
 const ОЦ = {
-  cur: null, история: [], мимо: new Set(), пул: [], таймер: 0, менял: false, нарисован: '',
+  cur: null, история: [], мимо: new Set(), пул: [], таймер: 0, менял: false, нарисован: '', фильтры: false,
   режим: (() => { try { return localStorage.getItem(ОЦ_LS) === 'случайно' ? 'случайно' : 'подряд'; } catch { return 'подряд'; } })()
 };
 // Столько после оценки трек ещё на экране: «−» и «+» всплывают после
@@ -20720,19 +20743,17 @@ function оцСледующий() {
 }
 const оцТрек = () => ОЦ.пул.find(r => r.key === ОЦ.cur) || null;
 
+/* Окно открывается над каталогом: route() сперва рисует витрину, потом
+   зовёт это. Под окном страница не прокручивается. */
 function showRate() {
-  уходИзИгры();
-  уходИзСтудии();
-  if (T.r) уходСТрека();
-  T.r = null;
-  ['page', 'footNote', 'tpage', 'apage', 'fpage', 'mpage', 'upage', 'rpage'].forEach(id => { $(id).hidden = true; });
   $('opage').hidden = false;
+  document.documentElement.classList.add('rate-on');
   document.title = 'Режим оценки — база треков';
   плашкаЭфира();
   if (!CAT.length) {               // таблица ещё едет — build() позовёт route() ещё раз
     $('oEmpty').hidden = false;
     $('oEmpty').innerHTML = '<p class="note">Читаю таблицу…</p>';
-    ['oHero', 'oPlay', 'oMine', 'oSet'].forEach(id => { $(id).hidden = true; });
+    ['oHero', 'oPlay', 'oMine', 'oNav', 'oFilt'].forEach(id => { $(id).hidden = true; });
     return;
   }
   ОЦ.пул = оцПул();
@@ -20740,17 +20761,25 @@ function showRate() {
   // нём нет — следующий по новому отбору.
   if (!оцТрек()) { const r = оцСледующий(); ОЦ.cur = r ? r.key : null; }
   оцРисовать();
-  window.scrollTo(0, 0);
 }
 
 function уходИзОценки() {
   if ($('opage').hidden) return;
   clearTimeout(ОЦ.таймер);
+  оцФильтрыПрочь();
   $('opage').hidden = true;
+  document.documentElement.classList.remove('rate-on');
   // Играющее доигрывает окном, как со страницы трека; остальное замолкает.
   стопОригинал($('oPlay'));
   плашкаЭфира();
   if (ОЦ.менял && CAT.length) { ОЦ.менял = false; rail(); render(true); }
+}
+
+/* Закрыть — убрать #rate из адреса, не добавляя шага в историю: иначе
+   «назад» в браузере открывал бы окно снова. */
+function оцЗакрыть() {
+  history.replaceState(null, '', location.pathname + location.search);
+  route();
 }
 
 function оцПерейти(r, вИсторию) {
@@ -20758,14 +20787,19 @@ function оцПерейти(r, вИсторию) {
   if (вИсторию && ОЦ.cur) ОЦ.история.push(ОЦ.cur);
   ОЦ.cur = r ? r.key : null;
   оцРисовать();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  $('opage').scrollTo({ top: 0, behavior: 'smooth' });
 }
-const оцДальше = () => { if (!$('opage').hidden) оцПерейти(оцСледующий(), true); };
+const оцДальше = () => { if (!$('opage').hidden && !ОЦ.фильтры) оцПерейти(оцСледующий(), true); };
 
 function оцРисовать() {
-  const r = оцТрек();
-  $('oSet').hidden = false;
   оцНастройки();
+  $('oFilt').hidden = !ОЦ.фильтры;
+  if (ОЦ.фильтры) {
+    ['oHero', 'oPlay', 'oMine', 'oNav', 'oEmpty'].forEach(id => { $(id).hidden = true; });
+    return;
+  }
+  const r = оцТрек();
+  $('oNav').hidden = false;
   $('oPrev').disabled = !ОЦ.история.length;
   $('oNext').textContent = r && MY[r.key] ? 'следующий ▶' : 'пропустить ▶';
   $('oNext').disabled = !r;
@@ -20775,7 +20809,6 @@ function оцРисовать() {
   if (пусто) {
     оцСтоп();
     ОЦ.нарисован = '';
-    фон('');
     const мимо = ОЦ.пул.filter(x => !MY[x.key] && ОЦ.мимо.has(x.key)).length;
     $('oEmpty').innerHTML = !ОЦ.пул.length
       ? '<h2>Под такой отбор ничего нет</h2><p class="note">Сними лишний фильтр — или оценивай всё подряд.</p>' +
@@ -20809,8 +20842,8 @@ function оцРисовать() {
 }
 
 /* Шапка — та же, что у страницы трека: обложка, название с припиской,
-   исполнитель, плашки, сердечко и две оценки справа. Плашки здесь не
-   ведут в каталог — уводили бы из режима. */
+   исполнитель, плашки, сердечко и две оценки. Плашки здесь не ведут в
+   каталог — уводили бы из режима. */
 function оцШапка(r) {
   const box = $('oHero');
   const bg = covUrl(r);
@@ -20849,13 +20882,11 @@ function оцШапка(r) {
       '</div>' +
     '</div>';
   covWire(box);
-  фон(bg);
   // У Spotify адрес картинки приезжает отдельным запросом — тогда ею же
-  // красим фон, как на странице трека.
+  // красим шапку, как на странице трека.
   const поздняя = bg ? null : box.querySelector('.hero-cov img[data-sp]');
   if (поздняя) поздняя.addEventListener('load', () => {
-    if (ОЦ.cur !== r.key || $('opage').hidden) return;
-    фон(поздняя.src);
+    if (ОЦ.cur !== r.key) return;
     const f = document.createElement('div');
     f.className = 'hero-bg';
     f.style.backgroundImage = 'url("' + поздняя.src.replace(/"/g, '%22') + '")';
@@ -20921,29 +20952,63 @@ function оцПлеер(r) {
   if (играл) { const face = pan.querySelector('.face'); if (face) face.click(); }
 }
 
-/* Настройки режима: порядок и отбор. Отбор — тот же, что в каталоге,
-   его плашки здесь только перечислены; настраивается он в фильтрах. */
+/* Верх окна: сколько ждёт, порядок, отбор и крестик. Отбор — тот же,
+   что в каталоге; его плашки здесь перечислены словами. */
 function оцНастройки() {
   const ждут = оцЖдут().length;
   const плашки = [...$('chips').querySelectorAll('.chip:not(.reset)')]
     .map(c => (c.classList.contains('off') ? 'без ' : '') + c.querySelector('.v').textContent);
   const сорт = $('sort').selectedOptions[0] ? $('sort').selectedOptions[0].textContent : '';
   $('oSet').innerHTML =
+    '<button type="button" class="mx" data-o="закрыть" aria-label="Закрыть">✕</button>' +
     '<div class="pan-h"><h2>Режим оценки<small>' + (ждут
       ? 'ждут оценки: ' + число(ждут) : 'ждущих нет') + '</small></h2>' +
+      (ОЦ.фильтры ? '' : '<button type="button" class="btn ghost" data-o="фильтры">Фильтры' +
+        (плашки.length ? '<b>' + плашки.length + '</b>' : '') + '</button>') +
       '<div class="plat" role="group" aria-label="Порядок">' +
         ['подряд', 'случайно'].map(k => '<button type="button" data-m="' + k + '" aria-pressed="' + (ОЦ.режим === k) + '">' +
           (k === 'подряд' ? 'подряд' : 'случайные') + '</button>').join('') +
       '</div></div>' +
     '<p class="note">' + (плашки.length
-      ? 'Отбор из каталога: ' + esc(плашки.join(' · ')) + '.'
+      ? 'Отбор: ' + esc(плашки.join(' · ')) + '.'
       : 'Все треки базы' + (ОЦ.режим === 'подряд' && сорт ? ', как в каталоге: ' + esc(сорт) : '') + '.') +
-      ' Оценённые не предлагаются.</p>' +
-    '<a class="lnk" href="#base" data-o="фильтры">' + (плашки.length ? 'изменить отбор' : 'выбрать в фильтрах') + '</a>' +
-    (плашки.length ? ' <button type="button" class="lnk" data-o="все">все треки</button>' : '');
+      ' Оценённые не предлагаются.' +
+      (плашки.length ? '<button type="button" class="lnk" data-o="все">все треки</button>' : '') + '</p>';
+  const n = $('oFiltN');
+  if (n) n.textContent = ждут ? 'ждут оценки: ' + число(ждут) : 'под отбор оценивать нечего';
+}
+
+/* Фильтры в окне — сам рельс каталога, перенесённый сюда: те же группы,
+   числа и правила щелчков. Уходит обратно на место за кнопкой
+   «Фильтры» каталога, как только окно фильтров закрывают. */
+function оцФильтры() {
+  ОЦ.фильтры = true;
+  clearTimeout(ОЦ.таймер);
+  $('oFilt').querySelector('.pan-h').after($('rail'));
+  rail();
+  оцРисовать();
+  $('opage').scrollTo({ top: 0 });
+}
+function оцФильтрыПрочь() {
+  if (!ОЦ.фильтры) return;
+  ОЦ.фильтры = false;
+  $('fToggle').after($('rail'));
+}
+function оцОтбор() {
+  ОЦ.пул = оцПул();
+  if (!оцТрек()) ОЦ.cur = (оцСледующий() || {}).key || null;
 }
 
 $('opage').addEventListener('click', e => {
+  // Щелчок по затемнению вокруг окна — закрыть.
+  if (e.target === $('opage')) { оцЗакрыть(); return; }
+  // Щелчок по рельсу перестраивает отбор — пересчитать, сколько ждёт.
+  // Рельс к этому времени уже перерисован, и нажатый пункт выпал из
+  // документа: closest() до #oFilt не дойдёт, смотрим путь события.
+  if (e.composedPath().includes($('oFilt')) && !e.target.closest('[data-o]')) {
+    setTimeout(() => { ОЦ.пул = оцПул(); оцНастройки(); }, 0);
+    return;
+  }
   const m = e.target.closest('[data-m]');
   if (m && m.closest('#oSet')) {
     ОЦ.режим = m.dataset.m;
@@ -20953,20 +21018,18 @@ $('opage').addEventListener('click', e => {
   }
   const o = e.target.closest('[data-o]');
   if (!o) return;
-  if (o.dataset.o === 'фильтры') {
-    e.preventDefault();
-    location.hash = '#base';
-    // На телефоне фильтры свёрнуты — разворачиваем, раз за ними пришли.
-    setTimeout(() => {
-      const ft = $('fToggle');
-      if (ft && getComputedStyle(ft).display !== 'none' && ft.getAttribute('aria-expanded') !== 'true') ft.click();
-    }, 60);
-  } else if (o.dataset.o === 'все') {
-    reset();
-    ОЦ.пул = оцПул();
-    if (!оцТрек()) ОЦ.cur = (оцСледующий() || {}).key || null;
+  const что = o.dataset.o;
+  if (что === 'закрыть') оцЗакрыть();
+  else if (что === 'фильтры') оцФильтры();
+  else if (что === 'готово') {
+    оцФильтрыПрочь();
+    оцОтбор();
     оцРисовать();
-  } else if (o.dataset.o === 'мимо') {
+  } else if (что === 'все') {
+    reset();
+    оцОтбор();
+    оцРисовать();
+  } else if (что === 'мимо') {
     ОЦ.мимо.clear();
     оцПерейти(оцСледующий(), false);
   }
@@ -20984,12 +21047,19 @@ $('oPrev').addEventListener('click', () => {
   // Трек мог выпасть из отбора — тогда возвращаемся к нему всё равно.
   if (!оцТрек()) { const r = CAT.find(x => x.key === k); if (r) ОЦ.пул.unshift(r); }
   оцРисовать();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  $('opage').scrollTo({ top: 0, behavior: 'smooth' });
 });
 document.addEventListener('keydown', e => {
   if ($('opage').hidden || e.ctrlKey || e.metaKey || e.altKey) return;
-  if (e.target.closest('input,textarea,select,[contenteditable]')) return;
   if (document.querySelector('.modal:not([hidden])')) return;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    if (ОЦ.фильтры) { оцФильтрыПрочь(); оцОтбор(); оцРисовать(); }
+    else оцЗакрыть();
+    return;
+  }
+  if (e.target.closest('input,textarea,select,[contenteditable]')) return;
+  if (ОЦ.фильтры) return;
   if (e.key === 'ArrowRight' && !$('oNext').disabled) { e.preventDefault(); $('oNext').click(); }
   else if (e.key === 'ArrowLeft' && !$('oPrev').disabled) { e.preventDefault(); $('oPrev').click(); }
 });
