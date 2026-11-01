@@ -1409,6 +1409,9 @@ html.rate-on{overflow:hidden}
 #oSet .note .lnk{margin:0 0 0 4px;font-size:12.5px}
 #oFilt .pan-h .btn{margin-left:auto}
 .o-done{display:flex;justify-content:flex-end;margin-top:16px}
+/* Заглушка на месте рельса, пока он в окне: держит колонку сетки каталога. */
+.rail-stub{min-height:1px}
+@media(max-width:1000px){.rail-stub{display:none}}
 /* Рельс каталога, перенесённый в окно: без липкости и своей прокрутки. */
 #oFilt .rail{position:static;max-height:none;overflow:visible;padding:0;background:none;display:flex}
 #oNav{margin-left:0;justify-content:flex-end}
@@ -20984,7 +20987,16 @@ function оцНастройки() {
 function оцФильтры() {
   ОЦ.фильтры = true;
   clearTimeout(ОЦ.таймер);
-  $('oFilt').querySelector('.pan-h').after($('rail'));
+  /* Каталог под окном — сетка «рельс | карточки». Унеси рельс без
+     замены — карточки съезжали в его узкую колонку, и это было видно
+     сквозь затемнение. На его месте стоит пустая заглушка той же ширины. */
+  const место = document.createElement('div');
+  место.className = 'rail-stub';
+  место.id = 'railStub';
+  // Ссылку берём до замены: снятый со страницы рельс по id уже не найти.
+  const рельс = $('rail');
+  рельс.replaceWith(место);
+  $('oFilt').querySelector('.pan-h').after(рельс);
   rail();
   оцРисовать();
   $('opage').scrollTo({ top: 0 });
@@ -20992,7 +21004,8 @@ function оцФильтры() {
 function оцФильтрыПрочь() {
   if (!ОЦ.фильтры) return;
   ОЦ.фильтры = false;
-  $('fToggle').after($('rail'));
+  const место = $('railStub');
+  if (место) место.replaceWith($('rail')); else $('fToggle').after($('rail'));
 }
 function оцОтбор() {
   ОЦ.пул = оцПул();
