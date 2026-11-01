@@ -7,7 +7,11 @@
 <meta name="description" content="Каталог разносов композитора: обложка, оценка, запись разбора и ссылка послушать.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<!-- Шрифты не держат первую отрисовку: стиль грузится как preload и
+     включается по onload, до того текст системным шрифтом. Блокирующий
+     <link rel=stylesheet> стоил Lighthouse 0,3–0,8 с до первого кадра. -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet"></noscript>
 <style>
 /* ============================================================
    БАЗА ТРЕКОВ — самостоятельная страница
@@ -11923,16 +11927,21 @@ function приписка() {
 
    Времянка: когда появится своя база, сюда встанет её адрес. */
 const ЖИВЫЕ = {
-  /* Каталог композитора — полная выгрузка: те же строки, что и в
-     data.csv, плюс двенадцать колонок. Из них нам нужны «Три
-     интересных факта» и «О чём трек?»: про 6 711 треков из 8 118 там
-     написано то, чего в архиве разносов нет вовсе.
+  /* Каталог — лёгкая выгрузка data.csv (1,8 МБ, 630 КБ по проводу):
+     все строки архива и все колонки, по которым строится витрина.
+     Раньше каталог собирался из full.csv (19 МБ, 5,7 МБ по проводу):
+     её разбор и повторная сборка занимали главный поток на секунду с
+     лишним — Lighthouse ставил за это «Performance» в 73.
 
-     Цена — размер: data.csv это 1,8 МБ (630 КБ по проводу), full.csv —
-     19 МБ (5,7 МБ). Первый экран от этого не страдает: встроенная
-     копия рисуется сразу, а свежая подменяет её, когда доедет. */
-  csv: ['https://raw.githubusercontent.com/Laitsberg/faryma.stats/main/data/full.csv',
-        'https://farymastats.info/data/full.csv'],
+     full.csv — те же строки плюс колонки каталога композитора. Из них
+     нужны только «Три интересных факта», «О чём трек?» и «Столбец 6»
+     (сумма заявки), и все три — только странице трека. Поэтому её
+     качает и разбирает фоновый поток (рассказЗагрузить()), а сюда
+     приезжают одни эти три колонки. */
+  csv: ['https://raw.githubusercontent.com/Laitsberg/faryma.stats/main/data.csv',
+        'https://farymastats.info/data.csv'],
+  рассказ: ['https://raw.githubusercontent.com/Laitsberg/faryma.stats/main/data/full.csv',
+            'https://farymastats.info/data/full.csv'],
   страны: ['https://raw.githubusercontent.com/Laitsberg/faryma.stats/main/data/countries.json',
            'https://farymastats.info/data/countries.json'],
   история: ['https://raw.githubusercontent.com/Laitsberg/faryma.stats/main/data/history.jsonl',
@@ -11990,6 +11999,78 @@ function разобрать(csv, снова) {
   });
 }
 
+/* ---------- рассказ из full.csv ----------
+   Факты, пересказ и сумма заявки — 19 МБ таблицы ради трёх колонок,
+   нужных одной странице трека. Качает и разбирает их фоновый поток:
+   главный за это время не стоит. PapaParse в него — тот же, что в
+   странице: текст его <script>. Наружу поток отдаёт только пять
+   колонок, а не всю таблицу. Потока нет (старый браузер) — то же
+   самое делаем здесь, когда браузер свободен. */
+let РАССКАЗ = null;           // сырой ключ строки → { sum, факты, оПесне }
+function рассказЗагрузить() {
+  const готово = строки => {
+    if (!строки || !строки.length) return;
+    const м = new Map();
+    let эфир = null;
+    строки.forEach(([что, где, sum, факты, оПесне]) => {
+      const st = parseStream(что, где);
+      if (st) { эфир = st; return; }
+      м.set((эфир ? эфир.num : '?') + '|' + что,
+            { sum: (sum || '').trim(), факты: фактыИз(факты), оПесне: (оПесне || '').trim() });
+    });
+    РАССКАЗ = м;
+    рассказРаздать();
+    if (T.r) drawTrack();
+  };
+  const здесь = () => (window.requestIdleCallback || setTimeout)(async () => {
+    const csv = await достать(ЖИВЫЕ.рассказ);
+    if (csv) Papa.parse(csv, { header: true, skipEmptyLines: 'greedy',
+      complete: r => готово(r.data.map(рассказКолонки)) });
+  });
+  const papa = [...document.scripts].find(x => x.textContent.includes('mholt/PapaParse'));
+  let поток;
+  try {
+    if (!window.Worker || !papa) throw 0;
+    const код = papa.textContent + ';\n' +
+      'const рассказКолонки = ' + рассказКолонки.toString() + ';\n' +
+      'onmessage = async e => {\n' +
+      '  for (const url of e.data) {\n' +
+      '    try {\n' +
+      '      const r = await fetch(url, { cache: "no-cache" });\n' +
+      '      if (!r.ok) continue;\n' +
+      '      const t = await r.text();\n' +
+      '      const p = Papa.parse(t, { header: true, skipEmptyLines: "greedy" });\n' +
+      '      postMessage(p.data.map(рассказКолонки));\n' +
+      '      return;\n' +
+      '    } catch (_) {}\n' +
+      '  }\n' +
+      '  postMessage(null);\n' +
+      '};';
+    const адрес = URL.createObjectURL(new Blob([код], { type: 'text/javascript' }));
+    поток = new Worker(адрес);
+    URL.revokeObjectURL(адрес);
+  } catch { здесь(); return; }
+  поток.onmessage = e => { поток.terminate(); готово(e.data); };
+  поток.onerror = () => { поток.terminate(); здесь(); };
+  поток.postMessage(ЖИВЫЕ.рассказ);
+}
+// Строка full.csv → только нужные колонки. Живёт и в потоке: туда
+// уходит её текст, поэтому — без обращений к чему-либо снаружи.
+function рассказКолонки(r) {
+  return [r['Что'] || '', r['Где'] || '', r['Столбец 6'] || '', r['Три интересных факта'] || '', r['О чём трек?'] || ''];
+}
+// Разложить рассказ по строкам каталога, и по склеенным повторам тоже.
+function рассказРаздать() {
+  CAT.forEach(r => (r.разы || [r]).forEach(x => {
+    const м = x.сырой && РАССКАЗ.get(x.сырой);
+    if (!м) return;
+    if (м.sum) x.sum = м.sum;
+    if (м.факты.length) x.факты = м.факты;
+    if (м.оПесне) x.оПесне = м.оПесне;
+  }));
+  CAT.forEach(r => { if (r.разы) рассказГлавному(r); });
+}
+
 async function подтянуть() {
   const csv = await достать(ЖИВЫЕ.csv);
   if (csv && csv !== CSV_INLINE) {
@@ -12005,6 +12086,8 @@ async function подтянуть() {
   } else if (csv) {
     СВЕЖО = true;   // доехала, но ровно та же — перестраивать нечего
   }
+  // Рассказ — следом за таблицей, фоновым потоком.
+  рассказЗагрузить();
 
   // Общие обложки и факты — маленькие файлы, тянем сразу за таблицей.
   const [обл, фкт] = await Promise.all([
@@ -12108,13 +12191,30 @@ function свояПесня(w) {
   return w;
 }
 
+/* Разбор ячеек — один раз на строку на всё время жизни страницы.
+   Каталог собирается дважды: из встроенной копии и когда доехала
+   свежая таблица, а строки в них почти все одни и те же — отличается
+   последний эфир. Ссылки, id площадок, исполнитель с названием и слова
+   для поиска на второй сборке берутся отсюда: она стоила столько же,
+   сколько первая, и Lighthouse засчитывал её как блокировку.
+   Всё, что тут лежит, — результаты чистых функций от самой ячейки;
+   на месте эти объекты и массивы никто не меняет. */
+const РАЗБОР = { что: new Map(), ист: new Map(), вид: new Map(), где: new Map(), оц: new Map(),
+                 жанр: new Map(), тэги: new Map(), поиск: new Map(), исп: new Map() };
+function мемо(кэш, ключ, f) {
+  if (кэш.has(ключ)) return кэш.get(ключ);
+  const v = f();
+  кэш.set(ключ, v);
+  return v;
+}
+
 function build(raw, снова) {
-  const parsed = raw.map(r => ({ r, w: свояПесня(parseWhat(r['Что'])) }));
+  const parsed = raw.map(r => ({ r, w: мемо(РАЗБОР.что, r['Что'] || '', () => свояПесня(parseWhat(r['Что']))) }));
 
   // Написание вселенных сводим к самому частому — как на статистике,
   // иначе «ULTRAKILL» и «Ultrakill» станут двумя пунктами фильтра.
   const SRC = applySourceAlias(dropNumberPrefix(canonMap(
-    parsed.map(p => parseSource(p.r['Что'])).filter(Boolean), nameKey)));
+    parsed.map(p => мемо(РАЗБОР.ист, p.r['Что'] || '', () => parseSource(p.r['Что']))).filter(Boolean), nameKey)));
 
   // Кто хоть раз выступал один: по этому списку participants() решает,
   // разбивать ли «X & Y» на двоих или это цельное название группы.
@@ -12129,17 +12229,28 @@ function build(raw, снова) {
 
     // Шуточные оценки («ДЫНЯ 🍈 +») parseRate отдаёт как null намеренно:
     // ступени у них нет, а витрина вся построена на ступенях.
-    const rate = parseRate(r['Оценка']);
+    const rate = мемо(РАЗБОР.оц, r['Оценка'] || '', () => parseRate(r['Оценка']));
     if (!rate) return;
 
-    const link = parseLink(r['Где']);
-    const src = parseSource(r['Что']);
+    const где = мемо(РАЗБОР.где, r['Где'] || '', () => {
+      const link = parseLink(r['Где']);
+      return { link,
+        ytId: link ? youtubeId(link.url) : '',
+        ytStart: link ? youtubeStart(link.url) : 0,
+        spId: link ? spotifyId(link.url) : '',
+        spAlbum: link ? spotifyAlbum(link.url) : '' };
+    });
+    const src = мемо(РАЗБОР.ист, r['Что'] || '', () => parseSource(r['Что']));
+    const ищем = мемо(РАЗБОР.поиск, w.full + ' ' + (r['Кто'] || ''), () => {
+      const т = w.full + ' ' + (r['Кто'] || '');
+      return { search: т.toLowerCase(), searchFlat: т.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ''), слова: слова(т) };
+    });
     CAT.push({
-      rate, link,
-      ytId: link ? youtubeId(link.url) : '',
-      ytStart: link ? youtubeStart(link.url) : 0,
-      spId: link ? spotifyId(link.url) : '',
-      spAlbum: link ? spotifyAlbum(link.url) : '',
+      rate, link: где.link,
+      ytId: где.ytId,
+      ytStart: где.ytStart,
+      spId: где.spId,
+      spAlbum: где.spAlbum,
       artist: w.artist, title: w.title || 'без названия', full: w.full,
       // Номер трека в эфире. Нужен в ключе: в архиве попадаются два
       // трека с одинаковым названием в одном эфире, и без номера ключ
@@ -12150,9 +12261,9 @@ function build(raw, снова) {
       user: (r['Кто'] || '').trim(),
       origin: (r['Откуда'] || '').trim(),
       source: src ? (SRC.get(nameKey(src)) || src) : '',
-      kind: sourceKind(r['Что']),
-      genres: splitGenres(r['Жанр']),
-      tags: (r['Тэги'] || '').split(/[,\/]/).map(s => s.trim()).filter(Boolean),
+      kind: мемо(РАЗБОР.вид, r['Что'] || '', () => sourceKind(r['Что'])),
+      genres: мемо(РАЗБОР.жанр, r['Жанр'] || '', () => splitGenres(r['Жанр'])),
+      tags: мемо(РАЗБОР.тэги, r['Тэги'] || '', () => (r['Тэги'] || '').split(/[,\/]/).map(s => s.trim()).filter(Boolean)),
       country: null,
       streamNum: stream ? stream.num : null,
       date: stream ? stream.date : null,
@@ -12161,6 +12272,9 @@ function build(raw, снова) {
       // которые на витрине не нужны, — как трек попал в очередь.
       vod:  stream ? stream.vod : '',
       sec:  toSeconds(r['Когда']),
+      // По нему рассказ из full.csv находит свою строку: эфир и ячейка
+      // «Что» как есть, без разбора.
+      сырой: (stream ? stream.num : '?') + '|' + String(r['Что'] || ''),
       way:  (r['Тип'] || '').trim(),
       sum:  (r['Столбец 6'] || '').trim(),
       // Из каталога композитора. В data.csv этих колонок нет, поэтому
@@ -12168,15 +12282,15 @@ function build(raw, снова) {
       факты: фактыИз(r['Три интересных факта']),
       оПесне: (r['О чём трек?'] || '').trim(),
       feat: (r['Фича'] || '').trim(),
-      search: (w.full + ' ' + (r['Кто'] || '')).toLowerCase(),
+      search: ищем.search,
       // то же без пробелов и знаков: «KICK BACK» и «KICKBACK» — одна
       // песня. Считаем один раз здесь, а не на каждую букву в поиске.
-      searchFlat: (w.full + ' ' + (r['Кто'] || '')).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ''),
+      searchFlat: ищем.searchFlat,
       // Отдельные слова — по ним поиск и идёт. Разбираем один раз при
       // сборке: перебирать семь тысяч строк регуляркой на каждую
       // напечатанную букву заметно дороже.
-      слова: слова((w.full + ' ' + (r['Кто'] || ''))),
-      словаИсп: слова(w.artist || '')
+      слова: ищем.слова,
+      словаИсп: мемо(РАЗБОР.исп, w.artist || '', () => слова(w.artist || ''))
     });
   });
 
@@ -12187,6 +12301,9 @@ function build(raw, снова) {
   });
 
   склеить();
+  // Рассказ мог доехать раньше этой сборки (свежая таблица пересобирает
+  // каталог) — раздаём его заново, иначе он пропал бы до перезагрузки.
+  if (РАССКАЗ) рассказРаздать();
   подобратьЧужое();
 
   // Добавленное посетителем кладём наверх — как самое свежее.
@@ -12273,6 +12390,22 @@ function applyCountries() {
    Version)» — разные записи, и мешать их нельзя. */
 const разы = r => r.разы || [r];
 
+/* Рассказ из каталога — про песню, а не про конкретный разнос.
+   У свежей строки его может не быть, а у прошлогодней быть, и
+   тогда карточка осталась бы без него ни за что. Берём у первого,
+   у кого есть. */
+function рассказГлавному(главный) {
+  const список = главный.разы || [];
+  if (!главный.факты.length) {
+    const есть = список.find(x => x.факты.length);
+    if (есть) главный.факты = есть.факты;
+  }
+  if (!главный.оПесне) {
+    const есть = список.find(x => x.оПесне);
+    if (есть) главный.оПесне = есть.оПесне;
+  }
+}
+
 function склеить() {
   const группы = new Map();
   CAT.forEach(r => {
@@ -12289,18 +12422,7 @@ function склеить() {
     список.sort((a, b) => (b.streamNum ?? -1) - (a.streamNum ?? -1));
     const главный = список[0];
     главный.разы = список;
-    /* Рассказ из каталога — про песню, а не про конкретный разнос.
-       У свежей строки его может не быть, а у прошлогодней быть, и
-       тогда карточка осталась бы без него ни за что. Берём у первого,
-       у кого есть. */
-    if (!главный.факты.length) {
-      const есть = список.find(x => x.факты.length);
-      if (есть) главный.факты = есть.факты;
-    }
-    if (!главный.оПесне) {
-      const есть = список.find(x => x.оПесне);
-      if (есть) главный.оПесне = есть.оПесне;
-    }
+    рассказГлавному(главный);
     список.slice(1).forEach(x => лишние.add(x));
   });
 
