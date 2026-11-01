@@ -652,10 +652,10 @@ a.cmt:hover{color:var(--brand-hi)}
    backdrop-filter и transform на плашках не ставить: под ними живут
    плееры, а плавающий плеер (position:fixed) от такого предка начал
    бы отсчитываться от плашки, а не от окна. */
-#tpage .pan,#tpage .talk,#rpage .pan{position:relative;overflow:hidden}
-.atmo-on #tpage .pan,.atmo-on #tpage .talk,.atmo-on #rpage .pan{background:rgba(24,24,28,.5);
+#tpage .pan,#tpage .talk,#rpage .pan,#opage .pan{position:relative;overflow:hidden}
+.atmo-on #tpage .pan,.atmo-on #tpage .talk,.atmo-on #rpage .pan,.atmo-on #opage .pan{background:rgba(24,24,28,.5);
   border:1px solid rgba(255,255,255,.07)}
-.atmo-on #tpage .pan::before,.atmo-on #tpage .talk::before,.atmo-on #rpage .pan::before{content:'';position:absolute;
+.atmo-on #tpage .pan::before,.atmo-on #tpage .talk::before,.atmo-on #rpage .pan::before,.atmo-on #opage .pan::before{content:'';position:absolute;
   inset:-80px;z-index:-1;pointer-events:none;background:var(--atmo) center/cover no-repeat;
   filter:blur(60px) saturate(1.3);opacity:.3}
 /* Шапка трека — как в прежних версиях: своя размытая обложка внутри и
@@ -706,8 +706,11 @@ a.cmt:hover{color:var(--brand-hi)}
 .hero-cov{position:relative;width:196px;height:196px;flex:none;border-radius:var(--r);
   overflow:hidden;background:#1F1F22;padding:0;cursor:zoom-in}
 /* Без картинки щелчок по обложке зовёт предложить свою — увеличивать
-   там нечего. */
-.hero-cov.empty{cursor:pointer}
+   там нечего. grid-column — от занятого класса .empty (заглушка пустой
+   сетки, grid-column:1/-1): в шапке-сетке на телефоне и в режиме
+   оценки обложка без картинки растягивалась на всю ширину, и название
+   уезжало под неё. */
+.hero-cov.empty{cursor:pointer;grid-column:auto}
 .hero-cov:hover img{filter:brightness(1.08)}
 .hero-cov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .hero-cov .art-fb{font-size:62px}
@@ -888,17 +891,17 @@ button.tg.brand:hover{background:var(--brand-hi);color:#151517}
    наведении — название ступени, а «−» и «+» по бокам появляются, когда
    оценка поставлена. Поставил — плашка бьёт тем же ударом, что карточка. */
 .mine-rate{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px}
-#tMine .mods{max-width:none;min-height:34px}
-#tMine .rt{font-size:17px;font-weight:700;text-shadow:none;color:var(--ink)}
-#tMine .rt.named{font-family:var(--m);font-size:17px}
-#tMine .mod{width:38px;height:32px;font-size:23px;background:rgba(255,255,255,.07)}
-#tMine .mod:hover:not(:disabled){background:rgba(255,255,255,.16)}
+.mine-pan .mods{max-width:none;min-height:34px}
+.mine-pan .rt{font-size:17px;font-weight:700;text-shadow:none;color:var(--ink)}
+.mine-pan .rt.named{font-family:var(--m);font-size:17px}
+.mine-pan .mod{width:38px;height:32px;font-size:23px;background:rgba(255,255,255,.07)}
+.mine-pan .mod:hover:not(:disabled){background:rgba(255,255,255,.16)}
 .big-scale{display:flex;gap:6px;width:100%}
 .big-scale .seg{width:auto;flex:1;height:40px;border-color:rgba(255,255,255,.35)}
 .big-scale .seg:hover{border-color:#fff}
-#tMine .rated-msg{position:static;margin-top:-4px;min-height:17px}
-#tMine.hit{animation:hit .7s ease-out}
-@media(prefers-reduced-motion:reduce){#tMine.hit{animation:none}}
+.mine-pan .rated-msg{position:static;margin-top:-4px;min-height:17px}
+.mine-pan.hit{animation:hit .7s ease-out}
+@media(prefers-reduced-motion:reduce){.mine-pan.hit{animation:none}}
 /* «Оставить комментарий» — только после оценки: аккуратная кнопка,
    которая уводит к полю под вкладками, а не второе поле здесь. */
 .mine-all{display:flex;align-items:center;gap:10px;width:100%;margin-top:14px;padding:10px 12px;
@@ -1385,6 +1388,33 @@ a.re{text-decoration:none}
   margin-top:13px;color:var(--faint);font-size:12px}
 .quick button{padding:3px 9px;border:1px solid #3a3a42;border-radius:5px;color:#B9B9C2;font-size:12px}
 .quick button:hover{border-color:var(--brand);color:var(--brand-hi)}
+.home-rate{display:flex;justify-content:center;margin-top:20px}
+.home-rate .btn{text-decoration:none}
+/* Режим оценки (#rate): тэги в шапке — не кнопки, уводить из режима им некуда. */
+#opage .tags span{font-size:13px;color:#D2D2D9}
+#oHero[hidden],#oPlay[hidden],#oMine[hidden],#oSet[hidden],#oEmpty[hidden]{display:none}
+#oEmpty .btn{margin-top:14px}
+/* Одной узкой колонкой, как виджет рекомендаций у StopGame: во всю
+   ширину каталога один трек выглядел пустырём — справа узкая колонка,
+   слева плеер на пол-экрана. Шапка трека — в том виде, что у страницы
+   трека на телефоне: обложка квадратиком, рядом название, оценки в ряд.
+   Порядок: шапка, своя оценка, плеер, настройки — шкала остаётся на
+   первом экране и на телефоне. */
+#opage{max-width:640px}
+#opage .tp-grid{display:flex;flex-direction:column;align-items:stretch;gap:14px}
+#opage .tp-col{display:contents}
+#oEmpty{order:0}#oHero{order:1}#oMine{order:2}#oPlay{order:3}#oSet{order:4}
+#opage .hero-in{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px 14px;padding:14px}
+#opage .hero-b{display:contents}
+#opage .hero-cov{grid-row:1/span 2;width:104px;height:104px}
+#opage .hero-cov .art-fb{font-size:36px}
+#opage .hero-b h1{grid-column:2;align-self:end;font-size:21px}
+#opage .hero-art{grid-column:2;align-self:start;font-size:16px;margin:0}
+#opage .hero-b .tgs,#opage .hero-b .tags,#opage .hero-act,#opage .hero-sc{grid-column:1/-1}
+#opage .hero-act{padding-top:0}
+#opage .hero-sc{width:auto;flex-direction:row}
+#opage .sc{flex:1;min-width:0;padding:9px 12px}
+#opage .sc b{font-size:17px}
 
 .feats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:35px;text-align:left}
 .feat{display:flex;flex-direction:column;min-height:261px;padding:19px 19px 17px;border-radius:9px;
@@ -2410,6 +2440,8 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
    <div class="suggest" id="hSuggest" hidden></div>
    <div class="quick" id="hQuick"></div>
   </div>
+  <!-- Режим оценки: треки по одному, по отбору каталога. -->
+  <div class="home-rate"><a class="btn" href="#rate">Режим оценки ▶</a></div>
   <div class="feats" id="hFeats"></div>
   <!-- Десятка по опыту: кто больше всех оценил и написал. Видна всем,
        и гостям, и вошедшим; без сервера её нет. Рисует JS. -->
@@ -2469,7 +2501,7 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
    <section class="talk" id="tTalk"></section>
   </div>
   <div class="tp-col">
-   <section class="pan" id="tMine"></section>
+   <section class="pan mine-pan" id="tMine"></section>
    <section class="pan" id="tFacts"></section>
    <section class="pan" id="tDist"></section>
   </div>
@@ -2536,6 +2568,29 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
 
 <!-- Рецензия отдельной страницей (#r=id): на неё можно дать ссылку,
      а не на трек, где она теряется среди комментариев. Рисует JS. -->
+<!-- Режим оценки (#rate): треки по одному — шапка, плеер оригинала и
+     «твоя оценка» со страницы трека. Рисует JS (showRate). -->
+<div class="tpage" id="opage" hidden>
+ <div class="tp-top">
+  <nav class="crumbs" aria-label="Где я"><a href="#">главная</a><span class="sep">›</span><b>режим оценки</b></nav>
+  <div class="tp-nav">
+   <button type="button" id="oPrev">◀ назад</button>
+   <button type="button" id="oNext">пропустить ▶</button>
+  </div>
+ </div>
+ <div class="tp-grid">
+  <div class="tp-col">
+   <section class="pan" id="oEmpty" hidden></section>
+   <section class="hero" id="oHero"></section>
+   <div id="oPlay"></div>
+  </div>
+  <div class="tp-col">
+   <section class="pan mine-pan" id="oMine"></section>
+   <section class="pan" id="oSet"></section>
+  </div>
+ </div>
+</div>
+
 <div class="tpage" id="rpage" hidden>
  <div class="tp-top">
   <nav class="crumbs" id="rCrumbs" aria-label="Где я"><a href="#base">база треков</a><span class="sep">›</span><b>рецензия</b></nav>
@@ -12132,6 +12187,7 @@ function build(raw, снова) {
       if (свежий) { T.r = свежий; drawTrack(); }
     }
     if (!$('page').hidden) главная();
+    if (!$('opage').hidden) showRate();
     if (!$('mpage').hidden) drawMe();
     // В студии могли ждать трек, который только что доехал в базу.
     if (!$('spage').hidden) стРисовать(false);
@@ -13521,6 +13577,8 @@ const время = sec => {
 /* ---------- маршрут ---------- */
 function route() {
   навигация();
+  if (location.hash === '#rate') return showRate();
+  уходИзОценки();
   if (location.hash === '#covers') return showAdmin();
   if (location.hash === '#fun') return showFun();
   if (/^#me(\/|$)/.test(location.hash)) return showMe();
@@ -13556,7 +13614,7 @@ function навигация() {
   // Студия открывается из кабинета («управление») — подсвечен кабинет.
   const h = location.hash;
   const где = h === '#fun' ? 'navFun' : h === '#studio' || /^#me(\/|$)/.test(h) ? '' : h.startsWith('#u=') ? '-' :
-              h === '' || h === '#' ? 'navHome' : 'navBase';
+              h === '' || h === '#' || h === '#rate' ? 'navHome' : 'navBase';
   ['navHome', 'navBase', 'navFun'].forEach(id => {
     if (id === где) $(id).setAttribute('aria-current', 'page');
     else $(id).removeAttribute('aria-current');
@@ -15426,25 +15484,51 @@ function drawMine() {
      наведении — название ступени, «−» и «+» по бокам — когда оценка
      есть. Поля комментария здесь больше нет: после оценки появляется
      кнопка «оставить комментарий», и она ведёт к полю под вкладками. */
-  box.innerHTML =
-    '<h2>Твоя оценка<small>' + видна + '</small></h2>' +
-    '<div class="mine-rate">' +
-      '<div class="mods off">' +
-        '<button type="button" class="mod" data-d="-1" aria-label="Понизить оценку">−</button>' +
-        '<div class="rt"></div>' +
-        '<button type="button" class="mod" data-d="1" aria-label="Повысить оценку">+</button>' +
-      '</div>' +
-      '<div class="big-scale"></div>' +
-      '<span class="rated-msg" aria-live="polite"></span>' +
-    '</div>' +
-    '<button type="button" class="mine-all" hidden>' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3v4l5-4h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>' +
-      'Оставить комментарий<span class="car">›</span></button>';
+  box.innerHTML = '<h2>Твоя оценка<small>' + видна + '</small></h2>';
+  const идти = document.createElement('button');
+  идти.type = 'button';
+  идти.className = 'mine-all';
+  идти.hidden = true;
+  идти.innerHTML =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3v4l5-4h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>' +
+    'Оставить комментарий<span class="car">›</span>';
+  box.append(шкалаОценки(r, box, {
+    вид: v => {
+      const заголовок = $('tMyRate');
+      if (заголовок) {
+        заголовок.textContent = v ? v.t + modLabel(v.m) : 'не поставлена';
+        заголовок.style.setProperty('--tc', v ? TCOLOR[v.t] : 'var(--faint)');
+      }
+      идти.hidden = !v;
+      // Рецензию без оценки не опубликовать — кнопке под лентой надо знать.
+      if ($('tTalk')._состояние) $('tTalk')._состояние();
+    },
+    // Средняя зрителей в шапке считает и плюсы с минусами — пересчитываем.
+    сменилась: () => drawDist()
+  }), идти);
+  идти.addEventListener('click', () => кПолюКомментария());
+}
 
-  const scale = box.querySelector('.big-scale');
-  const rt = box.querySelector('.rt');
-  const mods = box.querySelector('.mods');
-  const идти = box.querySelector('.mine-all');
+/* Шкала «твоей оценки» — та, что на странице трека: посередине «оцени
+   этот трек!», «−» и «+» по бокам, удар при оценке. Одна и та же на
+   странице трека и в режиме оценки (#rate). box — плашка, которая бьёт
+   ударом; вид(v) зовётся на каждой перерисовке, сменилась(как) — когда
+   оценку поставили ('ступень') или сдвинули плюсом и минусом ('мод'). */
+function шкалаОценки(r, box, { вид, сменилась } = {}) {
+  const обёртка = document.createElement('div');
+  обёртка.className = 'mine-rate';
+  обёртка.innerHTML =
+    '<div class="mods off">' +
+      '<button type="button" class="mod" data-d="-1" aria-label="Понизить оценку">−</button>' +
+      '<div class="rt"></div>' +
+      '<button type="button" class="mod" data-d="1" aria-label="Повысить оценку">+</button>' +
+    '</div>' +
+    '<div class="big-scale"></div>' +
+    '<span class="rated-msg" aria-live="polite"></span>';
+
+  const scale = обёртка.querySelector('.big-scale');
+  const rt = обёртка.querySelector('.rt');
+  const mods = обёртка.querySelector('.mods');
 
   // Шкала слева направо снизу вверх — как на карточке.
   const up = [...TIERS].reverse();
@@ -15460,8 +15544,9 @@ function drawMine() {
       const cur = MY[r.key];
       const держим = cur && cur.t === t.key && t.mods.includes(cur.m);
       MY[r.key] = { t: t.key, m: держим ? cur.m : '', w: Date.now() };
-      save(); paint(); drawDist(); учёт('rate');
-      ударОценки(box, mods, box.querySelector('.rated-msg'), t.key);
+      save(); paint(); учёт('rate');
+      ударОценки(box, mods, обёртка.querySelector('.rated-msg'), t.key);
+      if (сменилась) сменилась('ступень');
     });
     scale.append(b);
     return b;
@@ -15489,7 +15574,6 @@ function drawMine() {
 
   function paint() {
     const v = MY[r.key];
-    const заголовок = $('tMyRate');
     if (v) {
       const t = TIERS.find(x => x.key === v.t) || TIERS[0];
       draw(v.t, v.m, TCOLOR[t.key]);
@@ -15500,18 +15584,14 @@ function drawMine() {
       const i = t.mods.indexOf(v.m);
       mods.querySelector('[data-d="1"]').disabled = i <= 0;
       mods.querySelector('[data-d="-1"]').disabled = i < 0 || i >= t.mods.length - 1;
-      if (заголовок) { заголовок.textContent = t.key + modLabel(v.m); заголовок.style.setProperty('--tc', TCOLOR[t.key]); }
     } else {
       segs.forEach(s => { s.querySelector('i').style.width = '0%'; });
       rt.textContent = 'оцени этот трек!';
       rt.className = 'rt';
       rt.style.color = '';
       mods.classList.add('off');
-      if (заголовок) { заголовок.textContent = 'не поставлена'; заголовок.style.setProperty('--tc', 'var(--faint)'); }
     }
-    идти.hidden = !v;
-    // Рецензию без оценки не опубликовать — кнопке под лентой надо знать.
-    if ($('tTalk')._состояние) $('tTalk')._состояние();
+    if (вид) вид(v);
   }
 
   mods.addEventListener('click', e => {
@@ -15521,12 +15601,11 @@ function drawMine() {
     const t = TIERS.find(x => x.key === v.t); if (!t) return;
     const next = t.mods.indexOf(v.m) - Number(b.dataset.d);
     if (next < 0 || next >= t.mods.length) return;
-    // Средняя зрителей в шапке считает и плюсы с минусами — пересчитываем.
-    v.m = t.mods[next]; save(); paint(); drawDist();
+    v.m = t.mods[next]; save(); paint();
+    if (сменилась) сменилась('мод');
   });
   paint();
-
-  идти.addEventListener('click', () => кПолюКомментария());
+  return обёртка;
 }
 
 /* К полю комментария под вкладками — и сразу в него. */
@@ -20610,6 +20689,310 @@ function уходИзСтудии() {
   document.body.classList.remove('st-on', 'st-air', 'st-drag');
   if (CAT.length) { студияВКаталог(true); T.fresh = true; }
 }
+
+/* ============================================================
+   РЕЖИМ ОЦЕНКИ (#rate)
+   ------------------------------------------------------------
+   Кнопка на главной. Треки по одному: шапка трека, плеер оригинала,
+   «твоя оценка» — всё те же элементы, что на странице трека, нового
+   вида оценки здесь нет (просьба заказчика). Поставил оценку — тот же
+   удар, и через мгновение следующий трек.
+
+   Какие треки — решает отбор каталога: без галочек идут все, в порядке
+   и с сортировкой каталога; уже оценённые не предлагаются. «Случайные»
+   берут следующий наугад из того же отбора. Пропущенные в этот заход
+   больше не всплывают, пока их не вернут; «назад» возвращает и их. */
+const ОЦ_LS = 'faryma-rate-order';
+const ОЦ = {
+  cur: null, история: [], мимо: new Set(), пул: [], таймер: 0, менял: false, нарисован: '',
+  режим: (() => { try { return localStorage.getItem(ОЦ_LS) === 'случайно' ? 'случайно' : 'подряд'; } catch { return 'подряд'; } })()
+};
+// Столько после оценки трек ещё на экране: «−» и «+» всплывают после
+// удара через полторы секунды, и поправить оценку надо успеть.
+const ОЦ_ДАЛЬШЕ = 2500;
+
+const оцПул = () => rows().filter(r => !r.mine && !r.студия);
+const оцЖдут = () => ОЦ.пул.filter(r => !MY[r.key] && !ОЦ.мимо.has(r.key));
+function оцСледующий() {
+  const ждут = оцЖдут().filter(r => r.key !== ОЦ.cur);
+  if (!ждут.length) return null;
+  return ОЦ.режим === 'случайно' ? ждут[Math.floor(Math.random() * ждут.length)] : ждут[0];
+}
+const оцТрек = () => ОЦ.пул.find(r => r.key === ОЦ.cur) || null;
+
+function showRate() {
+  уходИзИгры();
+  уходИзСтудии();
+  if (T.r) уходСТрека();
+  T.r = null;
+  ['page', 'footNote', 'tpage', 'apage', 'fpage', 'mpage', 'upage', 'rpage'].forEach(id => { $(id).hidden = true; });
+  $('opage').hidden = false;
+  document.title = 'Режим оценки — база треков';
+  плашкаЭфира();
+  if (!CAT.length) {               // таблица ещё едет — build() позовёт route() ещё раз
+    $('oEmpty').hidden = false;
+    $('oEmpty').innerHTML = '<p class="note">Читаю таблицу…</p>';
+    ['oHero', 'oPlay', 'oMine', 'oSet'].forEach(id => { $(id).hidden = true; });
+    return;
+  }
+  ОЦ.пул = оцПул();
+  // Вернулись со страницы трека — тот же трек; отбор сменился и его в
+  // нём нет — следующий по новому отбору.
+  if (!оцТрек()) { const r = оцСледующий(); ОЦ.cur = r ? r.key : null; }
+  оцРисовать();
+  window.scrollTo(0, 0);
+}
+
+function уходИзОценки() {
+  if ($('opage').hidden) return;
+  clearTimeout(ОЦ.таймер);
+  $('opage').hidden = true;
+  // Играющее доигрывает окном, как со страницы трека; остальное замолкает.
+  стопОригинал($('oPlay'));
+  плашкаЭфира();
+  if (ОЦ.менял && CAT.length) { ОЦ.менял = false; rail(); render(true); }
+}
+
+function оцПерейти(r, вИсторию) {
+  clearTimeout(ОЦ.таймер);
+  if (вИсторию && ОЦ.cur) ОЦ.история.push(ОЦ.cur);
+  ОЦ.cur = r ? r.key : null;
+  оцРисовать();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+const оцДальше = () => { if (!$('opage').hidden) оцПерейти(оцСледующий(), true); };
+
+function оцРисовать() {
+  const r = оцТрек();
+  $('oSet').hidden = false;
+  оцНастройки();
+  $('oPrev').disabled = !ОЦ.история.length;
+  $('oNext').textContent = r && MY[r.key] ? 'следующий ▶' : 'пропустить ▶';
+  $('oNext').disabled = !r;
+  const пусто = !r;
+  ['oHero', 'oPlay', 'oMine'].forEach(id => { $(id).hidden = пусто; });
+  $('oEmpty').hidden = !пусто;
+  if (пусто) {
+    оцСтоп();
+    ОЦ.нарисован = '';
+    фон('');
+    const мимо = ОЦ.пул.filter(x => !MY[x.key] && ОЦ.мимо.has(x.key)).length;
+    $('oEmpty').innerHTML = !ОЦ.пул.length
+      ? '<h2>Под такой отбор ничего нет</h2><p class="note">Сними лишний фильтр — или оценивай всё подряд.</p>' +
+        '<button type="button" class="btn" data-o="все">Все треки</button>'
+      : '<h2>Всё оценено</h2><p class="note">Под этот отбор ты оценил всё' + (мимо ? ', кроме пропущенного' : '') + '.</p>' +
+        (мимо ? '<button type="button" class="btn" data-o="мимо">Вернуть пропущенные (' + число(мимо) + ')</button>' : '');
+    return;
+  }
+  if (ОЦ.нарисован !== r.key) {
+    ОЦ.нарисован = r.key;
+    оцШапка(r);
+    оцПлеер(r);
+    $('oMine').innerHTML = '<h2>Твоя оценка<small>' + (вошёл() && !(ОБЛ.проф && ОБЛ.проф.ratings_public === false)
+      ? 'видна другим зрителям' : 'видна только тебе') + '</small></h2>';
+    $('oMine').append(шкалаОценки(r, $('oMine'), {
+      вид: () => { $('oNext').textContent = MY[r.key] ? 'следующий ▶' : 'пропустить ▶'; },
+      сменилась: как => {
+        ОЦ.менял = true;
+        оцЗрители(r);
+        оцНастройки();
+        // Поставил — через мгновение дальше; «−» и «+» в это мгновение
+        // переписывают оценку и откладывают переход.
+        if (как === 'ступень' || ОЦ.таймер) {
+          clearTimeout(ОЦ.таймер);
+          ОЦ.таймер = setTimeout(() => { ОЦ.таймер = 0; оцДальше(); }, ОЦ_ДАЛЬШЕ);
+        }
+      }
+    }));
+  }
+  оцЗрители(r);
+}
+
+/* Шапка — та же, что у страницы трека: обложка, название с припиской,
+   исполнитель, плашки, сердечко и две оценки справа. Плашки здесь не
+   ведут в каталог — уводили бы из режима. */
+function оцШапка(r) {
+  const box = $('oHero');
+  const bg = covUrl(r);
+  const заг = имяСПрипиской(r.title || r.full);
+  const tgs = [];
+  if (r.year) tgs.push(String(r.year));
+  if (r.country) tgs.push(r.country);
+  r.genres.forEach(g => tgs.push(g));
+  if (r.origin) tgs.push(r.origin.toLowerCase());
+  const разносы = разы(r);
+  box.innerHTML =
+    (bg ? '<div class="hero-bg" style="background-image:url(&quot;' + esc(bg) + '&quot;)"></div>' : '') +
+    '<div class="hero-in">' +
+      '<a class="hero-cov' + (bg ? '' : ' empty') + '" href="' + trackHref(r) + '" data-tip="Страница трека">' + covHtml(r) + '</a>' +
+      '<div class="hero-b">' +
+        '<h1>' + esc(заг.имя || '—') + (заг.приписка ? ' <span class="tt-sub">' + esc(заг.приписка) + '</span>' : '') + '</h1>' +
+        '<p class="hero-art">' + esc(r.artist || '—') +
+          (r.source ? '<span class="src"> · ' + esc(r.source) + '</span>' : '') + '</p>' +
+        (tgs.length ? '<div class="tgs">' + tgs.map(t => '<span class="tg">' + esc(t) + '</span>').join('') + '</div>' : '') +
+        (r.tags.length ? '<div class="tags">' + r.tags.map(t => '<span>#' + esc(t) + '</span>').join('') + '</div>' : '') +
+        '<div class="hero-act">' +
+          '<a class="act" href="' + trackHref(r) + '">Страница трека</a>' +
+          '<button class="act ic" id="oFav" aria-pressed="false">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<path d="M12 21s-7.6-4.7-9.6-9.3C.9 8.3 3 4.5 6.9 4.5c2.2 0 3.7 1.2 5.1 3 1.4-1.8 2.9-3 5.1-3 3.9 0 6 3.8 4.5 7.2C19.6 16.3 12 21 12 21z"/></svg></button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="hero-sc">' +
+        '<div class="sc" style="--tc:' + tColor(r.rate) + '"' +
+          (разносы.length > 1 ? ' data-tip="' + esc('Разносили ' + разносы.length + ' раза: ' +
+            разносы.map(x => '№' + x.streamNum + ' — ' + (x.rate ? x.rate.label : 'без оценки')).join(', ')) + '"' : '') + '>' +
+          '<span>оценка композера</span>' +
+          '<b>' + esc(r.rate ? r.rate.label : 'нет') + '</b>' +
+          '<small>' + (r.rate ? '' : 'ещё не разобран') + '</small></div>' +
+        '<div class="sc nobody" id="oUsers"></div>' +
+      '</div>' +
+    '</div>';
+  covWire(box);
+  фон(bg);
+  // У Spotify адрес картинки приезжает отдельным запросом — тогда ею же
+  // красим фон, как на странице трека.
+  const поздняя = bg ? null : box.querySelector('.hero-cov img[data-sp]');
+  if (поздняя) поздняя.addEventListener('load', () => {
+    if (ОЦ.cur !== r.key || $('opage').hidden) return;
+    фон(поздняя.src);
+    const f = document.createElement('div');
+    f.className = 'hero-bg';
+    f.style.backgroundImage = 'url("' + поздняя.src.replace(/"/g, '%22') + '")';
+    box.prepend(f);
+    box.querySelector('.hero-cov').classList.remove('empty');
+  });
+
+  const fav = $('oFav');
+  const paintFav = () => {
+    const on = FAV.has(r.key);
+    fav.classList.toggle('on', on);
+    fav.setAttribute('aria-pressed', String(on));
+    fav.dataset.tip = on ? 'В избранном' : 'В избранное';
+    fav.setAttribute('aria-label', fav.dataset.tip);
+  };
+  fav.addEventListener('click', () => {
+    const on = !FAV.has(r.key);
+    on ? FAV.add(r.key) : FAV.delete(r.key);
+    if (on) учёт('fav');
+    save();
+    ОЦ.менял = true;
+    paintFav();
+  });
+  paintFav();
+}
+
+// Оценка пользователей — та же средняя, что на карточке каталога.
+function оцЗрители(r) {
+  const sc = $('oUsers');
+  if (!sc) return;
+  const ср = средняяЗрителей(r.key);
+  sc.className = ср ? 'sc users' : 'sc nobody';
+  if (ср) sc.style.setProperty('--tc', TCOLOR[ср.оценка.tier]); else sc.style.removeProperty('--tc');
+  sc.innerHTML = '<span>оценка пользователей</span>' + (ср
+    ? '<b>' + esc(ср.оценка.label) + '</b><small>' + число(ср.n) + ' ' + plural(ср.n, 'голос', 'голоса', 'голосов') + '</small>'
+    : '<b>пока нет</b><small>никто не оценил</small>');
+  sc.dataset.tip = 'Средняя по голосам тех, кто открыл свои оценки, и твоему.';
+}
+
+/* Плеер — «Оригинал трека» со страницы трека. Новый трек — прежний
+   плеер уходит вместе со звуком; если он играл, новый включается сам
+   (у ютуба — тем же щелчком по превью, что сделал бы зритель). */
+function оцСтоп() {
+  const старая = $('oPlay').querySelector('.pan.orig');
+  let играл = false;
+  if (старая) {
+    const з = старая._звук;
+    if (з) {
+      играл = з.играет;
+      try { if (з.играет) з.игрок.pause(); } catch {}
+      if (ЗВУК.сейчас === з) ЗВУК.сейчас = null;
+      try { з.игрок.destroy(); } catch {}
+    }
+  }
+  $('oPlay').textContent = '';
+  плашкаЭфира();
+  return играл;
+}
+function оцПлеер(r) {
+  const играл = оцСтоп();
+  const pan = панельОригинала(r, $('oPlay'));
+  $('oPlay').append(pan);
+  if (играл) { const face = pan.querySelector('.face'); if (face) face.click(); }
+}
+
+/* Настройки режима: порядок и отбор. Отбор — тот же, что в каталоге,
+   его плашки здесь только перечислены; настраивается он в фильтрах. */
+function оцНастройки() {
+  const ждут = оцЖдут().length;
+  const плашки = [...$('chips').querySelectorAll('.chip:not(.reset)')]
+    .map(c => (c.classList.contains('off') ? 'без ' : '') + c.querySelector('.v').textContent);
+  const сорт = $('sort').selectedOptions[0] ? $('sort').selectedOptions[0].textContent : '';
+  $('oSet').innerHTML =
+    '<div class="pan-h"><h2>Режим оценки<small>' + (ждут
+      ? 'ждут оценки: ' + число(ждут) : 'ждущих нет') + '</small></h2>' +
+      '<div class="plat" role="group" aria-label="Порядок">' +
+        ['подряд', 'случайно'].map(k => '<button type="button" data-m="' + k + '" aria-pressed="' + (ОЦ.режим === k) + '">' +
+          (k === 'подряд' ? 'подряд' : 'случайные') + '</button>').join('') +
+      '</div></div>' +
+    '<p class="note">' + (плашки.length
+      ? 'Отбор из каталога: ' + esc(плашки.join(' · ')) + '.'
+      : 'Все треки базы' + (ОЦ.режим === 'подряд' && сорт ? ', как в каталоге: ' + esc(сорт) : '') + '.') +
+      ' Оценённые не предлагаются.</p>' +
+    '<a class="lnk" href="#base" data-o="фильтры">' + (плашки.length ? 'изменить отбор' : 'выбрать в фильтрах') + '</a>' +
+    (плашки.length ? ' <button type="button" class="lnk" data-o="все">все треки</button>' : '');
+}
+
+$('opage').addEventListener('click', e => {
+  const m = e.target.closest('[data-m]');
+  if (m && m.closest('#oSet')) {
+    ОЦ.режим = m.dataset.m;
+    try { localStorage.setItem(ОЦ_LS, ОЦ.режим); } catch {}
+    оцНастройки();
+    return;
+  }
+  const o = e.target.closest('[data-o]');
+  if (!o) return;
+  if (o.dataset.o === 'фильтры') {
+    e.preventDefault();
+    location.hash = '#base';
+    // На телефоне фильтры свёрнуты — разворачиваем, раз за ними пришли.
+    setTimeout(() => {
+      const ft = $('fToggle');
+      if (ft && getComputedStyle(ft).display !== 'none' && ft.getAttribute('aria-expanded') !== 'true') ft.click();
+    }, 60);
+  } else if (o.dataset.o === 'все') {
+    reset();
+    ОЦ.пул = оцПул();
+    if (!оцТрек()) ОЦ.cur = (оцСледующий() || {}).key || null;
+    оцРисовать();
+  } else if (o.dataset.o === 'мимо') {
+    ОЦ.мимо.clear();
+    оцПерейти(оцСледующий(), false);
+  }
+});
+$('oNext').addEventListener('click', () => {
+  if (ОЦ.cur && !MY[ОЦ.cur]) ОЦ.мимо.add(ОЦ.cur);
+  оцПерейти(оцСледующий(), true);
+});
+$('oPrev').addEventListener('click', () => {
+  const k = ОЦ.история.pop();
+  if (!k) return;
+  ОЦ.мимо.delete(k);
+  clearTimeout(ОЦ.таймер);
+  ОЦ.cur = k;
+  // Трек мог выпасть из отбора — тогда возвращаемся к нему всё равно.
+  if (!оцТрек()) { const r = CAT.find(x => x.key === k); if (r) ОЦ.пул.unshift(r); }
+  оцРисовать();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+document.addEventListener('keydown', e => {
+  if ($('opage').hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target.closest('input,textarea,select,[contenteditable]')) return;
+  if (document.querySelector('.modal:not([hidden])')) return;
+  if (e.key === 'ArrowRight' && !$('oNext').disabled) { e.preventDefault(); $('oNext').click(); }
+  else if (e.key === 'ArrowLeft' && !$('oPrev').disabled) { e.preventDefault(); $('oPrev').click(); }
+});
 
 window.addEventListener('hashchange', route);
 
