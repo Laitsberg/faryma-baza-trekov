@@ -706,8 +706,11 @@ a.cmt:hover{color:var(--brand-hi)}
 .hero-cov{position:relative;width:196px;height:196px;flex:none;border-radius:var(--r);
   overflow:hidden;background:#1F1F22;padding:0;cursor:zoom-in}
 /* Без картинки щелчок по обложке зовёт предложить свою — увеличивать
-   там нечего. */
-.hero-cov.empty{cursor:pointer}
+   там нечего. grid-column — от занятого класса .empty (заглушка пустой
+   сетки, grid-column:1/-1): в шапке-сетке на телефоне и в режиме
+   оценки обложка без картинки растягивалась на всю ширину, и название
+   уезжало под неё. */
+.hero-cov.empty{cursor:pointer;grid-column:auto}
 .hero-cov:hover img{filter:brightness(1.08)}
 .hero-cov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .hero-cov .art-fb{font-size:62px}
@@ -1114,7 +1117,6 @@ a.re{text-decoration:none}
   .tp-grid{display:flex;flex-direction:column;align-items:stretch;gap:14px}
   .tp-col{display:contents}
   #tHero{order:1}#tMine{order:2}#tTabs{order:3}#tTab{order:4}#tFacts{order:5}#tDist{order:6}#tTalk{order:7}
-  #oEmpty{order:0}#oHero{order:1}#oMine{order:2}#oPlay{order:3}#oSet{order:4}
   .hero-in{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px 14px;padding:14px}
   .hero-b{display:contents}
   .hero-cov{grid-row:1/span 2;width:104px;height:104px}
@@ -1392,6 +1394,27 @@ a.re{text-decoration:none}
 #opage .tags span{font-size:13px;color:#D2D2D9}
 #oHero[hidden],#oPlay[hidden],#oMine[hidden],#oSet[hidden],#oEmpty[hidden]{display:none}
 #oEmpty .btn{margin-top:14px}
+/* Одной узкой колонкой, как виджет рекомендаций у StopGame: во всю
+   ширину каталога один трек выглядел пустырём — справа узкая колонка,
+   слева плеер на пол-экрана. Шапка трека — в том виде, что у страницы
+   трека на телефоне: обложка квадратиком, рядом название, оценки в ряд.
+   Порядок: шапка, своя оценка, плеер, настройки — шкала остаётся на
+   первом экране и на телефоне. */
+#opage{max-width:640px}
+#opage .tp-grid{display:flex;flex-direction:column;align-items:stretch;gap:14px}
+#opage .tp-col{display:contents}
+#oEmpty{order:0}#oHero{order:1}#oMine{order:2}#oPlay{order:3}#oSet{order:4}
+#opage .hero-in{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px 14px;padding:14px}
+#opage .hero-b{display:contents}
+#opage .hero-cov{grid-row:1/span 2;width:104px;height:104px}
+#opage .hero-cov .art-fb{font-size:36px}
+#opage .hero-b h1{grid-column:2;align-self:end;font-size:21px}
+#opage .hero-art{grid-column:2;align-self:start;font-size:16px;margin:0}
+#opage .hero-b .tgs,#opage .hero-b .tags,#opage .hero-act,#opage .hero-sc{grid-column:1/-1}
+#opage .hero-act{padding-top:0}
+#opage .hero-sc{width:auto;flex-direction:row}
+#opage .sc{flex:1;min-width:0;padding:9px 12px}
+#opage .sc b{font-size:17px}
 
 .feats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:35px;text-align:left}
 .feat{display:flex;flex-direction:column;min-height:261px;padding:19px 19px 17px;border-radius:9px;
