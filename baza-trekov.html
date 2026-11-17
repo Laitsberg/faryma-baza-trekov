@@ -437,6 +437,10 @@ a.cmt:hover{color:var(--brand-hi)}
    вовсе. Понадобится — flex и `flex:none` у года. */
 .aa{color:var(--dim);font-size:13px;margin-top:1px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Исполнитель — кнопка шириной со своё имя: щелчок по пустому месту
+   справа от короткого имени по-прежнему открывает трек. */
+button.aa{display:block;max-width:100%;width:fit-content;padding:0;text-align:left}
+button.aa:hover{color:var(--brand-hi)}
 .body{min-height:56px}
 .foot{display:flex;align-items:center;gap:9px;padding:10px 12px 12px}
 /* nowrap обязателен: дефис — место переноса, и «атл--» разрывалось на
@@ -447,11 +451,42 @@ a.cmt:hover{color:var(--brand-hi)}
 .rt-c .tri{width:0;height:0;flex:none;border-left:9px solid currentColor;
   border-top:5.5px solid transparent;border-bottom:5.5px solid transparent}
 .rt-u svg{width:15px;height:15px;flex:none}
+.rt-u .mn{margin-left:-2px;font-weight:500;font-size:11.5px;color:var(--dim)}
+.rt-u .mn:empty{display:none}
+/* Еле заметная черта между оценкой композитора и оценкой зрителей — как
+   между интересными фактами, только стоймя. Встаёт в промежуток между
+   ними, карточку не раздвигает. */
+.foot .rt-c{position:relative}
+.foot .rt-c::after{content:'';position:absolute;right:-5px;top:1px;bottom:1px;width:1px;background:var(--line)}
+/* Длинная пара «крин-- | крин-- (120)» на узкой карточке обрезается, а
+   не выталкивает кнопку ▶ за край. */
+.foot .rt-u{min-width:0;overflow:hidden}
 .play{margin-left:auto;width:52px;height:30px;flex:none;border-radius:6px;
   background:var(--card-2);display:grid;place-items:center;color:var(--ink);
   transition:background .14s,color .14s}
 .play:hover{background:var(--brand);color:#151517}
 .play svg{width:14px;height:14px}
+
+/* «Добавить свой трек» — последней в выдаче. Одна обложка, серая, как
+   служебное на сайте: заметно, но по глазам не бьёт. На наведении
+   поднимается, как карточка, а плюс сменяется словами. */
+.addcard{position:relative;aspect-ratio:1;align-self:start;display:grid;place-items:center;
+  border-radius:var(--r);background:var(--card);border:1px dashed rgba(255,255,255,.14);color:var(--faint);
+  transition:transform .16s,background .16s,color .16s,border-color .16s}
+.addcard > *{grid-area:1/1;transition:opacity .16s}
+.addcard svg{width:36%;height:36%}
+.addcard .lbl{opacity:0;font:700 15px var(--d);letter-spacing:-.01em}
+.addcard:hover,.addcard:focus-visible{transform:translateY(-2px);background:var(--card-2);
+  color:var(--ink);border-color:rgba(255,255,255,.3)}
+.addcard:hover svg,.addcard:focus-visible svg{opacity:0}
+.addcard:hover .lbl,.addcard:focus-visible .lbl{opacity:1}
+/* Пальцем навести нечем — слова стоят под плюсом сразу. */
+@media(hover:none){
+  .addcard{grid-template-rows:1fr auto 1fr}
+  .addcard svg{grid-area:1/1;align-self:end;width:30%;height:auto;aspect-ratio:1}
+  .addcard .lbl{grid-area:2/1;opacity:1;margin-top:8px;font-size:13px}
+  .addcard:hover svg,.addcard:focus-visible svg{opacity:1}
+}
 
 /* ---------- служебное ---------- */
 .boot,.empty{grid-column:1/-1;padding:70px 20px;text-align:center;color:var(--dim)}
@@ -542,7 +577,16 @@ a.cmt:hover{color:var(--brand-hi)}
   .hd,.more-wrap,.ftoggle,.rail{margin-left:5px;margin-right:5px;width:auto}
   .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   .grid .body{padding:9px 10px 0}
-  .grid .foot{padding:8px 10px 10px}
+  .grid .foot{padding:8px 10px 10px;gap:7px}
+  /* Две колонки на телефоне: с числом голосов подвалу тесно — значок
+     зрителей убираем (что вторая оценка — зрителей, говорит черта и
+     скобки), ▶ уже. */
+  :is(.grid:not(.list),.c-cards) .rt-u svg{display:none}
+  :is(.grid:not(.list),.c-cards) :is(.rt-c,.rt-u){font-size:11.5px;gap:4px}
+  :is(.grid:not(.list),.c-cards) .rt-u .mn{font-size:10.5px;margin-left:0}
+  :is(.grid:not(.list),.c-cards) .foot .rt-c::after{right:-4px}
+  :is(.grid:not(.list),.c-cards) .foot{gap:7px}
+  :is(.grid:not(.list),.c-cards) .play{width:36px}
   /* Сортировка и «плитками / списком» — строкой под заголовком: рядом с
      ним они ломали «база треков» на два слова в столбик. */
   .hd{grid-template-columns:minmax(0,1fr)}
@@ -561,6 +605,10 @@ a.cmt:hover{color:var(--brand-hi)}
 /* Колонки справа — постоянной ширины, чтобы шкалы и оценки стояли
    ровным столбцом из строки в строку. */
 .grid.list .card:hover{transform:none;background:var(--card-2)}
+.grid.list .addcard{aspect-ratio:auto;height:58px;display:flex;justify-content:center;align-items:center;gap:10px}
+.grid.list .addcard:hover{transform:none}
+.grid.list .addcard svg{width:20px;height:20px;opacity:1}
+.grid.list .addcard .lbl{opacity:1;margin:0;font-size:13.5px}
 .grid.list .cover{display:contents}
 .grid.list .art,.grid.list .art-fb{grid-area:art;position:relative;inset:auto;width:58px;height:58px;border-radius:6px}
 .grid.list .art-fb{font-size:20px}
@@ -589,7 +637,7 @@ a.cmt:hover{color:var(--brand-hi)}
   .grid.list{gap:5px}
   .grid.list .card{grid-template-columns:50px minmax(0,1fr) 32px 112px;grid-template-areas:"art body fav foot";gap:0 10px}
   .grid.list .art,.grid.list .art-fb{width:50px;height:50px}
-  .grid.list .rater,.grid.list .strm,.grid.list .times,.grid.list .rt-u{display:none}
+  .grid.list .rater,.grid.list .strm,.grid.list .times,.grid.list .rt-u,.grid.list .foot .rt-c::after{display:none}
   .grid.list .badge{width:30px;height:30px}
 }
 /* Телефон — как приложение: масштаб не крутится и вбок страница не
@@ -723,11 +771,13 @@ a.cmt:hover{color:var(--brand-hi)}
 .hero-art a{color:inherit;text-decoration:none}
 .hero-art a:hover{color:var(--brand-hi)}
 .hero-art .src{color:var(--dim);font-size:15px;font-weight:400}
+.hero-art .src button{padding:0;text-align:left}
+.hero-art .src button:hover{color:var(--brand-hi)}
 /* Тэги — отдельной строкой под основным и без рамок: год, страна и
    жанр — это про сам трек, а тэг — пометка к нему. Решётка их и
    отличает; щёлкаются они так же, как плашки. */
 .tags{display:flex;flex-wrap:wrap;gap:3px 12px;margin-top:-3px}
-.tags button{padding:0;font-size:13px;color:#D2D2D9}
+.tags button{padding:0;font-size:13px;font-style:italic;color:#D2D2D9}
 .tags button:hover{color:var(--brand-hi)}
 /* Оценки — отдельным столбцом справа: одной строкой под плашками они
    читались как ещё одна плашка, а это главное, ради чего трек открыли. */
@@ -1342,6 +1392,10 @@ a.re{text-decoration:none}
   animation:step .42s linear infinite alternate}
 .walker .lg.l{left:6px}
 .walker .lg.r{right:6px;animation-direction:alternate-reverse}
+/* Призрак — гость: без ника, полупрозрачный. Свой чуть плотнее чужих. */
+.walker.ghost{opacity:.34;transition:opacity .16s}
+.walker.ghost.you{opacity:.55}
+.walker.ghost:hover,.walker.ghost:focus-visible{opacity:.8}
 .walker.you .nick{color:#ffcc9e}
 .walker.you .spr::after{content:'★';position:absolute;top:-10px;right:-5px;color:#ffd184;font-size:9px}
 .walker:hover .lg,.walker:focus-visible .lg,.walker:hover .spr,.walker:focus-visible .spr{animation-play-state:paused}
@@ -2009,16 +2063,87 @@ body.st-air #stAir:hover{opacity:1}
    последние действия. Лента своей высоты строке не задаёт (contain:size)
    — она длиннее шапки и прокручивается внутри, а избранное ниже идёт во
    всю ширину. */
-.c-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,360px);gap:20px;align-items:stretch}
+.c-top{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:stretch}
 .c-top-l{min-width:0}
-.c-top .feed-panel{contain:size;display:flex;flex-direction:column;margin-top:46px;margin-bottom:26px}
-.c-top .feed-panel[hidden]{display:none}
-.c-top .feed-list{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--card-2) transparent}
-.c-top:has(.feed-panel[hidden]){grid-template-columns:minmax(0,1fr)}
 /* Человечек гуляет по верхней кромке шапки, как над поиском на главной. */
 .c-hero-w{position:relative;padding-top:46px}
 .c-run{position:absolute;left:30px;right:30px;top:0;height:46px;z-index:2}
 .c-top + .c-tabs,.c-top-l .c-tabs{margin-bottom:26px}
+/* Шапка и обзор — по второму макету заказчика
+   (faryma_profile_redesign.html): шапка во всю ширину, справа в ней три
+   числа и «Изменить»; последние действия — полосой карточек ниже, а не
+   столбцом сбоку от шапки. */
+.hero-title{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:5px}
+.hero-title .hero-name{margin-bottom:0}
+.hero-stats{display:flex;gap:11px;flex:none;align-self:center}
+.cab .hero-stat{width:98px;min-height:86px;display:flex;flex-direction:column;justify-content:center;padding:12px 13px;
+  border:1px solid #414049;border-radius:10px;background:rgba(41,41,47,.72);color:inherit;text-decoration:none;transition:border-color .14s}
+.cab a.hero-stat:hover{border-color:var(--brand);color:inherit}
+.hero-stat strong{font-size:26px;font-weight:800;line-height:1.12;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.hero-stat span{margin-top:4px;font-size:11px;line-height:1.25;color:var(--dim)}
+.hero-stats:empty{display:none}
+/* Обзор: слева избранное, справа «Продолжить», под ними действия. */
+.dash-grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(260px,.85fr);gap:16px;align-items:stretch;margin-bottom:16px}
+.dash-grid .music-main .c-cards{grid-template-columns:repeat(4,minmax(0,1fr))}
+.dash-grid .card .play{width:40px}
+.dash-side{background:#29292e;border:1px solid #37373d;border-radius:10px;padding:22px 20px;min-width:0}
+.dash-side h2{font-size:18px;font-weight:800;margin:0 0 18px;line-height:1.2}
+.cab .quick-row{display:flex;align-items:center;gap:11px;width:100%;margin-bottom:9px;padding:12px;text-align:left;border:1px solid #3c3c45;
+  border-radius:9px;background:#303037;color:var(--ink);text-decoration:none;transition:background .14s,border-color .14s}
+.cab .quick-row:hover{background:#3b3838;border-color:#78513c;color:var(--ink)}
+.quick-ic{width:35px;height:35px;flex:none;display:grid;place-items:center;border-radius:9px;background:#44352f;color:var(--brand-hi)}
+.quick-tx{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.quick-tx strong{font-size:12.5px}
+.quick-tx small{font-size:11px;color:var(--dim)}
+.quick-row > svg.i:last-child{color:var(--dim)}
+.quick-pl{display:flex;align-items:center;gap:10px;margin-top:13px;padding-top:13px;border-top:1px solid #3a3a43}
+.quick-pl svg.sp{width:25px;height:25px;flex:none}
+.quick-pl div{flex:1;min-width:0}
+.quick-pl strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quick-pl small{display:block;margin-top:2px;font-size:11px;color:var(--dim)}
+.act-panel{margin:0 0 31px;padding:21px 20px}
+.act-panel[hidden]{display:none}
+.upage-gap{margin-top:16px}
+.act-panel .feed-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.act-panel .feed-row{border:1px solid #393940;border-radius:10px;background:#2d2d34;padding:12px 13px;min-height:0;transition:border-color .14s}
+.act-panel .feed-row:hover{border-color:#5a5a64}
+.act-panel .feed-art{width:54px;height:54px;border-radius:6px}
+.act-panel .feed-arrow{display:none}
+.act-panel .feed-none{grid-column:1/-1;border-top:0;padding:4px 1px 8px}
+.atmo-on .cab .dash-side{background:rgba(34,31,36,.52);border-color:rgba(255,255,255,.09)}
+.atmo-on .cab .act-panel .feed-row,.atmo-on .cab .quick-row{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
+/* Строка вместо шапки на внутренних вкладках. */
+.c-compact{display:none}
+.cab.slim .c-compact{display:flex;align-items:center;gap:12px;padding:8px 0 0;color:inherit;text-decoration:none}
+.c-compact .cc-ava{width:35px;height:35px;flex:none;display:grid;place-items:center;overflow:hidden;border-radius:10px;border:1px solid var(--brand);
+  background:#34343a;font-size:12px;font-weight:800;color:var(--brand-hi)}
+.c-compact .cc-ava img{width:100%;height:100%;object-fit:cover}
+.c-compact b{font-size:14px;font-weight:800}
+.c-compact small{margin-left:auto;font-size:11.5px;color:var(--dim)}
+@media(max-width:1060px){.c-hero{flex-wrap:wrap}.hero-stats{order:5;width:100%}.cab .hero-stat{flex:1;width:auto}.dash-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:700px){.act-panel .feed-list{grid-template-columns:minmax(0,1fr)}.cab .hero-stat{min-height:66px;padding:8px 10px}.hero-stat strong{font-size:22px}
+  .dash-grid .music-main .c-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* «Моя музыка» и «заказы» — без большой шапки профиля и ленты
+   действий: там нужен сам список. Остаются вкладки и подразделы. */
+.cab.slim .c-hero-w{display:none}
+.cab.slim .c-top-l .c-tabs{margin-top:6px;margin-bottom:18px}
+.c-subs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+.c-subs[hidden]{display:none}
+.cab .c-sub{display:inline-flex;align-items:center;gap:6px;padding:7px 15px;border-radius:999px;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);color:#C8C8D0;font-size:12.5px;font-weight:600;text-decoration:none;
+  transition:color .14s,background .14s,border-color .14s}
+.cab .c-sub:hover{color:#fff;border-color:rgba(255,255,255,.3)}
+.cab .c-sub[aria-current="page"]{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.36);color:#fff}
+.c-sub b{font-weight:500;color:var(--dim)}
+.c-sub .tab-n{margin-left:0;padding:0 6px;border-radius:9px;background:var(--brand);color:#16100d;font-size:10.5px;font-weight:700}
+/* Каталог внутри кабинета — тот же каркас «рельс | сетка», без своих полей. */
+.cab .page.mus{max-width:none;margin:0;padding:0}
+.cab .mus .h1{letter-spacing:-.02em}
+.sp-promo.cl{background:linear-gradient(100deg,rgba(242,102,15,.16),rgba(242,102,15,.05) 60%,rgba(255,255,255,.03));
+  border-color:rgba(242,102,15,.38)}
+.sp-promo.cl svg.i{width:26px;height:26px;color:var(--brand-hi)}
+.sp-promo.cl .main-btn{background:var(--brand);border-color:var(--brand);color:#16100d}
+.sp-promo.cl .main-btn:hover{background:var(--brand-hi);border-color:var(--brand-hi);color:#16100d}
 /* Плашка «привяжи плейлист» над кабинетом — её можно закрыть. */
 .sp-promo{display:flex;align-items:center;gap:14px;margin:14px 0 0;padding:12px 14px 12px 16px;border-radius:10px;
   background:linear-gradient(100deg,rgba(30,215,96,.16),rgba(30,215,96,.05) 60%,rgba(255,255,255,.03));
@@ -2351,7 +2476,7 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
 .atmo-on .cab .c-tabs{border-color:rgba(255,255,255,.1)}
 @media(max-width:1160px){.feature-grid{grid-template-columns:minmax(0,1.4fr) minmax(310px,.75fr)}.music-main .c-cards{gap:10px}.music-main{padding:19px}.feed-panel{padding:18px 14px}.feed-row{min-height:56px}}
 @media(max-width:1040px){.c-cards{grid-template-columns:repeat(4,minmax(0,1fr))}.taste-split{gap:18px}.track-genres{display:none}.ach-strip{gap:10px}}
-@media(max-width:860px){.c-top{grid-template-columns:minmax(0,1fr)}.c-top .feed-panel{contain:none;margin-top:0;max-height:330px}
+@media(max-width:860px){
   .feature-grid,.overview-grid{grid-template-columns:1fr}.feed-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}.music-main .c-cards{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(max-width:800px){.settings-grid{grid-template-columns:1fr}.o-right{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}.o-right .order-inline,.o-right .o-panel{margin:0}.hero-actions .soft-btn span{display:none}.hero-actions .soft-btn{padding:9px}.c-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:600px){
@@ -2411,7 +2536,7 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
    <button class="tb-ic" id="btnSearch" data-tip="Искать" aria-label="Искать">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
    </button>
-   <button class="tb-ic" id="btnAdd" data-tip="Предложить трек" aria-label="Предложить трек">
+   <button class="tb-ic" id="btnAdd" data-tip="Добавить свой трек" aria-label="Добавить свой трек">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
    </button>
    <button class="tb-ic" id="btnLuck" data-tip="Случайный трек" aria-label="Случайный трек">
@@ -2473,9 +2598,9 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
  <button class="ftoggle" id="fToggle" type="button" aria-expanded="false" aria-controls="rail">Фильтры<b></b></button>
  <aside class="rail" id="rail" aria-label="Фильтры"></aside>
 
- <main>
+ <main id="catMain">
   <div class="hd">
-   <h1 class="h1">база треков<small id="count">—</small></h1>
+   <h1 class="h1" id="catH1">база треков<small id="count">—</small></h1>
    <div class="hd-r">
     <span class="sortbtn">
      <select id="sort" aria-label="Сортировка" data-dd-right>
@@ -2584,8 +2709,9 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
    <div class="c-hero-w"><div class="runway c-run" id="uRun"></div>
     <section class="c-hero" id="uHero" aria-label="Профиль"></section></div>
   </div>
-  <aside class="feed-panel" id="uFeed" aria-label="Последние действия" hidden></aside>
  </div>
+ <!-- Последние действия — полосой под шапкой, а не сбоку от неё. -->
+ <section class="feed-panel act-panel upage-gap" id="uFeed" aria-label="Последние действия" hidden></section>
  <div id="uBody"></div>
 </div>
 
@@ -2633,15 +2759,23 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
  <h1 class="fun-h">личный кабинет</h1>
  <!-- Плашка «привяжи свой плейлист Spotify» — закрывается крестиком. -->
  <div class="sp-promo" id="meSpPromo" hidden></div>
+ <!-- Такая же плашка «привяжи свои заказы» — пока заявок нет. -->
+ <div class="sp-promo cl" id="meClPromo" hidden></div>
  <div class="c-top">
   <div class="c-top-l">
    <div class="c-hero-w"><div class="runway c-run" id="meRun"></div>
     <section class="c-hero" id="meHero" aria-label="Профиль"></section></div>
+   <!-- В «моей музыке» и «заказах» вместо большой шапки — строка: аватар, ник, уровень. -->
+   <a class="c-compact" id="meCompact" href="#me"></a>
    <nav class="c-tabs" id="meTabs" role="tablist" aria-label="Разделы личного кабинета"></nav>
   </div>
-  <aside class="feed-panel" id="meFeed" aria-label="Последние действия"></aside>
  </div>
+ <!-- Подразделы «моей музыки» и «заказов» — скруглёнными кнопками под вкладками. -->
+ <nav class="c-subs" id="meSubs" aria-label="Подразделы" hidden></nav>
  <div id="meTab" role="tabpanel"></div>
+ <!-- «Моя музыка»: сюда на время переезжают рельс и сетка каталога
+      (коллекция()); содержимое этого блока JS не переписывает. -->
+ <div class="page mus" id="meMus" hidden></div>
  <!-- Все достижения — окном, как в макете. -->
  <div class="c-overlay" id="mAch" hidden><div class="c-dialog" role="dialog" aria-modal="true" aria-label="Достижения">
   <button type="button" class="c-close" data-ach-close aria-label="Закрыть"><svg class="i" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></svg></button>
@@ -2734,8 +2868,8 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
   <button class="mx" data-close aria-label="Закрыть">✕</button>
   <div class="mhd">
    <div class="k" style="color:var(--brand)">заявка</div>
-   <h2 id="addTitle">Предложить трек</h2>
-   <p>Ляжет в начало базы с пометкой «предложено тобой». Хранится в этом браузере — в таблицу разносов сама заявка не уходит.</p>
+   <h2 id="addTitle">Добавить свой трек</h2>
+   <p>Встанет в начало базы с пометкой «твой» — его можно оценить и положить в избранное. Пока хранится в этом браузере: другим его не видно, и в таблицу разносов он сам не уходит.</p>
   </div>
   <form id="addForm">
    <div class="field"><label for="aArtist">Исполнитель</label><input id="aArtist" required maxlength="90" placeholder="Ado"></div>
@@ -2777,7 +2911,7 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
 </div>
 
 <!-- Сообщить о неточности: не та обложка, год, название… Уходит в общую
-     базу, команда сайта разбирает во вкладке «управление» кабинета. -->
+     базу, команда сайта разбирает во вкладке «админка» кабинета. -->
 <div class="modal" id="mReport" hidden>
  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="repTitle">
   <button class="mx" data-close aria-label="Закрыть">✕</button>
@@ -11802,6 +11936,56 @@ const F = {
 const ПОЛЯ = ['tier', 'myTier', 'genre', 'origin', 'kind', 'tag', 'has', 'country',
               'release'];
 
+/* ---------- «моя музыка» кабинета ----------
+   Мои оценки и избранное в кабинете — тот же каталог: тот же рельс, те
+   же карточки, сортировка и страницы, только выборка другая. Поэтому
+   это не второй интерфейс, а режим этого: КОЛЛ говорит, из чего
+   выбирать, а рельс и сетка на это время переезжают в кабинет (сами
+   узлы, не копии). Отбор у каталога и у «моей музыки» свой: пока на
+   экране одно, отбор другого лежит в запасе. */
+let КОЛЛ = null;                       // null — каталог, 'ratings' — мои оценки, 'favs' — избранное
+const отборВзять = () => { const o = { q: F.q, sort: F.sort, page: F.page, поле: $('q') ? $('q').value : '' };
+  ПОЛЯ.forEach(k => { o[k] = new Map(F[k]); }); return o; };
+const отборПоставить = o => { F.q = o.q; F.sort = o.sort; F.page = o.page;
+  ПОЛЯ.forEach(k => { F[k].clear(); o[k].forEach((v, key) => F[k].set(key, v)); }); };
+const отборПустой = () => { const o = { q: '', sort: 'new', page: 0, поле: '' };
+  ПОЛЯ.forEach(k => { o[k] = new Map(); }); return o; };
+let МУЗ_F = отборПустой();             // отбор «моей музыки», пока на экране каталог
+let КАТ_F = null;                      // отбор каталога, пока на экране «моя музыка»
+const вКоллекции = r => КОЛЛ === 'favs' ? FAV.has(r.key) : !!MY[r.key];
+const КОЛЛ_ИМЯ = { ratings: 'мои оценки', favs: 'избранное' };
+
+function коллекция(режим) {
+  if (режим === КОЛЛ) return false;
+  const sort = $('sort'), q = $('q');
+  let поле = q.value;
+  if (!КОЛЛ) {
+    // из каталога в кабинет
+    КАТ_F = отборВзять();
+    отборПоставить(МУЗ_F);
+    поле = МУЗ_F.поле;
+    $('meMus').append($('fToggle'), $('rail'), $('catMain'));
+    [['myhigh', 'моя оценка сверху вниз'], ['mylow', 'моя оценка снизу вверх']].forEach(([v, имя]) => {
+      const o = document.createElement('option'); o.value = v; o.textContent = имя; o.dataset.my = '1'; sort.append(o); });
+  } else if (!режим) {
+    // из кабинета в каталог
+    МУЗ_F = отборВзять();
+    отборПоставить(КАТ_F);
+    поле = КАТ_F.поле;
+    КАТ_F = null;
+    $('page').append($('fToggle'), $('rail'), $('catMain'));
+    sort.querySelectorAll('[data-my]').forEach(o => o.remove());
+  } else F.page = 0;                   // оценки ↔ избранное: отбор тот же, страница первая
+  КОЛЛ = режим;
+  q.value = поле;
+  q.placeholder = режим === 'ratings' ? 'Поиск по моим оценкам…' : режим === 'favs' ? 'Поиск по избранному…' : 'Исполнитель, трек, кто заказал…';
+  sort.value = [...sort.options].some(o => o.value === F.sort) ? F.sort : (F.sort = 'new');
+  if (sort.parentNode._подпись) sort.parentNode._подпись();
+  $('catH1').firstChild.textContent = режим ? КОЛЛ_ИМЯ[режим] : 'база треков';
+  if (CAT.length) { rail(); render(true); }
+  return true;
+}
+
 const плюс  = m => [...m].filter(([, v]) => v > 0).map(([k]) => k);
 const минус = m => [...m].filter(([, v]) => v < 0).map(([k]) => k);
 /* Щелчки идут по кругу: не тронут → выбран → исключён → не тронут.
@@ -12134,6 +12318,11 @@ function build(raw, снова) {
 
     const link = parseLink(r['Где']);
     const src = parseSource(r['Что']);
+    const источник = src ? (SRC.get(nameKey(src)) || src) : '';
+    // Что ищется: строка трека, заказчик и вселенная под тем именем,
+    // под которым её показывает страница трека («Genshin Impact», а в
+    // таблице — «OST; Genshin»): по нему ведёт щелчок по источнику.
+    const искомое = w.full + ' ' + (r['Кто'] || '') + (источник ? ' ' + источник : '');
     CAT.push({
       rate, link,
       ytId: link ? youtubeId(link.url) : '',
@@ -12149,7 +12338,7 @@ function build(raw, снова) {
       parts: w.artist ? participants(w.artist, solo).map(nameKey) : [],
       user: (r['Кто'] || '').trim(),
       origin: (r['Откуда'] || '').trim(),
-      source: src ? (SRC.get(nameKey(src)) || src) : '',
+      source: источник,
       kind: sourceKind(r['Что']),
       genres: splitGenres(r['Жанр']),
       tags: (r['Тэги'] || '').split(/[,\/]/).map(s => s.trim()).filter(Boolean),
@@ -12168,14 +12357,14 @@ function build(raw, снова) {
       факты: фактыИз(r['Три интересных факта']),
       оПесне: (r['О чём трек?'] || '').trim(),
       feat: (r['Фича'] || '').trim(),
-      search: (w.full + ' ' + (r['Кто'] || '')).toLowerCase(),
+      search: искомое.toLowerCase(),
       // то же без пробелов и знаков: «KICK BACK» и «KICKBACK» — одна
       // песня. Считаем один раз здесь, а не на каждую букву в поиске.
-      searchFlat: (w.full + ' ' + (r['Кто'] || '')).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ''),
+      searchFlat: искомое.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ''),
       // Отдельные слова — по ним поиск и идёт. Разбираем один раз при
       // сборке: перебирать семь тысяч строк регуляркой на каждую
       // напечатанную букву заметно дороже.
-      слова: слова((w.full + ' ' + (r['Кто'] || ''))),
+      слова: слова(искомое),
       словаИсп: слова(w.artist || '')
     });
   });
@@ -12401,6 +12590,7 @@ function фактыИз(текст) {
 
 /* ---------- отбор ---------- */
 function match(r, skip) {
+  if (КОЛЛ && !вКоллекции(r)) return false;
   if (FQ.есть) {
     const ok = FQ.мягко
       ? (r.search.includes(F.q) || (FQ.плоский.length >= 4 && r.searchFlat.includes(FQ.плоский)))
@@ -12460,7 +12650,10 @@ const SORTS = {
   old: null,
   high: (a, b) => sc(b) - sc(a),
   low:  (a, b) => sc(a) - sc(b),
-  az:   (a, b) => (a.title || '').localeCompare(b.title || '', 'ru')
+  az:   (a, b) => (a.title || '').localeCompare(b.title || '', 'ru'),
+  // Только в «моей музыке» кабинета; неоценённое — в конце при любом порядке.
+  myhigh: (a, b) => (MY[b.key] ? баллМой(MY[b.key]) : -1) - (MY[a.key] ? баллМой(MY[a.key]) : -1),
+  mylow:  (a, b) => (MY[a.key] ? баллМой(MY[a.key]) : 99) - (MY[b.key] ? баллМой(MY[b.key]) : 99)
 };
 
 /* Насколько запрос попал в самого исполнителя: 0 — имя целиком,
@@ -12475,7 +12668,14 @@ function вес(r) {
 
 function rows() {
   let list = CAT.filter(r => match(r));
-  if (F.sort === 'old') list = list.slice().reverse();
+  /* В «моей музыке» «последние добавленные» — это последние оценённые
+     или последние, кому поставили сердечко, а не порядок таблицы. */
+  if (КОЛЛ && (F.sort === 'new' || F.sort === 'old')) {
+    const место = КОЛЛ === 'favs' ? new Map([...FAV].map((k, i) => [k, i])) : null;
+    const когда = r => место ? место.get(r.key) : ((MY[r.key] || {}).w || 0);
+    list = list.slice().sort((a, b) => когда(b) - когда(a));
+    if (F.sort === 'old') list.reverse();
+  } else if (F.sort === 'old') list = list.slice().reverse();
   else if (SORTS[F.sort]) list = list.slice().sort(SORTS[F.sort]);
   // Сортировка в JS устойчивая, поэтому внутри каждой ступени
   // сохраняется выбранный порядок — «сначала новые» и остальные.
@@ -13139,7 +13339,8 @@ function card(r) {
     '<div class="body"><a class="tt" href="' + trackHref(r) + '"' +
         (имя.приписка ? ' data-tip="' + esc(r.title) + '"' : '') + '>' +
         esc(имя.имя || '—') + '</a>' +
-      '<div class="aa">' + esc(r.artist || '—') + '</div></div>' +
+      (r.artist ? '<button type="button" class="aa" data-artist data-tip="Все треки исполнителя">' + esc(r.artist) + '</button>'
+                : '<div class="aa">—</div>') + '</div>' +
     '<div class="foot">' +
       '<span class="rt-c" style="--tc:' + tColor(r.rate) + '" data-tip="оценка композитора"><i class="tri"></i>' +
         esc(shortRate(r.rate)) + '</span>' +
@@ -13147,7 +13348,7 @@ function card(r) {
          галочкой на обложке и шкалой на наведении. */
       '<span class="rt-u" data-tip="оценка зрителей: пока никто не оценил">' +
         '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="8" r="3.6"/><path d="M2 20.5c0-4 3.1-6.4 7-6.4s7 2.4 7 6.4z"/><circle cx="16.8" cy="9" r="3"/><path d="M17.4 14.2c2.9.4 4.6 2.6 4.6 5.6V20.5h-4.4c0-2.5-.4-4.5-1.8-6z" opacity=".75"/></svg>' +
-        '<span class="mv">–</span></span>' +
+        '<span class="mv">–</span><span class="mn"></span></span>' +
       '<button class="play" aria-label="Слушать «' + esc(r.title) + '»" data-tip="Слушать здесь">' +
         '<svg viewBox="0 0 12 12" fill="currentColor"><path d="M2 1l9 5-9 5z"/></svg></button>' +
     '</div>';
@@ -13179,11 +13380,11 @@ function card(r) {
     b.addEventListener('click', () => {
       if (нужноВойти()) return;
       const cur = MY[r.key];
-      // Модификатор сохраняем, только если ступень та же и он ей
-      // разрешён: у «гениально» плюсов не бывает, у «кринж-контента»
-      // минусов — это правило шкалы, а не украшение.
-      const keep = cur && cur.t === t.key && t.mods.includes(cur.m);
-      MY[r.key] = { t: t.key, m: keep ? cur.m : '', w: Date.now() };
+      // Та же ступень уже стоит — щелчок ничего не делает: раньше он
+      // заново бил ударом и писал ту же оценку. Плюс и минус двигают
+      // кнопки по бокам, а не повторный щелчок.
+      if (cur && cur.t === t.key) return;
+      MY[r.key] = { t: t.key, m: '', w: Date.now() };
       save(); paint(); railAfterRate(); учёт('rate');
       удар(t.key);
     });
@@ -13267,11 +13468,15 @@ function card(r) {
     favBtn.setAttribute('aria-pressed', String(on));
     save();
     счётНаКарточке(el);
-    if (F.has.has('fav')) { rail(); render(true); }
+    // В «избранном» кабинета снятое сердечко убирает карточку сразу.
+    if (F.has.has('fav') || КОЛЛ === 'favs') { rail(); render(true); }
     else if (GOPEN['отметки'] !== false) rail();
   });
 
   el.querySelector('.play').addEventListener('click', () => играйСКарточки(r));
+  // Исполнитель — как запрос в поиске: все его треки.
+  const исп = el.querySelector('.aa[data-artist]');
+  if (исп) исп.addEventListener('click', () => поискВКаталоге(r.artist));
   const talk = el.querySelector('[data-talk]');
   if (talk) talk.addEventListener('click', () => { T.кКомментам = true; });
 
@@ -13325,6 +13530,8 @@ function зрителиНаКарточке(el) {
   if (!rtu) return;
   const ср = средняяЗрителей(el.dataset.key);
   rtu.querySelector('.mv').textContent = ср ? shortRate(ср.оценка) : '–';
+  // Сколько голосов за средней — тут же, в скобках: «атл++ (20)».
+  rtu.querySelector('.mn').textContent = ср ? '(' + число(ср.n) + ')' : '';
   if (ср) rtu.style.setProperty('--tc', TCOLOR[ср.оценка.tier]); else rtu.style.removeProperty('--tc');
   rtu.dataset.tip = ср ? 'оценка зрителей: ' + ср.оценка.label + ' · ' + число(ср.n) + ' ' + plural(ср.n, 'голос', 'голоса', 'голосов')
                        : 'оценка зрителей: пока никто не оценил';
@@ -13348,16 +13555,28 @@ function render(keep) {
   if (!VIEW.length) {
     const e = document.createElement('div');
     e.className = 'empty';
-    e.innerHTML = '<h3>Под такой отбор ничего нет</h3>' +
-      '<p>Такого сочетания в архиве не случилось. Сними лишний фильтр — цифры рядом с пунктами показывают, сколько за каждым стоит.</p>' +
-      '<button class="btn">Сбросить отбор</button>';
-    e.querySelector('button').addEventListener('click', reset);
+    // В «моей музыке» пусто бывает и без всякого отбора — тогда так и говорим.
+    const нетСвоего = КОЛЛ && !CAT.some(вКоллекции);
+    e.innerHTML = нетСвоего
+      ? (КОЛЛ === 'favs'
+          ? '<h3>В избранном пока пусто</h3><p>Добавь трек сердечком на обложке в каталоге — он появится здесь.</p>'
+          : '<h3>Оценок пока нет</h3><p>Их ставят в каталоге — шкала на обложке — или на странице трека. Каждый оценённый трек появится здесь.</p>') +
+        '<a class="btn" href="#base" style="text-decoration:none">В каталог</a>'
+      : '<h3>Под такой отбор ничего нет</h3>' +
+        '<p>Такого сочетания ' + (КОЛЛ ? 'в этой выборке' : 'в архиве') + ' не случилось. Сними лишний фильтр — цифры рядом с пунктами показывают, сколько за каждым стоит.</p>' +
+        '<button class="btn">Сбросить отбор</button>';
+    const сброс = e.querySelector('button');
+    if (сброс) сброс.addEventListener('click', reset);
     grid.append(e);
   } else {
     const frag = document.createDocumentFragment();
     VIEW.slice(F.page * F.per, F.page * F.per + F.per).forEach(r => frag.append(card(r)));
     grid.append(frag);
   }
+  /* После последнего трека выдачи — «добавить свой трек»: дошёл до
+     конца и не нашёл своего — вот куда его нести. Только в каталоге; в
+     «моей музыке» кабинета выборка своя, и добавлять в неё нечего. */
+  if (!КОЛЛ && F.page === страниц - 1) grid.append(картаДобавить());
 
   /* Считаем карточки, поэтому и подписываем их треками. Раньше стояло
      «разносов», и число врало: повторы склеены в одну карточку, а
@@ -13365,10 +13584,53 @@ function render(keep) {
      48 разносов сверх 6 751 карточки. Сколько разносов у трека,
      написано на нём самом меткой «×N разноса». */
   const n = VIEW.length;
+  const всего = КОЛЛ ? CAT.filter(вКоллекции).length : CAT.length;
   $('count').textContent = число(n) + ' ' + plural(n, 'трек', 'трека', 'треков') +
-    (n < CAT.length ? ' из ' + число(CAT.length) : '');
+    (n < всего ? ' из ' + число(всего) : '');
+  if (КОЛЛ) подвкладкиЧисла();
   страницы(страниц);
   chips();
+}
+
+/* Одна обложка с плюсом, без подвала с названием — чтобы не путалась с
+   треком. На наведении плюс сменяется словами «добавить трек». */
+function картаДобавить() {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'addcard';
+  b.setAttribute('aria-label', 'Добавить свой трек');
+  b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>' +
+    '<span class="lbl">добавить трек</span>';
+  b.addEventListener('click', () => окноДобавить());
+  return b;
+}
+function окноДобавить(т) {
+  $('addForm').reset();
+  if (т) { $('aArtist').value = т.artist || ''; $('aName').value = т.title || ''; $('aLink').value = т.link || ''; }
+  $('mAdd').hidden = false;
+  $('aArtist').focus();
+}
+/* Свой трек: встаёт в начало базы с пометкой «твой». Живёт в этом
+   браузере (MINE) — общей таблицы зрительских треков пока нет. Тот же
+   трек второй раз не добавляется: по ссылке или по паре «исполнитель —
+   название». Возвращает строку каталога. */
+const своёКлюч = s => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+function своёЕсть(т) {
+  const a = MINE.find(x => (т.link && x.link && своёКлюч(x.link) === своёКлюч(т.link)) ||
+    (своёКлюч(x.artist) === своёКлюч(т.artist) && своёКлюч(x.title) === своёКлюч(т.title)));
+  return a ? CAT.find(r => r.key === 'my|' + a.id) || null : null;
+}
+function добавитьСвоё(т) {
+  const уже = своёЕсть(т);
+  if (уже) return { r: уже, новый: false };
+  let id = Date.now();
+  while (MINE.some(x => x.id === id)) id++;
+  const rec = { id, artist: т.artist.trim().slice(0, 90), title: т.title.trim().slice(0, 90), link: (т.link || '').trim() };
+  MINE.push(rec); save();
+  const r = mineRow(rec);
+  CAT.unshift(r);
+  rail(); render(!!КОЛЛ);
+  return { r, новый: true };
 }
 
 /* ---------- страницы ---------- */
@@ -13445,6 +13707,8 @@ function controls() {
      спрятанную сетку, и с виду не происходило ничего. */
   const вКаталогСПоиском = () => {
     clearTimeout(timer);
+    // В «моей музыке» кабинета поиск ищет по ней, на месте.
+    if (КОЛЛ) return искать();
     вКаталог(() => { F.q = q.value.trim().toLowerCase(); });
   };
   // Подсказки — раньше своего Enter: выбранный стрелкой трек открывается
@@ -13453,7 +13717,7 @@ function controls() {
   q.addEventListener('input', () => {
     clearTimeout(timer);
     timer = setTimeout(() => {
-      if (витринаНаЭкране()) искать();
+      if (витринаНаЭкране() || КОЛЛ) искать();
       else { F.q = q.value.trim().toLowerCase(); T.fresh = true; }
     }, 160);
   });
@@ -13511,18 +13775,15 @@ function controls() {
     toast('Тебе выпал «' + (r.title || '—') + '» — ' + (r.artist || '—'));
   });
 
-  $('btnAdd').addEventListener('click', () => { $('mAdd').hidden = false; $('aArtist').focus(); });
+  $('btnAdd').addEventListener('click', () => окноДобавить());
   $('addForm').addEventListener('submit', e => {
     e.preventDefault();
     const a = $('aArtist').value.trim(), t = $('aName').value.trim(), l = $('aLink').value.trim();
     if (!a || !t) return;
-    const rec = { id: Date.now(), artist: a, title: t, link: l };
-    MINE.push(rec); save();
-    CAT.unshift(mineRow(rec));
+    const { r, новый } = добавитьСвоё({ artist: a, title: t, link: l });
     $('addForm').reset();
     $('mAdd').hidden = true;
-    rail(); render();
-    toast('«' + t + '» добавлен в начало базы');
+    toast(новый ? '«' + r.title + '» добавлен в начало базы' : '«' + r.title + '» уже есть среди твоих треков');
   });
 
   coverInit();
@@ -13530,7 +13791,8 @@ function controls() {
 
   const ft = $('fToggle');
   ft.addEventListener('click', () => {
-    const on = $('page').classList.toggle('filters-on');
+    // Рельс с кнопкой бывают и в кабинете («моя музыка») — класс на том, где они сейчас.
+    const on = ft.parentNode.classList.toggle('filters-on');
     ft.setAttribute('aria-expanded', String(on));
   });
 
@@ -13600,6 +13862,8 @@ const время = sec => {
 /* ---------- маршрут ---------- */
 function route() {
   навигация();
+  // Ушли из «моей музыки» — рельс и сетка возвращаются в каталог со своим отбором.
+  if (!/^#me\/(music(\/favs)?|ratings|favs)$/.test(location.hash)) коллекция(null);
   if (location.hash === '#rate') { showCatalog(); return showRate(); }
   уходИзОценки();
   if (location.hash === '#covers') return showAdmin();
@@ -13650,6 +13914,8 @@ function showTrack(r) {
   уходИзИгры();
   уходИзСтудии();
   if (!T.r && !$('page').hidden) BACK_Y = window.scrollY;   // куда вернуть, когда уйдёшь назад
+  // Из «моей музыки» — то же самое: назад возвращаемся на то же место списка.
+  if (!T.r && !$('mpage').hidden && КАБ.адрес) КАБ.y = { адрес: КАБ.адрес, y: window.scrollY };
   if (T.r && T.r !== r) уходСТрека();
   // Открыли трек — показываем свежий разнос. Кроме случая, когда у него
   // в фоне играет другой: тогда тот самый, чтобы не завести второй плеер.
@@ -13716,6 +13982,8 @@ function showCatalog() {
 /* Уйти на витрину с готовым отбором — например, за всеми треками
    исполнителя со страницы трека. */
 function toCatalog(setup) {
+  // Отбор ставим каталогу, а не «моей музыке» кабинета, если ушли из неё.
+  коллекция(null);
   if (setup) { setup(); T.fresh = true; }
   location.hash = '';
 }
@@ -13783,7 +14051,9 @@ function drawCrumbs() {
     const n = list[i + d];
     const b = d < 0 ? $('tPrev') : $('tNext');
     b.disabled = i < 0 || !n;
-    b.onclick = n ? () => openTrack(n) : null;
+    // Соседний трек открывается с «Разноса», а не с той вкладки, на
+    // которой стоял этот: просьба заказчика.
+    b.onclick = n ? () => { T.tab = 'roast'; openTrack(n); } : null;
     if (n) b.dataset.tip = (n.title || '—') + ' — ' + (n.artist || '—');
     else delete b.dataset.tip;
   };
@@ -13793,13 +14063,19 @@ function drawCrumbs() {
 /* Все треки исполнителя — это поиск по его имени на витрине: отдельного
    фильтра «исполнитель» в рельсе нет, а поиск ищет по всей строке. */
 function поИсполнителю() {
-  const r = T.r;
-  if (!r.artist) return;
-  toCatalog(() => {
+  if (T.r.artist) поискВКаталоге(T.r.artist);
+}
+/* Отбор «как если бы это вбили в поиск»: исполнитель с карточки и со
+   страницы трека, источник из шапки трека. В «моей музыке» кабинета
+   ищет там же, по своей выборке, — как и сам поиск в шапке. */
+function поискВКаталоге(текст) {
+  const setup = () => {
     reset_soft();
-    F.q = r.artist.toLowerCase();
-    $('q').value = r.artist;
-  });
+    F.q = текст.trim().toLowerCase();
+    $('q').value = текст;
+  };
+  if (КОЛЛ) { setup(); rail(); render(); return; }
+  вКаталог(setup);
 }
 /* Все столбцы отбора чистятся одинаково. Раньше здесь страна и год
    обнулялись как строка и число — такими они были до трёх состояний, —
@@ -13861,7 +14137,7 @@ function drawHero() {
   if (r.country) tgs.push(идти('country', r.country, r.country));
   r.genres.forEach(g => tgs.push(идти('genre', g, g)));
   if (r.origin) tgs.push(идти('origin', r.origin, r.origin.toLowerCase()));
-  if (r.mine) tgs.push('<span class="tg brand">предложено тобой</span>');
+  if (r.mine) tgs.push('<span class="tg brand">добавлено тобой</span>');
   if (r.студия) tgs.push('<span class="tg brand">оценено в студии · в таблицу ещё не внесено</span>');
   if (MYCOV[r.key]) tgs.push('<span class="tg brand">твоя обложка · ждёт проверки</span>');
   /* Тэги не красятся и не стоят в одном ряду с жанром: рядом с
@@ -13887,7 +14163,8 @@ function drawHero() {
         '</h1>' +
         '<p class="hero-art">' +
           (r.artist ? '<a href="#" data-artist data-tip="Все треки исполнителя">' + esc(r.artist) + '</a>' : '—') +
-          (r.source ? '<span class="src"> · ' + esc(r.source) + '</span>' : '') + '</p>' +
+          (r.source ? '<span class="src"> · <button type="button" data-src data-tip="Все треки отсюда в каталоге">' +
+            esc(r.source) + '</button></span>' : '') + '</p>' +
         (tgs.length ? '<div class="tgs">' + tgs.join('') + '</div>' : '') +
         (тэги.length ? '<div class="tags">' + тэги.join('') + '</div>' : '') +
         '<div class="hero-act">' +
@@ -13950,6 +14227,10 @@ function drawHero() {
 
   const art = box.querySelector('[data-artist]');
   if (art) art.addEventListener('click', e => { e.preventDefault(); поИсполнителю(); });
+  /* Источник (аниме, игра, фильм) — тоже поиском: отдельного столбца
+     отбора у вселенных нет, а её имя лежит в строке поиска трека. */
+  const src = box.querySelector('[data-src]');
+  if (src) src.addEventListener('click', () => поискВКаталоге(r.source));
 
   const fav = $('tFav');
   const paintFav = () => {
@@ -14615,7 +14896,7 @@ function играйСКарточки(r, что) {
   const из = площадкаИз(r);
   let любимая = '';
   try { любимая = localStorage.getItem(ПЛ_LS) || ''; } catch {}
-  const пл = [любимая, из, 'yt', 'sp', 'ya'].find(k => k && есть[k]) || '';
+  const пл = [любимая, ...ПЛ_ПОРЯДОК].find(k => k && есть[k]) || '';
   const вк = vkEmbed(r.vod, r.sec);
   if (!пл && !вк) { toast('Встроить этот трек не во что — вот его страница'); openTrack(r); return; }
   if (что !== 'roast' || !вк) что = пл ? 'orig' : 'roast';
@@ -14758,6 +15039,10 @@ function панельРазноса(r, duo) {
    доигрывает, если уйти со страницы, и её видно в шапке. */
 const ПЛОЩАДКИ = [['yt', 'YouTube'], ['sp', 'Spotify'], ['ya', 'Я.Музыка']];
 const ПЛ_LS = 'faryma-catalog-plat';
+/* Что открыть, пока зритель сам не выбрал площадку: сначала Spotify,
+   потом Я.Музыка, ютуб — последним (просьба заказчика). Раньше первой
+   шла площадка ссылки из таблицы, а за ней ютуб. */
+const ПЛ_ПОРЯДОК = ['sp', 'ya', 'yt'];
 
 /* Что можно встроить. У Spotify и Яндекса — путь вида «track/ID» или
    «album/ID»: ссылка в таблице бывает и на альбом, обычно сингл из
@@ -14796,7 +15081,7 @@ function панельОригинала(r, duo) {
   const из = площадкаИз(r);
   let любимая = '';
   try { любимая = localStorage.getItem(ПЛ_LS) || ''; } catch {}
-  const выбрать = () => [любимая, из, 'yt', 'sp', 'ya'].find(k => k && есть[k]) || '';
+  const выбрать = () => [любимая, ...ПЛ_ПОРЯДОК].find(k => k && есть[k]) || '';
   let сейчас = выбрать();
   const длит = r.длит ? ' · ' + время(r.длит) : '';
   const альбом = путь => путь.startsWith('album/') ? ' · ссылка на альбом' : '';
@@ -15391,15 +15676,16 @@ function tabInfo(box) {
   пара('страна исполнителя', esc(r.country || ''));
   box.append(dl);
 
-  const p = document.createElement('p');
-  p.className = 'note';
-  p.style.marginTop = '14px';
-  p.textContent = r.mine
-    ? 'Это твоя заявка: она живёт в этом браузере и в таблицу разносов не уходит.'
-    : r.студия
-    ? 'Оценка поставлена в студии. Пока строки нет в таблице разносов, трек виден только в этом браузере.'
-    : 'Всё, кроме страны, взято из таблицы разносов как есть. Страну ищет справочник по имени исполнителя — у редких имён его там может не быть.';
-  box.append(p);
+  // У обычного трека приписки под таблицей нет — заказчик попросил убрать.
+  if (r.mine || r.студия) {
+    const p = document.createElement('p');
+    p.className = 'note';
+    p.style.marginTop = '14px';
+    p.textContent = r.mine
+      ? 'Это твой трек: он живёт в этом браузере и в таблицу разносов не уходит.'
+      : 'Оценка поставлена в студии. Пока строки нет в таблице разносов, трек виден только в этом браузере.';
+    box.append(p);
+  }
   /* Пробную оценку из студии надо чем-то убрать и после «нового
      эфира»: очереди с этим треком уже нет, и «в очередь» не нажать. */
   if (r.студия) {
@@ -15499,15 +15785,14 @@ function tabSim(box) {
 function drawMine() {
   const r = T.r;
   const box = $('tMine');
-  /* Кому видна — смотря по входу и настройке «показывать мои оценки»:
-     у вошедшего она по умолчанию открыта. */
-  const видна = вошёл() && !(ОБЛ.проф && ОБЛ.проф.ratings_public === false)
-    ? 'видна другим зрителям' : 'видна только тебе';
   /* Как на карточке каталога: посередине «оцени этот трек!», на
      наведении — название ступени, «−» и «+» по бокам — когда оценка
      есть. Поля комментария здесь больше нет: после оценки появляется
      кнопка «оставить комментарий», и она ведёт к полю под вкладками. */
-  box.innerHTML = '<h2>Твоя оценка<small>' + видна + '</small></h2>';
+  /* Заголовка «Твоя оценка · видна другим зрителям» больше нет — просьба
+     заказчика: «оцени этот трек!» посередине говорит то же самое. */
+  box.textContent = '';
+  box.setAttribute('aria-label', 'Твоя оценка');
   const идти = document.createElement('button');
   идти.type = 'button';
   идти.className = 'mine-all';
@@ -15564,9 +15849,10 @@ function шкалаОценки(r, box, { вид, сменилась } = {}) {
     b.addEventListener('focus', () => примерить(t));
     b.addEventListener('click', () => {
       if (нужноВойти()) return;
+      // Та же ступень второй раз не ставится — как на карточке.
       const cur = MY[r.key];
-      const держим = cur && cur.t === t.key && t.mods.includes(cur.m);
-      MY[r.key] = { t: t.key, m: держим ? cur.m : '', w: Date.now() };
+      if (cur && cur.t === t.key) return;
+      MY[r.key] = { t: t.key, m: '', w: Date.now() };
       save(); paint(); учёт('rate');
       ударОценки(box, mods, обёртка.querySelector('.rated-msg'), t.key);
       if (сменилась) сменилась('ступень');
@@ -16602,11 +16888,25 @@ const цветПо = id => ЦВЕТА[[...String(id)].reduce((h, c) => (h * 31 +
 
 /* Кто сейчас на сайте: ты и те, кого база видела за последние две
    с половиной минуты. */
+/* Гость — призрак: полупрозрачный человечек без ника. Так выглядят все,
+   кто не вошёл через Twitch, и сам зритель до входа тоже (просьба
+   заказчика). Пока библиотека входа грузится, вошедшего от гостя
+   отличает сессия в браузере — как у шкалы оценки. */
+const яГость = () => {
+  if (вошёл()) return false;
+  if (ОБЛ && ОБЛ.состояние === 'грузится') { try { if (localStorage.getItem('faryma-auth')) return false; } catch {} }
+  return true;
+};
+const ПРИЗРАКОВ = 8;
 const онлайн = () => {
   const мой = вошёл() ? ОБЛ.user.id : '';
-  return [{ ник: мойНик() || 'это ты', цвет: ПРОФ.цвет || ЦВЕТА[0], я: true }].concat(
+  const я = яГость() ? { я: true, призрак: true } : { ник: мойНик() || 'это ты', цвет: ПРОФ.цвет || ЦВЕТА[0], я: true };
+  // Гостей база отдаёт числом (guests_now): имён у них нет. Себя из числа вычитаем.
+  const гостей = Math.min(ПРИЗРАКОВ, Math.max(0, ((ОБЛ && ОБЛ.гостей) || 0) - (я.призрак ? 1 : 0)));
+  return [я].concat(
     (ОБЛ ? ОБЛ.онлайн : []).filter(x => x.user_id !== мой).map(x => ({
-      ник: x.name || x.login || 'зритель', логин: x.login || '', цвет: x.color || цветПо(x.user_id), я: false })));
+      ник: x.name || x.login || 'зритель', логин: x.login || '', цвет: x.color || цветПо(x.user_id), я: false })).slice(0, 13 - гостей),
+    Array.from({ length: гостей }, () => ({ призрак: true })));
 };
 
 /* Гость или вошедший. Вошедшему не объясняем, что это за сайт: у него
@@ -16921,9 +17221,34 @@ const сравнимые = list => list.filter(x => x.r.rate);
    уровнем, вкладки «обзор», «мои оценки», «избранное», «мои заказы»,
    «настройки», «заявки». Вид — макета, данные — настоящие, а обложки и
    карточки треков — наши, те же, что в каталоге (card()). */
-const МЕНЮ = [['', 'обзор'], ['ratings', 'мои оценки'], ['favs', 'избранное'], ['playlist', 'мой плейлист'], ['wishes', 'хочу заказать'], ['orders', 'мои заказы'],
-              ['settings', 'настройки'], ['claims', 'заявки'], ['manage', 'управление']];
-/* «Управление» — инструменты команды сайта: модерам, админам и композитору. */
+/* Четыре вкладки и пятая — команде сайта (просьба заказчика): обзор,
+   моя музыка (оценки, избранное, плейлисты), заказы (хочу заказать,
+   история), настройки, админка. Подразделы — скруглёнными кнопками под
+   вкладками. Привязка своих заказов (бывшая вкладка «заявки») живёт в
+   настройках. */
+const МЕНЮ = [['', 'обзор'], ['music', 'моя музыка'], ['orders', 'заказы'], ['settings', 'настройки'], ['manage', 'админка']];
+const ПОДМЕНЮ = {
+  music:  [['', 'оценки'], ['favs', 'избранное'], ['playlist', 'плейлисты']],
+  orders: [['', 'хочу заказать'], ['history', 'история заказов']]
+};
+/* Прежние адреса вкладок — на новые: ссылки могли остаться в закладках
+   и в уведомлениях. */
+const КАБ_СТАРЫЕ = { ratings: ['music', ''], favs: ['music', 'favs'], playlist: ['music', 'playlist'],
+                     wishes: ['orders', ''], claims: ['settings', ''] };
+const КАБ = { адрес: '', y: null };
+function кабАдрес() {
+  const m = location.hash.match(/^#me(?:\/(\w+))?(?:\/(\w+))?/) || [];
+  let в = m[1] || '', п = m[2] || '';
+  if (КАБ_СТАРЫЕ[в]) {
+    if (в === 'claims') КАБ_ФОКУС = 'clName';
+    [в, п] = КАБ_СТАРЫЕ[в];
+  }
+  if (!МЕНЮ.some(([k]) => k === в)) в = '';
+  if (!(ПОДМЕНЮ[в] || [['']]).some(([k]) => k === п)) п = '';
+  return { в, п, адрес: '#me' + (в ? '/' + в : '') + (п ? '/' + п : '') };
+}
+const кабГде = (в, п) => '#me' + (в ? '/' + в : '') + (п ? '/' + п : '');
+/* «Админка» — инструменты команды сайта: модерам, админам и композитору. */
 const штатСайта = () => ['moder', 'admin', 'owner'].includes(мояРоль());
 
 /* Значки макета. */
@@ -16994,35 +17319,67 @@ function showMe() {
   плашкаЭфира();
   document.title = 'Личный кабинет — база треков';
   drawMe();
-  if (!тут) window.scrollTo(0, 0);
+  if (!тут) window.scrollTo(0, КАБ.y && КАБ.y.адрес === location.hash ? КАБ.y.y : 0);
+  КАБ.y = null;
 }
 
 function drawMe() {
-  let вкладка = (location.hash.match(/^#me\/(\w+)/) || [])[1] || '';
-  // Управление без роли — обычный обзор. Роль приезжает позже входа:
+  const { в, п, адрес } = кабАдрес();
+  if (адрес !== location.hash) { try { history.replaceState(null, '', адрес); } catch {} }
+  КАБ.адрес = адрес;
+  // Админка без роли — обычный обзор. Роль приезжает позже входа:
   // облакоРисовать() перерисует вкладку, когда она доедет.
-  if (вкладка === 'manage' && !штатСайта()) вкладка = '';
+  const вкладка = в === 'manage' && !штатСайта() ? '' : в;
+  // В «моей музыке» и «заказах» большой шапки профиля и ленты действий нет.
+  $('mpage').classList.toggle('slim', вкладка === 'music' || вкладка === 'orders');
   const list = мойСписок();
   ава();
   meHero();
   промоSpotify();
+  промоЗаявки();
   $('mAch').hidden = true;
   $('meTabs').innerHTML = МЕНЮ.filter(([k]) => k !== 'manage' || штатСайта()).map(([k, name]) =>
-    '<a class="c-tab" role="tab" href="#me' + (k ? '/' + k : '') + '" aria-selected="' + (k === вкладка) + '">' + name +
+    '<a class="c-tab" role="tab" href="' + кабГде(k) + '" aria-selected="' + (k === вкладка) + '">' + name +
     (k === 'manage' && ОБЛ && делКоманды() ? ' <b class="tab-n">' + делКоманды() + '</b>' : '') +
-    (k === 'wishes' && совпаденийЖеланий() ? ' <b class="tab-n">' + совпаденийЖеланий() + '</b>' : '') + '</a>').join('');
-  лентаНарисовать($('meFeed'), list, true);
+    (k === 'orders' && совпаденийЖеланий() ? ' <b class="tab-n">' + совпаденийЖеланий() + '</b>' : '') + '</a>').join('');
+  const под = ПОДМЕНЮ[вкладка];
+  $('meSubs').hidden = !под;
+  $('meSubs').innerHTML = под ? под.map(([k, name]) =>
+    '<a class="c-sub" href="' + кабГде(вкладка, k) + '"' + (k === п ? ' aria-current="page"' : '') + ' data-sub="' + вкладка + '/' + k + '">' +
+    name + '<b></b></a>').join('') : '';
+  подвкладкиЧисла();
 
   const box = $('meTab');
-  if (вкладка === 'ratings') return meRatings(box, list);
-  if (вкладка === 'favs') return meFavs(box);
-  if (вкладка === 'orders') return meOrders(box);
+  // Оценки и избранное — каталог в режиме выборки: рельс и сетка переезжают сюда.
+  const муз = вкладка === 'music' && п !== 'playlist';
+  $('meMus').hidden = !муз;
+  box.hidden = муз;
+  if (муз) {
+    box.textContent = '';
+    if (!коллекция(п === 'favs' ? 'favs' : 'ratings') && CAT.length) { rail(); render(true); }
+    return;
+  }
+  коллекция(null);
+  if (вкладка === 'music') return mePlaylist(box);
+  if (вкладка === 'orders') return п === 'history' ? meOrders(box) : meWishes(box);
   if (вкладка === 'settings') return meSettings(box);
-  if (вкладка === 'claims') return meClaims(box);
   if (вкладка === 'manage') return meManage(box);
-  if (вкладка === 'playlist') return mePlaylist(box);
-  if (вкладка === 'wishes') return meWishes(box);
   meOverview(box, list);
+}
+/* Числа на подразделах: сколько оценок, сколько в избранном, сколько
+   желаний совпало с чужими. Отдельно от drawMe(): сердечко в «избранном»
+   меняет число, а перерисовывать ради него кабинет незачем. */
+function подвкладкиЧисла() {
+  const box = $('meSubs');
+  if (!box || box.hidden) return;
+  const число_ = { 'music/': мойСписок().length, 'music/favs': CAT.length ? CAT.filter(r => FAV.has(r.key)).length : FAV.size };
+  box.querySelectorAll('[data-sub]').forEach(a => {
+    const b = a.querySelector('b');
+    const к = a.dataset.sub;
+    if (к in число_) { b.className = ''; b.textContent = число(число_[к]); }
+    else if (к === 'orders/' && совпаденийЖеланий()) { b.className = 'tab-n'; b.textContent = совпаденийЖеланий(); }
+    else { b.className = ''; b.textContent = ''; }
+  });
 }
 
 const ЗНАЧОК_TW = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.3 3 3 6.4v13.1h4.5V22h2.5l2.4-2.5h3.7L21 14.6V3H4.3Zm15 10.8-2.8 2.8H12l-2.4 2.4v-2.4H5.8V4.6h13.5v9.2ZM16.5 7.6h-1.7v4.9h1.7V7.6Zm-4.6 0h-1.7v4.9h1.7V7.6Z"/></svg>';
@@ -17052,9 +17409,12 @@ function meHero() {
   // Фон из аватара. У вошедшего — из профиля: его же видят те, кто
   // открывает этот профиль. У гостя — в браузере.
   if (!$('mpage').hidden) фон(фонИзАватара() && img ? img : '');
+  // Разносы — заказы, привязанные к профилю; не привязаны — числа нет вовсе.
+  const з = вошёл() ? мойЗаказы() : null;
+  const заказов = з ? з.length : null;
 
-  let мета = (п && РОЛИ[п.role] ? '<span class="role-tag ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '') +
-    '<span class="hero-since"' + (п ? '' : ' data-tip="Без входа всё твоё лежит в этом браузере"') + '>' +
+  const роль = п && РОЛИ[п.role] ? '<span class="role-tag ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '';
+  let мета = '<span class="hero-since"' + (п ? '' : ' data-tip="Без входа всё твоё лежит в этом браузере"') + '>' +
       (п ? 'на сайте с ' : 'здесь с ') + МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span>' +
     (логин && !п.twitch_hidden ? '<a class="twitch-link" href="https://www.twitch.tv/' + encodeURIComponent(логин) +
       '" target="_blank" rel="noopener noreferrer">Twitch · ' + esc(логин) + ' ↗</a>' : '') +
@@ -17070,21 +17430,41 @@ function meHero() {
 
   $('meHero').innerHTML = аваHtml(img, ник, ПРОФ.цвет) +
     '<div class="hero-text">' +
-      '<div class="hero-name' + (ник ? '' : ' none') + '">' + esc(ник || 'без ника') + '</div>' +
+      '<div class="hero-title"><div class="hero-name' + (ник ? '' : ' none') + '">' + esc(ник || 'без ника') + '</div>' + роль + '</div>' +
       '<div class="hero-bio">' + esc(ПРОФ.о || (ник ? '' : 'Войди через Twitch или впиши ник в настройках.')) + '</div>' +
       '<div class="hero-meta">' + мета + (вошёл() && ОБЛ.подписки ? '<span class="hero-follow">' + подписчикиСлово(ОБЛ.подписки.на_меня.length) + '</span>' : '') +
       '</div>' + вход + уровеньHtml(мойОпыт()) + '</div>' +
+    /* Три числа справа — как в макете; каждое ведёт туда, где это лежит. */
+    '<div class="hero-stats">' + статШапки(мойСписок().length, ['моя оценка', 'мои оценки', 'моих оценок'], '#me/music') +
+      статШапки(FAV.size, ['в избранном', 'в избранном', 'в избранном'], '#me/music/favs') +
+      (заказов != null ? статШапки(заказов, ['разнос', 'разноса', 'разносов'], '#me/orders/history') : '') + '</div>' +
     '<div class="hero-actions">' +
-      '<a class="soft-btn" href="#me/settings" data-tip="Настройки" aria-label="Настройки">' + ико('edit') + '</a></div>';
+      '<a class="soft-btn" href="#me/settings">' + ико('edit') + '<span>Изменить</span></a></div>';
   аваЗапас($('meHero'), ник);
+  // Строка вместо шапки — для «моей музыки» и «заказов».
+  const у = мойОпыт();
+  $('meCompact').innerHTML = '<span class="cc-ava">' + (img ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(img) + '">' : esc(буквы(ник) || '🦉')) + '</span>' +
+    '<b>' + esc(ник || 'личный кабинет') + '</b><small>уровень ' + у.lvl + ' · ' + число(мойСписок().length) + ' ' +
+    plural(мойСписок().length, 'оценка', 'оценки', 'оценок') + '</small>';
+  const мини = $('meCompact').querySelector('img');
+  if (мини) мини.addEventListener('error', () => { мини.parentNode.textContent = буквы(ник) || '🦉'; });
   // Свой человечек гуляет по кромке шапки — как над поиском на главной.
-  человечекНаШапке($('meRun'), { ник: ник || 'это ты', цвет: ПРОФ.цвет || ЦВЕТА[0], я: true });
+  человечекНаШапке($('meRun'), яГость() ? { я: true, призрак: true } : { ник: ник || 'это ты', цвет: ПРОФ.цвет || ЦВЕТА[0], я: true });
 }
+
+const статШапки = (n, слова_, куда) => (куда ? '<a class="hero-stat" href="' + куда + '">' : '<div class="hero-stat">') +
+  '<strong>' + число(n) + '</strong><span>' + plural(n, ...слова_) + '</span>' + (куда ? '</a>' : '</div>');
 
 /* Человечек по верхней кромке шапки профиля: в кабинете — свой, в
    чужом профиле — его хозяин. Разметка и шаг — те же, что на главной. */
 function человечекHtml(ч, i = 0) {
-  const стиль = 'style="--c:' + esc(ч.цвет) + ';--d0:-' + (i * 11) + 's;--t:' + (40 + i * 7 % 23) + 's"';
+  const стиль = 'style="--c:' + esc(ч.призрак ? '#dcdce8' : ч.цвет) + ';--d0:-' + (i * 11) + 's;--t:' + (40 + i * 7 % 23) + 's"';
+  if (ч.призрак) {
+    const спрайт = '<span class="spr"><i class="hd0"></i><i class="bd0"></i><i class="lg l"></i><i class="lg r"></i></span>';
+    return ч.я
+      ? '<a class="walker ghost you" href="#me" ' + стиль + ' data-tip="Это ты — пока гость. Войди через Twitch, и у человечка появятся ник и цвет" aria-label="Это ты — гость. Открыть личный кабинет">' + спрайт + '</a>'
+      : '<span class="walker ghost" ' + стиль + ' data-tip="Гость — зритель без входа">' + спрайт + '</span>';
+  }
   const тело = '<span class="nick">' + esc(ч.ник) + '</span>' +
     '<span class="spr"><i class="hd0"></i><i class="bd0"></i><i class="lg l"></i><i class="lg r"></i></span>';
   return ч.я
@@ -17202,7 +17582,7 @@ const миниЗаказ = o => '<a class="mini-order" href="' + trackHref(o.r) 
   '<span class="rating-col" style="color:' + tColor(o.x.rate) + '">' + esc(o.x.rate ? o.x.rate.label : '—') + '</span></a>';
 function заказыКратко(з, свои) {
   return '<section class="order-inline"><div class="section-title" style="margin-bottom:12px"><h2>' + (свои ? 'мои заказы' : 'заказы') + '</h2>' +
-      (з && свои ? '<a class="text-link" href="#me/orders">вся история ' + ико('arrow') + '</a>' : '') + '</div>' +
+      (з && свои ? '<a class="text-link" href="#me/orders/history">вся история ' + ико('arrow') + '</a>' : '') + '</div>' +
     (з ? '<div class="order-count"><strong>' + число(з.length) + '</strong><span>' + plural(з.length, 'трек', 'трека', 'треков') +
         ' на разносах</span></div><div class="mini-orders">' + з.slice(0, 3).map(миниЗаказ).join('') + '</div>'
       : '<p class="mutedline" style="margin:0">' + (!свои ? 'Заказы из таблицы разносов к профилю пока не привязаны.'
@@ -17211,8 +17591,6 @@ function заказыКратко(з, свои) {
 }
 
 /* ---------- обзор ---------- */
-const КБ = { q: '', tier: '', genre: '', sort: 'new', view: 'grid', cmp: false };
-
 function meOverview(box, list) {
   const по = new Map(CAT.map(r => [r.key, r]));
   const любимые = [...FAV].reverse().map(k => по.get(k)).filter(Boolean);
@@ -17232,7 +17610,7 @@ function meOverview(box, list) {
     const прочее = всего - топ.reduce((n, [, c]) => n + c, 0);
     const доля = c => Math.max(1, Math.round(c / всего * 100));
     вкус = '<section class="o-panel"><div class="section-title"><h2>мой музыкальный вкус</h2>' +
-        '<a class="text-link" href="#me/ratings" data-clear>все оценки (' + число(list.length) + ') ' + ико('arrow') + '</a></div>' +
+        '<a class="text-link" href="#me/music" data-clear>все оценки (' + число(list.length) + ') ' + ико('arrow') + '</a></div>' +
       '<div class="taste-split"><div><div class="minor-title">Как я оцениваю</div>' +
         TIERS.map((t, i) => '<button type="button" class="tier-row" data-tier="' + esc(t.key) + '" data-tip="Показать эти оценки">' +
           '<span class="tier-label">' + t.key + '</span><span class="tier-track"><span class="tier-fill" style="--tier:' + TCOLOR[t.key] +
@@ -17255,14 +17633,33 @@ function meOverview(box, list) {
     '<button type="button" class="text-link" data-ach-all>все достижения ' + ико('arrow') + '</button></div>' +
     '<div class="ach-strip">' + три.map(достижениеHtml).join('') + '</div></section>';
 
-  /* Избранное — во всю ширину, пять карточек того же размера, что в
-     каталоге. Последние действия переехали наверх, к шапке. */
+  /* По второму макету заказчика: слева избранное (четыре наши карточки),
+     справа «Продолжить» — что можно сделать дальше, под ними последние
+     действия полосой карточек (раньше — столбцом справа от шапки). */
+  const п = вошёл() ? ОБЛ.проф : null;
+  const пл = п ? ПЛЕЙЛИСТЫ.filter(([, поле]) => п[поле]) : [];
+  const дПл = РЗ_ПЛ.данные;
   box.innerHTML =
-    '<section class="music-main" style="margin-bottom:31px"><div class="music-main-top"><h2>избранные треки</h2>' +
-      '<a class="text-link" href="#me/favs">всё избранное (' + число(любимые.length) + ') ' + ико('arrow') + '</a></div>' +
+    '<div class="tab-heading"><div><h2>обзор</h2><p>Любимая музыка, последние действия и то, что можно сделать дальше.</p></div></div>' +
+    '<div class="dash-grid">' +
+    '<section class="music-main"><div class="music-main-top"><h2>избранные треки <span class="mutedline" style="font-weight:500">(' + число(любимые.length) + ')</span></h2>' +
+      '<a class="text-link" href="#me/music/favs" data-clear>всё избранное ' + ико('arrow') + '</a></div>' +
       (любимые.length ? '<div class="c-cards cmp" data-cards></div>'
         : '<div class="c-empty">В избранном пока нет треков. Добавь понравившиеся сердечком на обложке в <a href="#base">каталоге</a>.</div>') +
     '</section>' +
+    '<aside class="dash-side"><h2>продолжить</h2>' +
+      '<a class="quick-row" href="#rate"><span class="quick-ic">' + ико('star') + '</span><span class="quick-tx"><strong>Режим оценки</strong>' +
+        '<small>Треки по одному: оценил — следующий</small></span>' + ико('arrow') + '</a>' +
+      '<button type="button" class="quick-row" data-add-track><span class="quick-ic">' + ико('disc') + '</span><span class="quick-tx"><strong>Добавить трек</strong>' +
+        '<small>Свой трек — в начало базы</small></span>' + ико('arrow') + '</button>' +
+      '<a class="quick-row" href="#me/orders"><span class="quick-ic">' + ико('headphones') + '</span><span class="quick-tx"><strong>Хочу заказать</strong>' +
+        '<small>Список желаемых разносов</small></span>' + ико('arrow') + '</a>' +
+      '<div class="quick-pl">' + ЗНАЧОК_SP + '<div><strong>' + esc(пл.length ? (дПл ? дПл.имя : 'Плейлист ' + пл.map(x => x[2]).join(' и ')) : 'Плейлист Spotify или YouTube') + '</strong>' +
+        '<small>' + (пл.length ? (дПл ? число(дПл.todo.length) + ' ' + plural(дПл.todo.length, 'трек ещё не разнесён', 'трека ещё не разнесены', 'треков ещё не разнесены')
+          : 'что из него уже разнесли') : 'сверим с архивом разносов') + '</small></div>' +
+        '<a class="text-link" href="#me/music/playlist">' + (пл.length ? 'открыть' : 'привязать') + ' ' + ико('arrow') + '</a></div>' +
+    '</aside></div>' +
+    '<section class="feed-panel act-panel" data-feed aria-label="Последние действия"></section>' +
     '<div class="overview-grid"><div class="o-left">' + вкус + достиж + '</div>' +
       '<aside class="o-right">' + заказыКратко(вошёл() ? мойЗаказы() : null, true) +
         (вошёл() ? '<section class="o-panel" data-follow><div class="section-title"><h2>подписки</h2></div>' +
@@ -17270,7 +17667,9 @@ function meOverview(box, list) {
         (вошёл() ? '<section class="o-panel" data-near><div class="section-title"><h2>близкие по вкусу</h2></div>' +
           '<p class="mutedline">считаю…</p></section>' : '') + '</aside></div>';
   шить(box);
-  сеткаКарточек(box.querySelector('[data-cards]'), любимые.slice(0, 5), 5);
+  сеткаКарточек(box.querySelector('[data-cards]'), любимые.slice(0, 4), 4);
+  лентаНарисовать(box.querySelector('[data-feed]'), list);
+  box.querySelector('[data-add-track]').addEventListener('click', () => окноДобавить());
   подпискиНарисовать(box.querySelector('[data-follow]'));
   близкиеНарисовать(box.querySelector('[data-near]'));
 }
@@ -17279,20 +17678,21 @@ function meOverview(box, list) {
    кабинете — свои, в профиле — того зрителя, только открытое. Стрелки
    у шапки ленты нет: вести «все действия» некуда. Комментарий ведёт к
    нему самому в ленте трека, рецензия — на свою страницу. */
-function лентаКаркас(el, текст) {
-  el.innerHTML = '<div class="music-main-top"><h2>последние действия</h2></div>' +
+function лентаКаркас(el, текст, свои) {
+  el.innerHTML = '<div class="music-main-top"><h2>последние действия</h2>' +
+      (свои ? '<a class="text-link" href="#me/music" data-clear>все оценки ' + ико('arrow') + '</a>' : '') + '</div>' +
     '<div class="feed-list">' + (текст ? '<div class="feed-none">' + текст + '</div>' : '') + '</div>';
   return el.querySelector('.feed-list');
 }
 function лентаСобрать(список, ряды, пусто) {
-  const все = список.sort((a, b) => b.ts - a.ts).slice(0, 8);
+  const все = список.sort((a, b) => b.ts - a.ts).slice(0, 6);
   ряды.innerHTML = все.length ? все.map(строкаЛенты).join('') : '<div class="feed-none">' + пусто + '</div>';
   шить(ряды);
 }
 async function лентаНарисовать(el, list) {
   if (!el) return;
   const по = new Map(CAT.map(r => [r.key, r]));
-  const ряды = лентаКаркас(el);
+  const ряды = лентаКаркас(el, '', true);
   const оценки = list.filter(x => x.v.w).map(x => ({ тип: 'rate', ts: x.v.w, r: x.r, v: x.v }));
   const здесь = [];
   Object.entries(TALK).forEach(([k, л]) => (л || []).forEach(c => {
@@ -17346,35 +17746,23 @@ $('meTab').addEventListener('click', e => {
   if (t.hasAttribute('data-ach-all')) return достиженияОкно();
   if (t.hasAttribute('data-fav')) return сердцеЩёлк(t);
   if (t.dataset.tier || t.dataset.genre || t.hasAttribute('data-clear')) {
-    Object.assign(КБ, { q: '', tier: t.dataset.tier || '', genre: t.dataset.genre || '' });
-    if (location.hash === '#me/ratings') { e.preventDefault(); drawMe(); }
-    else if (t.tagName === 'BUTTON') location.hash = '#me/ratings';
+    // «Моя музыка» откроется уже с этим отбором: ступень своей оценки или жанр.
+    МУЗ_F = отборПустой();
+    if (t.dataset.tier) МУЗ_F.myTier.set(t.dataset.tier, 1);
+    if (t.dataset.genre) МУЗ_F.genre.set(t.dataset.genre, 1);
+    if (t.tagName === 'BUTTON') location.hash = '#me/music';
   }
 });
-/* Сняли сердечко в «избранном» — карточка уходит из списка сразу. */
+/* Сняли сердечко у избранного на обзоре — карточка уходит сразу. */
 $('meTab').addEventListener('click', e => {
   if (!e.target.closest('.card .fav')) return;
-  if (/^#me(\/favs)?$/.test(location.hash)) setTimeout(drawMe, 0);
+  if (/^#me$/.test(location.hash)) setTimeout(drawMe, 0);
 });
 
-/* ---------- мои оценки ---------- */
-function отобратьОценки(list) {
-  const w = слова(КБ.q);
-  const out = list.filter(x => {
-    if (КБ.tier && x.v.t !== КБ.tier) return false;
-    if (КБ.genre && !x.r.genres.includes(КБ.genre)) return false;
-    return !w.length || w.every(q => совпало(x.r, q, x.r.слова) || x.r.genres.some(g => g.toLowerCase().startsWith(q)));
-  });
-  const балл = x => баллМой(x.v);
-  const по = {
-    new: (a, b) => (b.v.w || 0) - (a.v.w || 0) || (a.r.title || '').localeCompare(b.r.title || '', 'ru'),
-    best: (a, b) => балл(b) - балл(a),
-    worst: (a, b) => балл(a) - балл(b),
-    artist: (a, b) => (a.r.artist || '').localeCompare(b.r.artist || '', 'ru'),
-    title: (a, b) => (a.r.title || '').localeCompare(b.r.title || '', 'ru')
-  };
-  return out.sort(по[КБ.sort] || по.new);
-}
+/* ---------- мои оценки и избранное ----------
+   Своих списков у них больше нет: это каталог в режиме выборки
+   (коллекция()) — тот же рельс, те же карточки и сортировка. Строка
+   ниже осталась для оценок в чужом профиле. */
 function рядОценки(x, cmp) {
   const r = x.r, v = x.v, к = trackHref(r);
   return '<div class="track-row"><a class="track-art" href="' + к + '" tabindex="-1" aria-hidden="true">' + covHtml(r) + '</a>' +
@@ -17385,89 +17773,6 @@ function рядОценки(x, cmp) {
       (cmp ? '<small>композитор: <i>' + esc(r.rate ? r.rate.label : '—') + '</i></small>' : '') + '</a>' +
     '<div class="track-actions">' + сердце(r) + '</div></div>';
 }
-function meRatings(box, list) {
-  const шапка = '<div class="tab-heading"><div><h2>мои оценки</h2><p>Твоя музыкальная коллекция: искать, пересматривать и переоценивать.</p></div></div>';
-  if (!list.length) {
-    box.innerHTML = шапка + '<div class="c-empty">' + ико('search') + 'Оценок пока нет. Их ставят в <a href="#base">каталоге</a>, ' +
-      'на обложке, или на странице трека.</div>';
-    return;
-  }
-  const жанры = [...new Set(list.flatMap(x => x.r.genres))].sort((a, b) => a.localeCompare(b, 'ru'));
-  if (КБ.genre && !жанры.includes(КБ.genre)) КБ.genre = '';
-  const опции = (пары, выбор, пусто) => '<option value="">' + esc(пусто) + '</option>' +
-    пары.map(([v, n]) => '<option value="' + esc(v) + '"' + (v === выбор ? ' selected' : '') + '>' + esc(n) + '</option>').join('');
-  box.innerHTML = шапка +
-    '<div class="toolbar"><input id="kbQ" class="c-field" type="search" placeholder="Название, исполнитель или жанр" aria-label="Найти оценённый трек" value="' + esc(КБ.q) + '">' +
-      '<select id="kbT" class="dropdown" aria-label="Фильтр по оценке">' + опции(TIERS.map(t => [t.key, t.key]), КБ.tier, 'Любая оценка') + '</select>' +
-      '<select id="kbG" class="dropdown" aria-label="Фильтр по жанру">' + опции(жанры.map(g => [g, g]), КБ.genre, 'Все жанры') + '</select>' +
-      '<select id="kbS" class="dropdown" aria-label="Сортировка">' + [['new', 'Сначала последние'], ['best', 'Высокие оценки'], ['worst', 'Низкие оценки'],
-        ['artist', 'По исполнителю'], ['title', 'По названию']].map(([v, n]) => '<option value="' + v + '"' + (v === КБ.sort ? ' selected' : '') + '>' + n + '</option>').join('') + '</select>' +
-      '<div class="switch-group toolbar-spacer" role="group" aria-label="Вид">' +
-        [['grid', 'Плитки'], ['list', 'Список']].map(([v, n]) => '<button type="button" data-view="' + v + '" class="' + (КБ.view === v ? 'active' : '') +
-          '" aria-pressed="' + (КБ.view === v) + '">' + n + '</button>').join('') + '</div></div>' +
-    '<label class="toggle-line"><input type="checkbox" id="kbC"' + (КБ.cmp ? ' checked' : '') + '><span>Показать рядом оценки композитора</span></label>' +
-    '<div class="results-line"><span id="kbN"></span></div><div id="kbOut"></div>';
-  const рисовать = () => {
-    const out = отобратьОценки(list);
-    $('kbN').textContent = 'Найдено ' + число(out.length) + ' из ' + число(list.length) + ' ' + plural(list.length, 'оценки', 'оценок', 'оценок');
-    const el = $('kbOut');
-    el.textContent = '';
-    if (!out.length) {
-      el.innerHTML = '<div class="c-empty">' + ико('search') + 'По заданным условиям ничего не нашлось.<br>' +
-        '<button type="button" class="text-link" data-clear style="margin-top:10px">Сбросить фильтры ' + ико('arrow') + '</button></div>';
-      return;
-    }
-    if (КБ.view === 'grid') {
-      const g = document.createElement('div');
-      g.className = 'c-cards' + (КБ.cmp ? ' cmp' : '');
-      el.append(g);
-      сеткаКарточек(g, out.map(x => x.r));
-    } else {
-      // Список длинный — кусками, как и сетка.
-      const m = document.createElement('div');
-      m.className = 'music-list';
-      el.append(m);
-      let n = 0;
-      const ещё = () => {
-        m.insertAdjacentHTML('beforeend', out.slice(n, n + 100).map(x => рядОценки(x, КБ.cmp)).join(''));
-        n += 100;
-        шить(m);
-        const b = el.querySelector('.c-more'); if (b) b.remove();
-        if (n < out.length) {
-          el.insertAdjacentHTML('beforeend', '<button type="button" class="soft-btn c-more" style="margin-top:14px">показать ещё ' +
-            число(Math.min(100, out.length - n)) + ' из ' + число(out.length - n) + '</button>');
-          el.querySelector('.c-more').addEventListener('click', ещё);
-        }
-      };
-      ещё();
-    }
-  };
-  let timer;
-  $('kbQ').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { КБ.q = $('kbQ').value; рисовать(); }, 120); });
-  $('kbT').addEventListener('change', e => { КБ.tier = e.target.value; рисовать(); });
-  $('kbG').addEventListener('change', e => { КБ.genre = e.target.value; рисовать(); });
-  $('kbS').addEventListener('change', e => { КБ.sort = e.target.value; рисовать(); });
-  $('kbC').addEventListener('change', e => { КБ.cmp = e.target.checked; рисовать(); });
-  box.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
-    КБ.view = b.dataset.view;
-    box.querySelectorAll('[data-view]').forEach(x => { x.classList.toggle('active', x === b); x.setAttribute('aria-pressed', String(x === b)); });
-    рисовать();
-  }));
-  рисовать();
-}
-
-/* ---------- избранное ---------- */
-function meFavs(box) {
-  const по = new Map(CAT.map(r => [r.key, r]));
-  const list = [...FAV].reverse().map(k => по.get(k)).filter(Boolean);
-  box.innerHTML = '<div class="tab-heading"><div><h2>избранное</h2><p>' + число(list.length) + ' ' + plural(list.length, 'трек', 'трека', 'треков') +
-      (list.length > 1 ? ', сначала новые' : '') + '</p></div>' +
-      '<a class="soft-btn" href="#me/ratings" data-clear>' + ико('arrow') + ' Мои оценки</a></div>' +
-    (list.length ? '<div class="c-cards cmp" data-cards></div>'
-      : '<div class="c-empty">' + ико('heart') + 'Здесь пока пусто. Добавь трек сердечком на обложке в <a href="#base">каталоге</a>.</div>');
-  сеткаКарточек(box.querySelector('[data-cards]'), list);
-}
-
 /* ---------- мои заказы ---------- */
 const КЗ = { sort: 'new' };
 function рядЗаказа(o) {
@@ -17511,7 +17816,7 @@ function статЗаказов(з) {
     '</div></div></div>';
 }
 function meOrders(box) {
-  const шапка = '<div class="tab-heading"><div><h2>мои заказы</h2><p>Все треки, принесённые на разнос</p></div>' +
+  const шапка = '<div class="tab-heading"><div><h2>история заказов</h2><p>Все треки, принесённые на разнос</p></div>' +
     '<a class="soft-btn" href="#base">' + ико('external') + ' Перейти к базе треков</a></div>';
   if (!вошёл()) {
     box.innerHTML = шапка + '<div class="c-empty">Свои заказы можно привязать к профилю после входа через Twitch.' +
@@ -17521,7 +17826,7 @@ function meOrders(box) {
   const з = мойЗаказы();
   if (!з) {
     box.innerHTML = шапка + '<div class="c-empty">Заказы из таблицы разносов к профилю пока не привязаны.<br>' +
-      'В таблице заказчик записан так, как его назвали на стриме, — найди себя во вкладке <a href="#me/claims">«заявки»</a>, ' +
+      'В таблице заказчик записан так, как его назвали на стриме, — найди себя в <a href="#me/claims">настройках, в блоке «привязать свои заказы»</a>, ' +
       'и админ привяжет заказы, сверив ник на Twitch.</div>';
     return;
   }
@@ -17628,6 +17933,26 @@ function промоSpotify() {
     '<a class="main-btn" href="#me/settings" data-sp-go>Привязать</a>' +
     '<button type="button" class="x" data-sp-x aria-label="Больше не показывать" data-tip="Больше не показывать">✕</button>';
 }
+/* Такая же плашка про свои заказы: в таблице заказчик записан так, как
+   его назвали на стриме, и сам к профилю не привяжется. Зовём, пока у
+   вошедшего нет ни одной заявки; крестик — больше не показывать
+   (ПРОФ.заявНет). */
+function промоЗаявки() {
+  const el = $('meClPromo');
+  const звать = вошёл() && Array.isArray(ОБЛ.заявки) && !ОБЛ.заявки.length && !ПРОФ.заявНет;
+  el.hidden = !звать;
+  if (!звать || el.firstChild) return;
+  el.innerHTML = ико('disc') + '<p>Заказывал треки на стриме? Привяжи свои заказы к профилю — найди себя в таблице разносов, и админ их привяжет.</p>' +
+    '<a class="main-btn" href="#me/settings" data-cl-go>Привязать</a>' +
+    '<button type="button" class="x" data-cl-x aria-label="Больше не показывать" data-tip="Больше не показывать">✕</button>';
+}
+$('meClPromo').addEventListener('click', e => {
+  if (e.target.closest('[data-cl-x]')) { ПРОФ.заявНет = true; saveПроф(); $('meClPromo').hidden = true; ПОДСКАЗКА.спрятать(); }
+  else if (e.target.closest('[data-cl-go]')) {
+    КАБ_ФОКУС = 'clName';
+    if (location.hash === '#me/settings') { e.preventDefault(); drawMe(); }
+  }
+});
 $('meSpPromo').addEventListener('click', e => {
   if (e.target.closest('[data-sp-x]')) { ПРОФ.спНет = true; saveПроф(); $('meSpPromo').hidden = true; ПОДСКАЗКА.спрятать(); }
   else if (e.target.closest('[data-sp-go]')) {
@@ -17659,7 +17984,7 @@ function spotifyБлок(п) {
     : привязаны.map(([к, поле, имя, адрес]) => '<div class="sp-now" data-sp-now="' + к + '"><img alt="" src="" hidden><div><b>' + имя + ': плейлист привязан</b><small>' + esc(п[поле]) + '</small></div>' +
           '<div class="sp-row" style="margin-left:auto"><a class="soft-btn" href="' + esc(адрес(п[поле])) + '" target="_blank" rel="noopener noreferrer" aria-label="Открыть в ' + имя + '" data-tip="Открыть в ' + имя + '">' + ико('external') + '</a>' +
           '<button type="button" class="soft-btn bad" data-sp-off="' + к + '">Отвязать</button></div></div>').join('') +
-      (привязаны.length ? '<p class="setting-hint" style="margin:0 0 14px">Что из него уже разнесли, а что ещё нет, — во вкладке <a class="text-link" href="#me/playlist">«мой плейлист»</a>.</p>' : '') +
+      (привязаны.length ? '<p class="setting-hint" style="margin:0 0 14px">Что из него уже разнесли, а что ещё нет, — во вкладке <a class="text-link" href="#me/music/playlist">«моя музыка» → «плейлисты»</a>.</p>' : '') +
       (свободны.length ? '<label class="form-label" for="spUrl">Ссылка на плейлист ' + свободны.map(x => x[2]).join(' или ') + '</label>' +
         '<div class="sp-row"><input type="text" id="spUrl" placeholder="' + (свободны.length > 1 ? 'open.spotify.com/playlist/… или youtube.com/playlist?list=…'
           : свободны[0][0] === 'sp' ? 'https://open.spotify.com/playlist/…' : 'https://www.youtube.com/playlist?list=…') + '" autocomplete="off">' +
@@ -17679,7 +18004,7 @@ function spotifyПодключить(box) {
     if (id) РЗ_ПЛ.источник = к;
     промоSpotify();
     // Привязали — сразу к тому, ради чего: что из него разнесли.
-    if (id && location.hash !== '#me/playlist') location.hash = '#me/playlist';
+    if (id && location.hash !== '#me/music/playlist') location.hash = '#me/music/playlist';
     else drawMe();
   };
   const on = el.querySelector('[data-sp-on]');
@@ -17875,17 +18200,34 @@ function рядРазнесли(код, x) {
     (r ? '<a class="track-grade" href="' + к + '"' : '<span class="track-grade"') + ' style="color:' + (оц ? TCOLOR[оц.tier] : 'var(--faint)') + '">' +
       esc(m.l || 'без оценки') + (x.ratings.length > 1 ? '<small>разносили ' + x.ratings.length + ' раза</small>' : '') + (r ? '</a>' : '</span>') + '</div>';
 }
+/* Трек плейлиста или желание → свой трек сайта: ссылка — на ролик или
+   на трек Spotify, по ней же потом узнаём, что он уже добавлен. */
+const вСвоё = (т, yt) => ({ artist: т.artists.map(a => a.name).join(', '), title: т.title,
+  link: yt || т.yt ? 'https://youtu.be/' + (yt || т.yt) : /^[A-Za-z0-9]{22}$/.test(т.id || '') ? 'https://open.spotify.com/track/' + т.id : '' });
+/* «Добавить на сайт» рядом с «хочу заказать»: трек встаёт в базу своим
+   (см. добавитьСвоё) — его можно оценить, не дожидаясь разноса. Уже
+   добавлен — вместо кнопки ссылка на него. */
+function кнопкаНаСайт(своё) {
+  const r = своёЕсть(своё);
+  return r ? '<a class="soft-btn pl-add" href="' + trackHref(r) + '" data-tip="Открыть на сайте">' + ико('check') + 'на сайте</a>'
+    : '<button type="button" class="soft-btn pl-add" data-add data-tip="Трек встанет в базу — его можно оценить самому">+ добавить на сайт</button>';
+}
+function наСайт(своё) {
+  if (!своё.artist || !своё.title) { окноДобавить(своё); return null; }
+  const { r, новый } = добавитьСвоё(своё);
+  toast(новый ? '«' + r.title + '» добавлен на сайт — в начало базы' : '«' + r.title + '» уже есть среди твоих треков');
+  return r;
+}
 function рядНеРазнесли(x, сколько) {
   const т = x.track;
   const мой = !!(ОБЛ.желания && ОБЛ.желания.has(x.ключ));
-  const оц = parseRate(x.label);
   return '<div class="track-row" data-key="' + esc(x.ключ) + '">' + заглушкаСп(т) +
     '<span class="track-identity"><strong>' + esc(т.title) + '</strong><small>' + esc(артистыСп(т)) +
       (т.ms ? ' · ' + длительность(т.ms) : '') + (x.long ? ' · <b class="pl-long" data-tip="Дольше шести минут — за разнос доплата">доплата</b>' : '') + '</small>' +
       (мой ? попутчикиHtml(x.ключ) : '') + '</span>' +
     (сколько ? '<span class="pl-want" data-tip="Столько других зрителей тоже хотят его заказать">хотят ещё ' + сколько + '</span>' : '') +
-    '<span class="track-grade pl-pred" data-tip="' + esc('Прогноз «Что разнесут?»: ' + x.why) + '" style="color:' + (оц ? TCOLOR[оц.tier] : 'var(--faint)') + '">≈ ' +
-      esc(x.label) + '<small>прогноз</small></span>' +
+    /* Прогноза оценки композитора здесь больше нет — заказчик попросил убрать. */
+    кнопкаНаСайт(вСвоё(т)) +
     '<button type="button" class="soft-btn pl-wish" data-wish aria-pressed="' + мой + '">' + (мой ? ико('check') + 'хочу' : '+ хочу заказать') + '</button></div>';
 }
 
@@ -17896,7 +18238,7 @@ async function mePlaylist(box) {
   if (!есть.some(x => x[0] === РЗ_ПЛ.источник)) РЗ_ПЛ.источник = есть.length ? есть[0][0] : '';
   const источник = РЗ_ПЛ.источник;
   const id = источник ? п[ПЛЕЙЛИСТЫ.find(x => x[0] === источник)[1]] : '';
-  const шапка = '<div class="tab-heading"><div><h2>мой плейлист</h2><p>Что из твоего плейлиста композитор уже разнёс, а что ещё нет.</p></div>' +
+  const шапка = '<div class="tab-heading"><div><h2>плейлисты</h2><p>Что из твоего плейлиста композитор уже разнёс, а что ещё нет.</p></div>' +
     (id ? '<div class="sp-row">' + (есть.length > 1 ? '<div class="switch-group" role="group" aria-label="Какой плейлист">' +
         есть.map(([к, , имя]) => '<button type="button" data-pl-src="' + к + '" class="' + (к === источник ? 'active' : '') + '" aria-pressed="' + (к === источник) + '">' + имя + '</button>').join('') + '</div>' : '') +
       '<button type="button" class="soft-btn" data-pl-again>обновить</button>' +
@@ -17912,7 +18254,7 @@ async function mePlaylist(box) {
     return;
   }
   const рис = () => {
-    if (!box.isConnected || location.hash !== '#me/playlist') return;
+    if (!box.isConnected || location.hash !== '#me/music/playlist') return;
     if (РЗ_ПЛ.ошибка) {
       box.innerHTML = шапка + '<div class="c-empty">' + esc(РЗ_ПЛ.ошибка) +
         '<br><span class="mutedline">' + (источник === 'yt' ? 'Плейлист должен быть открытым или доступным по ссылке: на YouTube — «…» у плейлиста → «Доступ».'
@@ -17952,8 +18294,8 @@ async function плейлистНарисовать(box, шапка, д) {
       [['todo', 'ещё не разнесли', д.todo.length], ['rated', 'уже разнесли', д.rated.length]].map(([v, n, c]) =>
         '<button type="button" data-pl-view="' + v + '" class="' + (РЗ_ПЛ.вид === v ? 'active' : '') + '" aria-pressed="' + (РЗ_ПЛ.вид === v) + '">' + n + ' (' + число(c) + ')</button>').join('') +
       '</div><input class="c-field" type="search" data-pl-q placeholder="Найти в плейлисте" aria-label="Найти в плейлисте" value="' + esc(РЗ_ПЛ.q) + '"></div>' +
-    (РЗ_ПЛ.вид === 'todo' ? '<p class="t-note" style="max-width:none;margin:0 0 10px">Прогноз — как композитор в среднем оценивал этого артиста или новичков его жанра (приложение «Что разнесут?»). ' +
-      'Отметь «хочу заказать» — и если этот же трек захочет кто-то ещё, вы увидите друг друга и сможете заказать вместе.</p>' : '') +
+    (РЗ_ПЛ.вид === 'todo' ? '<p class="t-note" style="max-width:none;margin:0 0 10px">Отметь «хочу заказать» — и если этот же трек захочет кто-то ещё, вы увидите друг друга и сможете заказать вместе. ' +
+      '«Добавить на сайт» — трек встанет в базу, и его можно оценить самому, не дожидаясь разноса.</p>' : '') +
     '<div class="music-list" data-pl-list></div>';
   const список = box.querySelector('[data-pl-list]');
   // Сколько других хотят каждую песню — для всего «ещё не разнесли» разом.
@@ -17979,6 +18321,12 @@ async function плейлистНарисовать(box, шапка, д) {
   let т;
   box.querySelector('[data-pl-q]').addEventListener('input', e => { clearTimeout(т); т = setTimeout(() => { РЗ_ПЛ.q = e.target.value; РЗ_ПЛ.показано = 100; рисовать(); }, 150); });
   список.addEventListener('click', async e => {
+    const доб = e.target.closest('[data-add]');
+    if (доб) {
+      const x = д.todo.find(y => y.ключ === доб.closest('[data-key]').dataset.key);
+      if (x && наСайт(вСвоё(x.track))) рисовать();
+      return;
+    }
     const b = e.target.closest('[data-wish]'); if (!b) return;
     const ключ = b.closest('[data-key]').dataset.key;
     const x = д.todo.find(y => y.ключ === ключ); if (!x) return;
@@ -17996,7 +18344,7 @@ async function плейлистНарисовать(box, шапка, д) {
 /* ---------- вкладка «хочу заказать» ---------- */
 async function meWishes(box) {
   const шапка = '<div class="tab-heading"><div><h2>хочу заказать</h2><p>Треки, которые ты хочешь принести на разнос. Хочет кто-то ещё — договоритесь и закажите вместе.</p></div>' +
-    '<a class="soft-btn" href="#me/playlist">' + ЗНАЧОК_SP.replace('class="sp"', 'class="sp" style="width:15px;height:15px"') + ' мой плейлист</a></div>';
+    '<a class="soft-btn" href="#me/music/playlist">' + ЗНАЧОК_SP.replace('class="sp"', 'class="sp" style="width:15px;height:15px"') + ' мой плейлист</a></div>';
   if (!вошёл()) {
     box.innerHTML = шапка + '<div class="c-empty">Список «хочу заказать» живёт в аккаунте — после входа через Twitch.' +
       (ОБЛ && ОБЛ.sb ? '<br><button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '') + '</div>';
@@ -18004,7 +18352,7 @@ async function meWishes(box) {
   }
   box.innerHTML = шапка + '<p class="mutedline">загружаю…</p>';
   const ж = await желанияЗагрузить();
-  if (!box.isConnected || location.hash !== '#me/wishes') return;
+  if (!box.isConnected || location.hash !== '#me/orders') return;
   meHeroTabs();
   if (!ж) { box.innerHTML = шапка + '<div class="c-empty">' + (/wishes/.test(ОБЛ.желанияОшибка || '') ? '«Хочу заказать» на сервере ещё не включено.' : 'Не удалось загрузить.') + '</div>'; return; }
   const скрыты = ОБЛ.проф && ОБЛ.проф.wishes_public === false;
@@ -18019,9 +18367,15 @@ async function meWishes(box) {
           попутчикиHtml(w.song_key) + '<span class="wish-done" hidden></span></span>' +
         (w.yt_id ? '<a class="soft-btn wish-pl" href="https://youtu.be/' + esc(w.yt_id) + '" target="_blank" rel="noopener noreferrer" aria-label="Открыть на YouTube" data-tip="Открыть на YouTube">' + ПЛ_ЗНАЧОК.yt + '</a>' : '') +
         (w.sp_id ? '<a class="soft-btn wish-pl" href="https://open.spotify.com/track/' + esc(w.sp_id) + '" target="_blank" rel="noopener noreferrer" aria-label="Открыть в Spotify" data-tip="Открыть в Spotify">' + ПЛ_ЗНАЧОК.sp + '</a>' : '') +
+        кнопкаНаСайт(вСвоё({ id: w.sp_id || '', title: w.title, artists: [{ name: w.artist }] }, w.yt_id)) +
         '<button type="button" class="soft-btn bad" data-unwish aria-label="Убрать" data-tip="Убрать из списка">' + ико('close') + '</button></div>').join('') + '</div>'
-      : '<div class="c-empty">Пока пусто. Добавь трек ссылкой выше или отмечай треки во вкладке <a href="#me/playlist">«мой плейлист»</a> — кнопкой «хочу заказать».</div>');
+      : '<div class="c-empty">Пока пусто. Добавь трек ссылкой выше или отмечай треки в <a href="#me/music/playlist">своём плейлисте</a> — кнопкой «хочу заказать».</div>');
   формаЖеланияПодключить(box);
+  box.querySelectorAll('.wish-row [data-add]').forEach(b => b.addEventListener('click', () => {
+    const w = ж.get(b.closest('[data-key]').dataset.key);
+    const своё = вСвоё({ id: w.sp_id || '', title: w.title, artists: [{ name: w.artist }] }, w.yt_id);
+    if (наСайт(своё)) b.outerHTML = кнопкаНаСайт(своё);
+  }));
   box.querySelectorAll('[data-unwish]').forEach(b => b.addEventListener('click', async () => {
     const w = ж.get(b.closest('[data-key]').dataset.key);
     b.disabled = true;
@@ -18132,13 +18486,13 @@ const ЧТО_НЕ_ТАК = { cover: 'обложка', year: 'год или ал�
 const делКоманды = () => (ОБЛ.ждут || 0) + (ОБЛ.неточностей || 0);
 function meManage(box) {
   const старший = ['admin', 'owner'].includes(мояРоль());
-  box.innerHTML = '<div class="tab-heading"><div><h2>управление</h2><p>Инструменты команды сайта.</p></div></div>' +
+  box.innerHTML = '<div class="tab-heading"><div><h2>админка</h2><p>Инструменты команды сайта.</p></div></div>' +
     '<div class="mg-grid">' +
       (студияМожно() ? '<a class="mg-card" href="#studio"><b>Студия оценок</b><span>Экран для стрима: очередь эфира, пластинка на сцене и шкала. Оценённое сразу встаёт в каталог.</span><small>открыть студию →</small></a>' : '') +
       (старший ? '<a class="mg-card" href="#covers"><b>Обложки и факты</b><span>Собрать присланные обложки и факты в covers.json и facts.json, вписать обложку трекам без неё.</span><small>открыть панель →</small></a>' : '') +
     '</div>' +
     '<section class="o-panel" data-reports><div class="section-title"><h2>сообщения о неточностях</h2></div><p class="mutedline">загружаю…</p></section>' +
-    (старший ? '<section class="o-panel" data-review></section>' : '') +
+    (старший ? '<section class="o-panel" data-review aria-label="Заявки на привязку заказов"></section>' : '') +
     '<section class="o-panel" data-banned><div class="section-title"><h2>закрытые комментарии</h2></div><p class="mutedline">загружаю…</p></section>' +
     (старший ? '<section class="o-panel"><div class="section-title"><h2>команда сайта</h2></div><div id="meTeam"><p class="me-cnt">загружаю…</p></div></section>' : '');
   командаНарисовать($('meTeam'));
@@ -18254,6 +18608,8 @@ function meSettings(box) {
           'оценки и избранное — если их не скрыть.</p><p>Без входа ник, оценки и комментарии лежат в этом браузере, и другие их не видят.</p></div>' +
         (ОБЛ && ОБЛ.sb ? '<button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '')) +
     '</aside></div>' +
+    /* Привязка своих заказов — бывшая вкладка «заявки». */
+    (п ? '<div id="clBox" style="margin-top:30px"></div>' : '') +
     (п ? '<section class="settings-box" style="margin-top:24px"><div class="section-title"><h2>аккаунт</h2></div>' +
         '<div class="acc-row"><div><b>Twitch' + (п.login ? ' · ' + esc(п.login) : '') + '</b><small>Оценки, сердечки, цвет и пара слов о себе лежат в базе сайта ' +
           'и приезжают на любое устройство, где ты вошёл.</small></div><button type="button" class="soft-btn" data-logout>Выйти</button></div>' +
@@ -18261,6 +18617,7 @@ function meSettings(box) {
           '<button type="button" class="soft-btn bad" id="prDel">Удалить…</button></div></section>' : '');
   приватностьПодключить(box);
   spotifyПодключить(box);
+  if ($('clBox')) моиЗаявки($('clBox'));
   if (КАБ_ФОКУС) {
     const f = $(КАБ_ФОКУС);
     КАБ_ФОКУС = '';
@@ -18707,12 +19064,39 @@ async function ктоНаСайте() {
   ОБЛ.онлайн = data || [];
   if (!$('page').hidden && CAT.length) полоса();
 }
+/* Гости — призраки на полосе. Гость раз в минуту отмечается случайным
+   id из своего браузера (guest_ping) и получает, сколько гостей на сайте;
+   вошедший только спрашивает число (guests_now). Имён и профилей у
+   гостей нет, наружу — одно число. Функций в базе ещё нет (схему не
+   перезапустили) — больше не спрашиваем: на полосе просто нет чужих
+   призраков. */
+const ГОСТЬ_LS = 'faryma-guest-id';
+function гостьId() {
+  try {
+    let id = localStorage.getItem(ГОСТЬ_LS) || '';
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) {
+      id = crypto.randomUUID ? crypto.randomUUID()
+        : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+      localStorage.setItem(ГОСТЬ_LS, id);
+    }
+    return id;
+  } catch { return ''; }
+}
+async function гостиНаСайте() {
+  if (!ОБЛ.sb || ОБЛ.безГостей || document.visibilityState === 'hidden') return;
+  const id = вошёл() ? '' : гостьId();
+  const { data, error } = id ? await ОБЛ.sb.rpc('guest_ping', { p_id: id }) : await ОБЛ.sb.rpc('guests_now');
+  if (error) { ОБЛ.безГостей = true; return; }
+  ОБЛ.гостей = Number(data) || 0;
+  if (!$('page').hidden && CAT.length) полоса();
+}
 function онлайнЦикл() {
   ктоНаСайте();
-  setInterval(() => { отметиться(); ктоНаСайте(); }, 60000);
+  гостиНаСайте();
+  setInterval(() => { отметиться(); ктоНаСайте(); гостиНаСайте(); }, 60000);
   setInterval(уведомленияЗагрузить, 5 * 60000);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') { отметиться(); ктоНаСайте(); }
+    if (document.visibilityState === 'visible') { отметиться(); ктоНаСайте(); гостиНаСайте(); }
   });
 }
 
@@ -18725,14 +19109,14 @@ function облакоРисовать(сВкладкой) {
   if (T.r && $('tTalk')._рисовать) $('tTalk')._рисовать();
   if (!$('page').hidden && CAT.length) главная();
   if (!$('mpage').hidden && CAT.length) {
-    // Роль доехала или ушла — вкладка «управление» появляется или пропадает.
+    // Роль доехала или ушла — вкладка «админка» появляется или пропадает.
     const вкладкиСтарые = !!document.querySelector('#meTabs a[href="#me/manage"]') !== штатСайта();
     if ((сВкладкой || вкладкиСтарые) && !$('meTab').contains(document.activeElement)) drawMe();
-    else { meHero(); промоSpotify(); }
+    else { meHero(); промоSpotify(); промоЗаявки(); }
   }
 }
 
-/* Студия — по роли; вход в неё теперь во вкладке «управление» кабинета.
+/* Студия — по роли; вход в неё теперь во вкладке «админка» кабинета.
    Роль доехала, а открыт адрес студии — показываем её; роль ушла
    (вышел) — уходим из студии. */
 function студияДоступ() {
@@ -18865,20 +19249,9 @@ async function заявкиМои() {
 }
 
 /* ---------- заявки ----------
-   Своя история заявок и форма новой — у всех вошедших. У админа и
-   композитора выше — заявки зрителей на разбор. */
-async function meClaims(box) {
-  const шапка = '<div class="tab-heading"><div><h2>заявки</h2><p>История заявок на привязку своих заказов' +
-    (['admin', 'owner'].includes(мояРоль()) ? '. Заявки зрителей — во вкладке <a class="text-link" href="#me/manage">«управление»</a>' : '') + '</p></div></div>';
-  if (!вошёл()) {
-    box.innerHTML = шапка + '<div class="c-empty">Заявку на привязку своих заказов подают после входа через Twitch.' +
-      (ОБЛ && ОБЛ.sb ? '<br><button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '') + '</div>';
-    return;
-  }
-  box.innerHTML = шапка + '<div data-mine></div>';
-  моиЗаявки(box.querySelector('[data-mine]'));
-}
-
+   Своя история заявок на привязку заказов и форма новой — у всех
+   вошедших, блоком в настройках (отдельной вкладки больше нет). Заявки
+   зрителей админ и композитор разбирают в «админке». */
 const СТАТУС = { approved: ['одобрено', '', 'check'], pending: ['ждёт', ' pending', 'clock'], rejected: ['отклонена', ' bad', 'close'] };
 function моиЗаявки(el) {
   const все = ОБЛ.заявки || [];
@@ -18887,7 +19260,7 @@ function моиЗаявки(el) {
   const логин = ОБЛ.проф && ОБЛ.проф.login ? ОБЛ.проф.login.toLowerCase() : '';
   const заявлено = new Set(все.filter(c => c.status !== 'rejected').map(c => c.name));
   const мойЛогин = логин && имена.has(логин) && !заявлено.has(логин) ? имена.get(логин) : null;
-  el.innerHTML = '<div class="section-title"><h2>мои заявки</h2></div>' +
+  el.innerHTML = '<div class="section-title"><h2>мои заказы: заявки на привязку</h2></div>' +
     (все.length ? все.slice().reverse().map(c => {
       const [слово, класс, знак] = СТАТУС[c.status] || СТАТУС.pending;
       const n = сколько(c);
@@ -18937,6 +19310,7 @@ function моиЗаявки(el) {
     моиЗаявки(el);
     const р = el.parentNode.querySelector('[data-review]');
     if (р) разборЗаявок(р); else meHeroTabs();
+    промоЗаявки();
   };
   const подать = async (k, note) => {
     const e = имена.get(k);
@@ -19017,21 +19391,17 @@ async function разборЗаявок(el) {
 }
 /* Число ждущих на вкладке — без перерисовки самой вкладки. */
 function meHeroTabs() {
-  // Число на «хочу заказать» — сколько треков из списка хочет кто-то ещё.
-  const ж = document.querySelector('#meTabs a[href="#me/wishes"]');
-  if (ж) {
-    let b = ж.querySelector('.tab-n');
-    const n = совпаденийЖеланий();
-    if (!n && b) b.remove();
-    else if (n) { if (!b) { b = document.createElement('b'); b.className = 'tab-n'; ж.append(' ', b); } b.textContent = n; }
-  }
-  const a = document.querySelector('#meTabs a[href="#me/manage"]');
-  if (!a) return;
-  let b = a.querySelector('.tab-n');
-  const n = делКоманды();
-  if (!n) { if (b) b.remove(); return; }
-  if (!b) { b = document.createElement('b'); b.className = 'tab-n'; a.append(' ', b); }
-  b.textContent = n;
+  const метка = (a, n) => {
+    if (!a) return;
+    let b = a.querySelector('.tab-n');
+    if (!n) { if (b) b.remove(); return; }
+    if (!b) { b = document.createElement('b'); b.className = 'tab-n'; a.append(' ', b); }
+    b.textContent = n;
+  };
+  // Число на «заказах» — сколько треков из «хочу заказать» хочет кто-то ещё.
+  метка(document.querySelector('#meTabs a[href="#me/orders"]'), совпаденийЖеланий());
+  метка(document.querySelector('#meTabs a[href="#me/manage"]'), делКоманды());
+  подвкладкиЧисла();
 }
 
 /* ---------- кто заказал: ссылкой на профиль ----------
@@ -19092,9 +19462,9 @@ function уведомленияСтроки(u, сколько) {
       : n.kind === 'wish' ? '<b>' + esc(n.who || n.who_login) + '</b> тоже хочет заказать «' + esc(обрезать(n.body, 80)) + '» — договоритесь и закажите вместе'
       : 'Ответ от <b>' + esc(n.who || n.who_login) + '</b>' + (t ? ' к «' + esc(t.title) + '»' : '') + ': «' + esc(обрезать(n.body, 90)) + '»';
     // Ответ — прямо к нему в ленте трека, а не просто на страницу трека.
-    const куда = n.kind === 'claim' ? '#me/orders'
+    const куда = n.kind === 'claim' ? '#me/orders/history'
       : n.kind === 'follow' ? '#u=' + encodeURIComponent(n.who_login || '')
-      : n.kind === 'wish' ? '#me/wishes'
+      : n.kind === 'wish' ? '#me/orders'
       : (t ? trackHref(t) + (n.comment_id ? '&c=' + n.comment_id : '') : '#me');
     return '<a class="note-row' + (n.fresh ? ' fresh' : '') + '" href="' + куда + '"><span>' + текст + '</span><time>' +
       когда(Date.parse(n.at)) + '</time></a>';
@@ -19244,13 +19614,14 @@ async function drawUser(login) {
   const с = new Date(п.created_at);
   $('uHero').innerHTML = аваHtml(п.avatar_url, ник, п.color) +
     '<div class="hero-text">' + (это ? '<div class="hero-kicker">Так тебя видят другие</div>' : '') +
-      '<div class="hero-name">' + esc(ник) + '</div><div class="hero-bio">' + esc(п.bio || '') + '</div>' +
-      '<div class="hero-meta">' + (РОЛИ[п.role] ? '<span class="role-tag ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '') +
-        '<span class="hero-since">на сайте с ' + МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span>' +
+      '<div class="hero-title"><div class="hero-name">' + esc(ник) + '</div>' +
+        (РОЛИ[п.role] ? '<span class="role-tag ' + п.role + '">' + РОЛИ[п.role] + '</span>' : '') + '</div><div class="hero-bio">' + esc(п.bio || '') + '</div>' +
+      '<div class="hero-meta"><span class="hero-since">на сайте с ' + МЕСЯЦА[с.getMonth()] + ' ' + с.getFullYear() + '</span>' +
         '<span class="hero-follow" data-followers hidden></span>' +
         (п.twitch_hidden ? '' : '<a class="twitch-link" href="https://www.twitch.tv/' + encodeURIComponent(п.login) + '" target="_blank" rel="noopener noreferrer">Twitch · ' +
           esc(п.login) + ' ↗</a>') + '</div><div data-lvl></div></div>' +
-    (это ? '<div class="hero-actions"><a class="soft-btn" href="#me/settings">' + ико('edit') + '<span>Настройки</span></a></div>'
+    '<div class="hero-stats" data-stats></div>' +
+    (это ? '<div class="hero-actions"><a class="soft-btn" href="#me/settings">' + ико('edit') + '<span>Изменить</span></a></div>'
       : '<div class="hero-actions"><button type="button" class="soft-btn follow-btn" data-sub aria-pressed="false" hidden>' +
           ико('heart') + '<span>подписаться</span></button></div>');
   аваЗапас($('uHero'), ник);
@@ -19306,7 +19677,7 @@ async function drawUser(login) {
     }
   }
 
-  /* Последние действия — справа от шапки, если зритель их не скрыл:
+  /* Последние действия — полосой под шапкой, если зритель их не скрыл:
      открытые оценки и комментарии. */
   if (!п.activity_hidden) {
     const действия = (rt || []).filter(x => x.rated_at).map(x => ({ тип: 'rate', ts: Date.parse(x.rated_at), r: по.get(x.track_key),
@@ -19388,6 +19759,11 @@ async function drawUser(login) {
   const имена = new Set(((cl && cl.data) || []).map(c => c.name));
   const з = имена.size ? заказыПо(имена) : null;
 
+  // Числа в шапке — только открытое: скрытые оценки и избранное не считаем.
+  $('uHero').querySelector('[data-stats]').innerHTML =
+    (rt ? статШапки(rt.length, ['оценка', 'оценки', 'оценок']) : '') +
+    (любимые ? статШапки(любимые.length, ['в избранном', 'в избранном', 'в избранном']) : '') +
+    (з ? статШапки(з.length, ['разнос', 'разноса', 'разносов']) : '');
   $('uBody').innerHTML = '<div class="overview-grid" style="margin-top:26px"><div class="o-left">' + левое + '</div>' +
     '<aside class="o-right">' + заказыКратко(з, false) + '</aside></div>';
   шить($('uBody'));
@@ -20824,8 +21200,8 @@ function оцРисовать() {
     ОЦ.нарисован = r.key;
     оцШапка(r);
     оцПлеер(r);
-    $('oMine').innerHTML = '<h2>Твоя оценка<small>' + (вошёл() && !(ОБЛ.проф && ОБЛ.проф.ratings_public === false)
-      ? 'видна другим зрителям' : 'видна только тебе') + '</small></h2>';
+    $('oMine').textContent = '';
+    $('oMine').setAttribute('aria-label', 'Твоя оценка');
     $('oMine').append(шкалаОценки(r, $('oMine'), {
       вид: () => { $('oNext').textContent = MY[r.key] ? 'следующий ▶' : 'пропустить ▶'; },
       сменилась: как => {

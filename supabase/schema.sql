@@ -18,6 +18,8 @@
 --   online   — кто сейчас на сайте: вошедший раз в минуту отмечается,
 --              время ставит сервер. Читать могут все — это и есть
 --              человечки на главной (через представление online_now).
+--   guests_online — гости без входа, «призраки» на главной: наружу
+--              только число (guest_ping, guests_now), таблица закрыта.
 --   role_grants — кто кем назначен, по логину Twitch. Роль в профиле
 --              ставит сервер при входе: композитор входит — и сразу
 --              «композитор». Через API эту таблицу не видно вовсе.
@@ -1015,3 +1017,44 @@ create or replace view public.online_now with (security_invoker = true) as
   where o.seen_at > now() - interval '150 seconds' and not p.hide_online;
 revoke all on public.online_now from anon, authenticated;
 grant select on public.online_now to anon, authenticated;
+
+-- ---------- гости на сайте ----------
+-- Призрачные человечки на главной: зрители без входа. Ни имён, ни
+-- профилей — наружу только число. Гость раз в минуту отмечается случайным
+-- id из своего браузера (guest_ping), вошедший спрашивает число
+-- (guests_now). Сама таблица закрыта целиком: ходят в неё две функции.
+-- Подделать отметку ничего не стоит, поэтому это число, а не люди:
+-- страница рисует не больше восьми призраков, таблица не растёт дальше
+-- 500 строк и сама чистит всё, что старше десяти минут.
+create table if not exists public.guests_online (
+  id       uuid primary key,
+  seen_at  timestamptz not null default now()
+);
+alter table public.guests_online enable row level security;
+revoke all on public.guests_online from anon, authenticated;
+
+create or replace function public.guest_ping(p_id uuid)
+returns integer language plpgsql security definer set search_path = '' as $$
+declare n integer;
+begin
+  if p_id is null then raise exception 'no id'; end if;
+  delete from public.guests_online where seen_at < now() - interval '10 minutes';
+  update public.guests_online set seen_at = now() where id = p_id;
+  if not found and (select count(*) from public.guests_online) < 500 then
+    insert into public.guests_online (id) values (p_id)
+      on conflict (id) do update set seen_at = now();
+  end if;
+  select count(*) into n from public.guests_online
+   where seen_at > now() - interval '150 seconds';
+  return n;
+end $$;
+revoke execute on function public.guest_ping(uuid) from public;
+grant execute on function public.guest_ping(uuid) to anon, authenticated;
+
+create or replace function public.guests_now()
+returns integer language sql stable security definer set search_path = '' as $$
+  select count(*)::integer from public.guests_online
+   where seen_at > now() - interval '150 seconds'
+$$;
+revoke execute on function public.guests_now() from public;
+grant execute on function public.guests_now() to anon, authenticated;
