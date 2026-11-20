@@ -1724,6 +1724,10 @@ button.me-pill.out:hover{color:#fff;border-color:#5d5e62}
 .archive-stage{--paper:#f3efe7;--white:#f3efe7;
   position:relative;width:100%;height:640px;top:auto;right:auto;align-self:center;min-width:0;z-index:2}
 .archive-stage .paper{isolation:isolate}
+/* Смена трека на обложке: бумага гаснет, меняет картинку и появляется
+   (класс .swap ставит коллажСмена()). transform — тот же, что в макете. */
+.archive-stage .paper{transition:transform .45s cubic-bezier(.22,1,.36,1),opacity .45s ease}
+.archive-stage .paper.swap{opacity:0}
 .archive-stage .paper .mask{background:linear-gradient(180deg,rgba(0,0,0,.30) 3%,rgba(0,0,0,.72) 68%,rgba(0,0,0,.90) 100%)}
 .archive-stage .paper .paper-tag{bottom:18px;left:18px;right:17px;color:#fff;font:600 12px/1.4 var(--b);letter-spacing:0;
   text-shadow:0 1px 6px rgba(0,0,0,.5)}
@@ -17167,21 +17171,22 @@ function вКаталог(setup) {
 
 const ГЛ = { подсказчик: null, наВиду: false };
 
-/* Коллаж справа на главной. Картинки и места обложек — из макета
-   заказчика, а всё, что о треке говорится, — из таблицы: подпись,
-   жанр, страна, год, оценка композера. Трек узнаётся по исполнителю и
-   началу названия; не нашёлся — обложка остаётся картинкой, без
-   ссылки и без сведений на мониторе. */
+/* Коллаж справа на главной. Места обложек и первые четыре картинки —
+   из макета заказчика, а всё, что о треке говорится, — из таблицы:
+   подпись, жанр, страна, год, оценка композера. Первые четыре трека
+   узнаются по исполнителю и началу названия; не нашёлся — обложка
+   остаётся картинкой, без ссылки и без сведений на мониторе. */
 const КОЛЛАЖ = [
   { кто: /^c418$/i,        что: /^sweden\b/i },
   { кто: /^ado$/i,         что: /^usseewa\b/i },
   { кто: /^linkin park$/i, что: /^in the end$/i },
   { кто: /^toby fox$/i,    что: /^megalovania\b/i }
 ];
-const коллажТрек = i => {
-  const к = КОЛЛАЖ[i];
-  return к ? CAT.find(r => !r.mine && !r.студия && к.кто.test(r.artist) && к.что.test(r.title)) : null;
-};
+/* Какой трек сейчас на какой обложке. Сначала — четыре из макета (их
+   картинки встроены, видны сразу и без сети), потом их по одной
+   сменяют случайные треки архива (`коллажСмена()`). */
+const КОЛЛАЖ_СЕЙЧАС = [null, null, null, null];
+const коллажТрек = i => КОЛЛАЖ_СЕЙЧАС[i];
 
 /* Подпись под названием — первая фраза первого факта из таблицы.
    Фактов нет (встроенная копия, пустая ячейка) — подписи нет: пустое
@@ -17193,14 +17198,78 @@ function фразаФакта(r) {
   return (m ? m[0] : ф).trim();
 }
 
+function бумагаПодписать(a, r) {
+  if (r) a.href = trackHref(r); else a.removeAttribute('href');
+  if (!r) return;
+  a.querySelector('.paper-tag b').textContent = r.artist + ' — ' + имяСПрипиской(r.title).имя;
+  a.querySelector('.paper-tag span').textContent = фразаФакта(r);
+}
+
+/* Свежая таблица подменяет встроенную: треки на обложках находим в
+   ней заново по ключу, а не возвращаем четвёрку из макета. */
 function коллаж() {
   document.querySelectorAll('#hStage .paper').forEach(a => {
-    const r = коллажТрек(+a.dataset.gl);
-    if (r) a.href = trackHref(r); else a.removeAttribute('href');
-    if (!r) return;
-    a.querySelector('.paper-tag b').textContent = r.artist + ' — ' + имяСПрипиской(r.title).имя;
-    a.querySelector('.paper-tag span').textContent = фразаФакта(r);
+    const i = +a.dataset.gl, был = КОЛЛАЖ_СЕЙЧАС[i];
+    let r = был && CAT.find(x => x.key === был.key);
+    if (!r && !a.dataset.сменена) {
+      const к = КОЛЛАЖ[i];
+      r = CAT.find(x => !x.mine && !x.студия && к.кто.test(x.artist) && к.что.test(x.title));
+    }
+    КОЛЛАЖ_СЕЙЧАС[i] = r || был || null;
+    бумагаПодписать(a, КОЛЛАЖ_СЕЙЧАС[i]);
   });
+}
+
+/* Кто годится на обложку коллажа: трек с оценкой и квадратной
+   обложкой, которой можно верить, — утверждённой вручную или из
+   Spotify с порогом доверия (`spCover`). Превью ютуба не берём: это
+   кадр 16:9, на бумаге он вышел бы мутным обрезком. Если у достаточно
+   треков есть факты — только из них, чтобы под названием была подпись. */
+function коллажПул() {
+  const заняты = new Set(КОЛЛАЖ_СЕЙЧАС.filter(Boolean).map(r => r.key));
+  const все = CAT.filter(r => !r.mine && !r.студия && r.rate && !заняты.has(r.key) &&
+    (COVER[r.key] || r.spCover));
+  const сФактами = все.filter(r => r.факты && r.факты.length);
+  return сФактами.length >= 40 ? сФактами : все;
+}
+
+/* Раз в 6 секунд одна обложка (по кругу) уступает место случайному
+   треку. Не трогаем ту, что под курсором, в фокусе или показана на
+   мониторе; за кадром и в фоновой вкладке смены нет. Новая картинка
+   сначала загружается, и только потом бумага гаснет и появляется уже
+   с ней — не доехала, берём другой трек в следующий раз. */
+const КОЛЛАЖ_ШАГ = 6000;
+let коллажОчередь = 0;
+function коллажСмена() {
+  setTimeout(коллажСмена, КОЛЛАЖ_ШАГ);
+  if (document.hidden || $('page').hidden || !ГЛ.главнаяВидна || !CAT.length) return;
+  const бумаги = [...document.querySelectorAll('#hStage .paper')];
+  for (let k = 0; k < бумаги.length; k++) {
+    const i = (коллажОчередь + k) % бумаги.length, a = бумаги[i];
+    if (a.matches(':hover') || a === document.activeElement || a.classList.contains('on') ||
+        МОНИТОР.обложка === i || a.classList.contains('swap')) continue;
+    коллажОчередь = i + 1;
+    const пул = коллажПул();
+    if (!пул.length) return;
+    const r = пул[Math.floor(Math.random() * пул.length)];
+    const адрес = coverOf(r).url;
+    const im = new Image();
+    im.onload = () => {
+      if (a.matches(':hover') || a === document.activeElement) return;
+      a.classList.add('swap');
+      setTimeout(() => {
+        const img = a.querySelector('img');
+        img.src = адрес;
+        img.alt = 'Обложка ' + r.artist + ' — ' + имяСПрипиской(r.title).имя;
+        КОЛЛАЖ_СЕЙЧАС[i] = r;
+        a.dataset.сменена = '1';
+        бумагаПодписать(a, r);
+        a.classList.remove('swap');
+      }, МОНИТОР.тише.matches ? 0 : 450);
+    };
+    im.src = адрес;
+    return;
+  }
 }
 
 /* Монитор: без наведения печатает подсказки по кругу, на обложке —
@@ -17450,6 +17519,7 @@ function главнаяПульт() {
   /* Видна ли главная — для монитора и лапки: за кадром они не крутятся. */
   new IntersectionObserver(es => { ГЛ.главнаяВидна = es[0].isIntersecting; }).observe($('home'));
   лапка();
+  setTimeout(коллажСмена, КОЛЛАЖ_ШАГ);
 
   $('navHome').addEventListener('click', e => {
     if (location.hash !== '' && location.hash !== '#') return;
