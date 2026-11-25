@@ -691,7 +691,7 @@ button.aa:hover{color:var(--brand-hi)}
 .tp-nav button:disabled{opacity:.32;cursor:default}
 /* На фоне из обложки — такими же полупрозрачными плашками, как всё на
    странице трека: глухие серые торчали заплатками. */
-.atmo-on .tp-nav button{background:rgba(24,24,28,.5);border:1px solid rgba(255,255,255,.07)}
+.atmo-on .tp-nav button{background:rgba(13,13,16,.5);border:1px solid rgba(255,255,255,.07)}
 .atmo-on .tp-nav button:hover:not(:disabled){background:rgba(255,255,255,.1)}
 
 .tp-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:20px;align-items:start}
@@ -699,27 +699,46 @@ button.aa:hover{color:var(--brand-hi)}
 
 /* ---------- шапка трека ---------- */
 .hero{position:relative;background:var(--card);border-radius:var(--r);overflow:hidden}
-/* Когда под страницей есть фон из обложки, все плашки страницы трека
-   полупрозрачные и подкрашены той же обложкой: глухие серые, они лежали
-   на цветном фоне заплатками. Подкраска — размытая обложка под самой
-   плашкой (::before), а не стекло на просвет: фон из обложки к середине
-   экрана тает, и нижние плашки на просвет оставались бы серыми.
-   backdrop-filter и transform на плашках не ставить: под ними живут
-   плееры, а плавающий плеер (position:fixed) от такого предка начал
-   бы отсчитываться от плашки, а не от окна. */
+/* Плашки страницы трека — по утверждённому прототипу заказчика
+   (faryma-track-panels-fixed, ТЗ «инфа по визуализации плашек»). Два
+   режима: шапка трека — №5 «фрагмент + цвет», остальные — №7
+   «авто-гибрид». Слои — фрагмент обложки 440×240 (--slice) и
+   коэффициенты разбора обложки; считает их плашкиИзОбложки().
+   Отличие от прототипа одно: там тёмная основа — фон самой плашки, а
+   backdrop-filter стоит на ней же. Здесь и то и другое — в ::before:
+   backdrop-filter (как transform и filter) на .pan сделал бы её
+   отсчётом для position:fixed, и плавающее окно видео прилипло бы к
+   плашке. По той же причине у плашек нет isolation — оба слоя лежат
+   на z-index:-1 в общем контексте, по порядку: основа, потом цвет. */
 #tpage .pan,#tpage .talk,#rpage .pan,#opage .pan{position:relative;overflow:hidden}
-.atmo-on #tpage .pan,.atmo-on #tpage .talk,.atmo-on #rpage .pan,.atmo-on #opage .pan{background:rgba(24,24,28,.5);
-  border:1px solid rgba(255,255,255,.07)}
-.atmo-on #tpage .pan::before,.atmo-on #tpage .talk::before,.atmo-on #rpage .pan::before,.atmo-on #opage .pan::before{content:'';position:absolute;
-  inset:-80px;z-index:-1;pointer-events:none;background:var(--atmo) center/cover no-repeat;
-  filter:blur(60px) saturate(1.3);opacity:.3}
-/* Шапка трека — как в прежних версиях: своя размытая обложка внутри и
-   затемнение по диагонали, только прозрачнее, чем было, — цвет обложки
-   в ней самый густой на странице. Размыта сильнее фона: при 34px у
-   части обложек в шапке читались пятна и контуры, и глаз цеплялся за
-   них раньше, чем за название. Слой шире плашки на столько же, иначе
-   по краям размытие светлеет. */
-.atmo-on .hero{background:rgba(24,24,28,.35);border:1px solid rgba(255,255,255,.08)}
+.atmo-on #tpage .pan,.atmo-on #tpage .talk,.atmo-on #rpage .pan,.atmo-on #opage .pan,.atmo-on .hero{
+  background:transparent;border:1px solid rgba(255,255,255,.025);border-radius:8px}
+.atmo-on #tpage .pan::before,.atmo-on #tpage .talk::before,.atmo-on #rpage .pan::before,.atmo-on #opage .pan::before,
+.atmo-on #tpage .pan::after,.atmo-on #tpage .talk::after,.atmo-on #rpage .pan::after,.atmo-on #opage .pan::after,
+.atmo-on .hero::before,.atmo-on .hero::after{content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;
+  pointer-events:none;background-size:cover;background-position:50% 50%;background-repeat:no-repeat}
+/* Тёмная основа и размытие того, что за плашкой. */
+.atmo-on #tpage .pan::before,.atmo-on #tpage .talk::before,.atmo-on #rpage .pan::before,.atmo-on #opage .pan::before{
+  background-color:rgba(13,13,16,var(--panelAdaptive,.5));
+  -webkit-backdrop-filter:blur(55px);backdrop-filter:blur(55px)}
+.atmo-on .hero::before{background-color:rgba(13,13,16,var(--heroPanelAdaptive,.5))}
+/* Цвет: №7 — фрагмент, затемнённый на 16%, размытый на 55px и шире
+   плашки на столько же, чтобы края не светлели. */
+.atmo-on #tpage .pan::after,.atmo-on #tpage .talk::after,.atmo-on #rpage .pan::after,.atmo-on #opage .pan::after{
+  inset:-55px;border-radius:0;
+  background-image:linear-gradient(180deg,rgba(10,10,14,.16),rgba(10,10,14,.16)),var(--slice,none);
+  opacity:min(1,calc(.65 * .74 * var(--auto,.65) * var(--colorBoost,1)));
+  filter:blur(55px) saturate(var(--panelSat,.92)) brightness(var(--panelBright,1.04)) contrast(var(--panelContrast,.94))}
+/* №5 — фрагмент без размытия, затемнение 10→20% и блик второго цвета
+   обложки справа сверху. */
+.atmo-on .hero::after{
+  background-image:linear-gradient(180deg,rgba(10,10,14,.10),rgba(10,10,14,.20)),
+    radial-gradient(circle at 78% 18%,rgb(var(--glow2,40 30 50) / .30),transparent 52%),var(--slice,none);
+  opacity:min(1,calc(.50 * .85 * var(--auto,.65) * var(--colorBoost,1)));
+  filter:saturate(var(--panelSat,.92)) brightness(var(--panelBright,1.04)) contrast(var(--panelContrast,.94))}
+/* Прежняя подкраска шапки — размытая обложка внутри — уступила №5. Без
+   фона (нет обложки) её и так нет. */
+.atmo-on .hero .hero-bg{display:none}
 .hero-bg{position:absolute;inset:-140px;background-size:cover;background-position:center;
   filter:blur(90px) saturate(1.3);opacity:.75}
 .hero-bg::after{content:'';position:absolute;inset:0;
@@ -14520,6 +14539,110 @@ function фон(url) {
   // тот же адрес — шапке сайта, она красится им же
   document.body.style.setProperty('--atmo', css || 'none');
   document.body.classList.toggle('atmo-on', !!url);
+  плашкиИзОбложки(url);
+}
+
+/* ---------- плашки из обложки ----------
+   Формулы — ровно из утверждённого прототипа заказчика: разбор обложки
+   на холсте 64×64 (средняя яркость, разброс 5–95-го процентилей, доля
+   ярких, насыщенность), из них — сила цветового слоя (auto), ослабление
+   затемнения для тёмных, светлых и контрастных обложек и компенсация
+   цвета, «смягчение» при фиксированных 35%. Фрагмент 440×240 — обложка
+   «cover» по центру, blur 2px, насыщенность 108%, яркость 82% и
+   затемнение 8%. Второй по весу оттенок — блик шапки (--glow2).
+   Холсту нужна картинка с CORS: Spotify и ютуб его отдают. Не отдал
+   сервер (ручная обложка с чужого сайта) — фрагментом становится сама
+   обложка, а коэффициенты — средние, как у прототипа до разбора. */
+const ПЛАШКИ = { адрес: '', кэш: new Map() };
+const ПЛАШКИ_ПОКА = { '--auto': '.65', '--colorBoost': '1', '--panelAdaptive': '.5', '--heroPanelAdaptive': '.5',
+  '--panelSat': '.92', '--panelBright': '1.04', '--panelContrast': '.94', '--glow2': '40 30 50' };
+function плашкиИзОбложки(url) {
+  const st = document.body.style;
+  ПЛАШКИ.адрес = url;
+  if (!url) { st.removeProperty('--slice'); return; }
+  const поставить = v => Object.entries(v).forEach(([k, x]) => st.setProperty(k, x));
+  const готово = ПЛАШКИ.кэш.get(url);
+  if (готово) return поставить(готово);
+  поставить(Object.assign({ '--slice': 'url("' + url.replace(/"/g, '%22') + '")' }, ПЛАШКИ_ПОКА));
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    let v;
+    try { v = разборОбложки(img); } catch { return; }   // холст «испорчен» — остаёмся на сырой обложке
+    if (ПЛАШКИ.кэш.size > 40) ПЛАШКИ.кэш.delete(ПЛАШКИ.кэш.keys().next().value);
+    ПЛАШКИ.кэш.set(url, v);
+    if (ПЛАШКИ.адрес === url) поставить(v);
+  };
+  img.src = url;
+}
+function разборОбложки(img) {
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const lum = (r, g, b) => .2126 * r + .7152 * g + .0722 * b;
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const вписать = (ctx, w, h, cover) => {
+    const k = cover ? Math.max(w / iw, h / ih) : Math.min(w / iw, h / ih);
+    ctx.drawImage(img, (w - iw * k) / 2, (h - ih * k) / 2, iw * k, ih * k);
+  };
+  // Фрагмент 440×240.
+  const c = document.createElement('canvas'); c.width = 440; c.height = 240;
+  вписать(c.getContext('2d'), 440, 240, true);
+  const o = document.createElement('canvas'); o.width = 440; o.height = 240;
+  const ox = o.getContext('2d');
+  ox.filter = 'blur(2px) saturate(1.08) brightness(0.82)';
+  ox.drawImage(c, 0, 0);
+  ox.filter = 'none';
+  ox.fillStyle = 'rgba(8,8,12,.08)';
+  ox.fillRect(0, 0, 440, 240);
+  const срез = o.toDataURL('image/png');
+  // Разбор 64×64, «contain» на #101014.
+  const n = 64, a = document.createElement('canvas'); a.width = a.height = n;
+  const ax = a.getContext('2d', { willReadFrequently: true });
+  ax.fillStyle = '#101014'; ax.fillRect(0, 0, n, n);
+  вписать(ax, n, n, false);
+  const d = ax.getImageData(0, 0, n, n).data;
+  let mean = [0, 0, 0], ys = [], bright = 0, sat = 0;
+  const bins = Array.from({ length: 12 }, () => ({ w: 0, r: 0, g: 0, b: 0 }));
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i + 1], b = d[i + 2], y = lum(r, g, b), mx = Math.max(r, g, b), mn = Math.min(r, g, b), df = mx - mn;
+    ys.push(y); bright += y > 175 ? 1 : 0; sat += df / 255;
+    mean[0] += r; mean[1] += g; mean[2] += b;
+    if (df > 12) {
+      const h = mx === r ? ((g - b) / df + 6) % 6 : mx === g ? (b - r) / df + 2 : (r - g) / df + 4;
+      const bin = bins[Math.floor(h * 2) % 12], w = df / 255 * (.25 + .75 * Math.sqrt(y / 255));
+      bin.w += w; bin.r += r * w; bin.g += g * w; bin.b += b * w;
+    }
+  }
+  const count = ys.length;
+  mean = mean.map(x => x / count);
+  ys.sort((p, q) => p - q);
+  const range = (ys[Math.floor(count * .95)] - ys[Math.floor(count * .05)]) / 255;
+  const avg = lum(...mean) / 255;
+  bright /= count; sat /= count;
+  const ranked = bins.filter(b => b.w > 0).sort((p, q) => q.w - p.w);
+  const цвет = b => [b.r / b.w, b.g / b.w, b.b / b.w];
+  const второй = ranked[1] && ranked[1].w > ranked[0].w * .24 ? цвет(ranked[1]) : mean;
+  const tone = (rgb, limit, satur) => {
+    const y = lum(...rgb), k = Math.min(1, limit / Math.max(y, 1));
+    return rgb.map(x => clamp(Math.round((y + (x - y) * satur) * k), 0, limit * 1.65));
+  };
+  const risk = clamp(.40 * avg + .28 * bright + .35 * range + .23 * sat, 0, 1);
+  const auto = clamp(1.20 - risk * 1.20, .20, .95);
+  const darkRelief = clamp((.42 - avg) * .40, 0, .14);
+  const lightRelief = clamp((avg - .62) * .28 + bright * .08, 0, .16);
+  const contrastRelief = clamp((range - .55) * .06, 0, .05);
+  const s = .35;   // «смягчение» прототипа, зафиксировано
+  const f = x => x.toFixed(3);
+  return {
+    '--slice': 'url("' + срез + '")',
+    '--glow2': tone(второй, 67, .85).map(Math.round).join(' '),
+    '--auto': f(auto),
+    '--panelAdaptive': f(clamp(.50 - darkRelief - lightRelief - contrastRelief, .26, .50)),
+    '--heroPanelAdaptive': f(clamp(.50 - darkRelief * .68 - lightRelief * .56 - contrastRelief * .35, .30, .50)),
+    '--colorBoost': f(clamp(1 + darkRelief * 1.15 + lightRelief * 1.25 + contrastRelief * .80, 1, 1.24)),
+    '--panelSat': f(clamp(1 - s * (.22 + sat * .08), .68, 1)),
+    '--panelBright': f(clamp(1 + s * (.08 + (avg < .40 ? .08 : 0)), 1, 1.17)),
+    '--panelContrast': f(clamp(1 - s * (.16 + range * .08), .72, 1))
+  };
 }
 
 /* ---------- обложка во весь экран ----------
