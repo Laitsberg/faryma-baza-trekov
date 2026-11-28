@@ -46,6 +46,13 @@
 --              хотят одно и то же — оба видят друг друга (wish_mates) и
 --              могут заказать вместе. Видны, пока хозяин не скрыл
 --              (wishes_public).
+--   pools, pledges — заказочная: сбор на песню из «хочу заказать» и
+--              доли участников. Доля — обещание, а не платёж. Пишут
+--              только функции (pool_open, pledge_set, pool_update,
+--              pool_close), читают все (wish_board, pool_board).
+--   wish_invites — «позвать в сбор»: уведомление тому, у кого та же
+--              песня в открытом списке (wish_invite).
+--   site_settings — цена разноса по умолчанию (set_order_price).
 --
 -- «Automatically expose new tables» при создании проекта выключен,
 -- поэтому доступ к каждой таблице ниже выдаётся явно (grant).
@@ -817,6 +824,220 @@ $$;
 revoke execute on function public.wish_counts(text[]) from public;
 grant execute on function public.wish_counts(text[]) to anon, authenticated;
 
+-- ---------- заказочная ----------
+-- Общий список «хочу заказать»: желания всех, кто их не скрыл, сложенные
+-- по песне. Свои скрытые желания видит только сам зритель — у него они
+-- тоже в списке. Название и исполнитель — как их записал первый
+-- пожелавший; кто хочет — по порядку, первым тот, кто раньше.
+create or replace function public.wish_board()
+returns table (song_key text, title text, artist text, sp_ids text[], yt_ids text[],
+               n int, first_at timestamptz, last_at timestamptz, people jsonb)
+language sql stable security definer set search_path = '' as $$
+  select w.song_key,
+         (array_agg(w.title order by w.created_at))[1],
+         (array_agg(w.artist order by w.created_at))[1],
+         coalesce(array_agg(distinct w.sp_id) filter (where w.sp_id is not null), '{}'),
+         coalesce(array_agg(distinct w.yt_id) filter (where w.yt_id is not null), '{}'),
+         count(*)::int, min(w.created_at), max(w.created_at),
+         jsonb_agg(jsonb_build_object('id', p.id, 'name', p.name, 'login', p.login,
+                   'avatar_url', p.avatar_url, 'color', p.color, 'at', w.created_at) order by w.created_at)
+    from public.wishes w
+    join public.profiles p on p.id = w.user_id
+   where p.wishes_public or w.user_id = (select auth.uid())
+   group by w.song_key
+   order by count(*) desc, max(w.created_at) desc
+   limit 2000
+$$;
+revoke execute on function public.wish_board() from public;
+grant execute on function public.wish_board() to anon, authenticated;
+
+-- Сбор: договорённость заказать трек вместе. Деньги здесь не ходят —
+-- доля это обещание, а не платёж. На песню один сбор; цель (сколько
+-- стоит разнос) ставит организатор: длинный трек дороже, а цену знает
+-- он, а не сайт. «Заказан» — организатор отметил, что заказ оформлен.
+create table if not exists public.pools (
+  id          bigint generated always as identity primary key,
+  song_key    text not null unique check (char_length(song_key) between 2 and 300),
+  title       text not null check (char_length(title) between 1 and 300),
+  artist      text not null check (char_length(artist) between 1 and 300),
+  sp_id       text check (sp_id ~ '^[A-Za-z0-9]{22}$'),
+  yt_id       text check (yt_id ~ '^[A-Za-z0-9_-]{11}$'),
+  owner       uuid not null references public.profiles (id) on delete cascade,
+  target      int not null check (target between 100 and 200000),
+  ordered     boolean not null default false,
+  created_at  timestamptz not null default now()
+);
+create table if not exists public.pledges (
+  pool_id     bigint not null references public.pools (id) on delete cascade,
+  user_id     uuid not null references public.profiles (id) on delete cascade,
+  amount      int not null check (amount between 1 and 200000),
+  updated_at  timestamptz not null default now(),
+  primary key (pool_id, user_id)
+);
+alter table public.pools enable row level security;
+alter table public.pledges enable row level security;
+-- Пишут только функции ниже: у сбора есть правила, которые в
+-- политиках не выразить (одна песня — один сбор, желание при доле).
+revoke all on public.pools, public.pledges from anon, authenticated;
+
+-- «Позвать в сбор»: уведомление тому, кто хочет ту же песню. Звать
+-- можно только того, у кого эта песня в открытом списке, — иначе это
+-- был бы способ писать кому угодно. Один раз на человека и песню.
+create table if not exists public.wish_invites (
+  id          bigint generated always as identity primary key,
+  from_id     uuid not null references public.profiles (id) on delete cascade,
+  to_id       uuid not null references public.profiles (id) on delete cascade,
+  song_key    text not null,
+  title       text not null,
+  created_at  timestamptz not null default now(),
+  unique (from_id, to_id, song_key)
+);
+alter table public.wish_invites enable row level security;
+revoke all on public.wish_invites from anon, authenticated;
+
+-- Цена разноса по умолчанию — подсказка «~N ₽ с человека» у песен без
+-- сбора. Ставят композитор и админ. Не поставлена — денег на странице нет.
+create table if not exists public.site_settings (
+  key         text primary key,
+  value       jsonb not null,
+  updated_at  timestamptz not null default now()
+);
+alter table public.site_settings enable row level security;
+drop policy if exists site_settings_read on public.site_settings;
+create policy site_settings_read on public.site_settings for select to anon, authenticated using (true);
+revoke all on public.site_settings from anon, authenticated;
+grant select on public.site_settings to anon, authenticated;
+
+create or replace function public.set_order_price(p_price int)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if public.my_role() not in ('admin', 'owner') then raise exception 'not allowed'; end if;
+  if p_price is null then delete from public.site_settings where key = 'order_price'; return; end if;
+  if p_price not between 100 and 200000 then raise exception 'bad price'; end if;
+  insert into public.site_settings (key, value) values ('order_price', to_jsonb(p_price))
+    on conflict (key) do update set value = excluded.value, updated_at = now();
+end $$;
+revoke execute on function public.set_order_price(int) from public, anon;
+grant execute on function public.set_order_price(int) to authenticated;
+
+-- Все сборы с долями и организатором.
+create or replace function public.pool_board()
+returns table (id bigint, song_key text, title text, artist text, sp_id text, yt_id text,
+               target int, ordered boolean, created_at timestamptz, owner jsonb, pledges jsonb)
+language sql stable security definer set search_path = '' as $$
+  select po.id, po.song_key, po.title, po.artist, po.sp_id, po.yt_id, po.target, po.ordered, po.created_at,
+         jsonb_build_object('id', o.id, 'name', o.name, 'login', o.login, 'avatar_url', o.avatar_url, 'color', o.color),
+         coalesce((select jsonb_agg(jsonb_build_object('id', p.id, 'name', p.name, 'login', p.login,
+                     'avatar_url', p.avatar_url, 'color', p.color, 'amount', pl.amount, 'at', pl.updated_at)
+                     order by pl.updated_at)
+                     from public.pledges pl join public.profiles p on p.id = pl.user_id
+                    where pl.pool_id = po.id), '[]'::jsonb)
+    from public.pools po
+    join public.profiles o on o.id = po.owner
+   order by po.created_at desc
+   limit 1000
+$$;
+revoke execute on function public.pool_board() from public;
+grant execute on function public.pool_board() to anon, authenticated;
+
+-- Доля в сбор = желание: кто скидывается, тот и хочет эту песню.
+create or replace function public.wish_ensure(p_key text, p_title text, p_artist text, p_sp text, p_yt text)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if exists (select 1 from public.wishes where user_id = (select auth.uid()) and song_key = p_key) then return; end if;
+  insert into public.wishes (user_id, song_key, sp_id, yt_id, title, artist)
+    values ((select auth.uid()), p_key, p_sp, p_yt, p_title, p_artist)
+    on conflict do nothing;
+end $$;
+revoke execute on function public.wish_ensure(text, text, text, text, text) from public, anon, authenticated;
+
+create or replace function public.pool_open(p_key text, p_title text, p_artist text, p_sp text, p_yt text,
+                                            p_target int, p_amount int)
+returns bigint language plpgsql security definer set search_path = '' as $$
+declare me uuid := (select auth.uid()); pid bigint;
+begin
+  if me is null then raise exception 'not signed in'; end if;
+  if (select banned from public.profiles where id = me) then raise exception 'banned'; end if;
+  if (select count(*) from public.pools where owner = me and not ordered) >= 10 then raise exception 'too many pools'; end if;
+  if p_amount is not null and p_amount not between 0 and 200000 then raise exception 'bad amount'; end if;
+  perform public.wish_ensure(p_key, p_title, p_artist, p_sp, p_yt);
+  insert into public.pools (song_key, title, artist, sp_id, yt_id, owner, target)
+    values (p_key, left(p_title, 300), left(p_artist, 300), p_sp, p_yt, me, p_target)
+    returning id into pid;
+  if coalesce(p_amount, 0) > 0 then
+    insert into public.pledges (pool_id, user_id, amount) values (pid, me, p_amount);
+  end if;
+  return pid;
+exception when unique_violation then raise exception 'pool exists';
+end $$;
+
+-- Своя доля: 0 — убрать. В заказанный сбор доли больше не меняются.
+create or replace function public.pledge_set(p_pool bigint, p_amount int)
+returns void language plpgsql security definer set search_path = '' as $$
+declare me uuid := (select auth.uid()); po public.pools;
+begin
+  if me is null then raise exception 'not signed in'; end if;
+  if (select banned from public.profiles where id = me) then raise exception 'banned'; end if;
+  select * into po from public.pools where id = p_pool;
+  if not found then raise exception 'no pool'; end if;
+  if po.ordered then raise exception 'pool ordered'; end if;
+  if p_amount is null or p_amount not between 0 and 200000 then raise exception 'bad amount'; end if;
+  if p_amount = 0 then
+    delete from public.pledges where pool_id = p_pool and user_id = me;
+    return;
+  end if;
+  perform public.wish_ensure(po.song_key, po.title, po.artist, po.sp_id, po.yt_id);
+  insert into public.pledges (pool_id, user_id, amount) values (p_pool, me, p_amount)
+    on conflict (pool_id, user_id) do update set amount = excluded.amount, updated_at = now();
+end $$;
+
+-- Организатор меняет цель и отмечает «заказ оформлен»; отменить сбор
+-- может он сам или команда сайта (модерация).
+create or replace function public.pool_update(p_pool bigint, p_target int, p_ordered boolean)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  update public.pools set target = coalesce(p_target, target), ordered = coalesce(p_ordered, ordered)
+   where id = p_pool and owner = (select auth.uid());
+  if not found then raise exception 'not allowed'; end if;
+end $$;
+create or replace function public.pool_close(p_pool bigint)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  delete from public.pools where id = p_pool and (owner = (select auth.uid()) or public.is_staff());
+  if not found then raise exception 'not allowed'; end if;
+end $$;
+
+create or replace function public.wish_invite(p_key text, p_to uuid)
+returns boolean language plpgsql security definer set search_path = '' as $$
+declare me uuid := (select auth.uid()); t text;
+begin
+  if me is null then raise exception 'not signed in'; end if;
+  if p_to = me then raise exception 'self'; end if;
+  if (select banned from public.profiles where id = me) then raise exception 'banned'; end if;
+  select w.artist || ' — ' || w.title into t
+    from public.wishes w join public.profiles p on p.id = w.user_id and p.wishes_public
+   where w.user_id = p_to and w.song_key = p_key;
+  if t is null then raise exception 'no such wish'; end if;
+  if (select count(*) from public.wish_invites where from_id = me and created_at > now() - interval '1 hour') >= 30 then
+    raise exception 'too many invites';
+  end if;
+  insert into public.wish_invites (from_id, to_id, song_key, title) values (me, p_to, p_key, left(t, 300))
+    on conflict do nothing;
+  return found;
+end $$;
+-- Кого я уже звал — чтобы кнопка не предлагала звать второй раз.
+create or replace function public.my_invites()
+returns table (to_id uuid, song_key text)
+language sql stable security definer set search_path = '' as $$
+  select to_id, song_key from public.wish_invites where from_id = (select auth.uid())
+$$;
+revoke execute on function public.pool_open(text, text, text, text, text, int, int), public.pledge_set(bigint, int),
+  public.pool_update(bigint, int, boolean), public.pool_close(bigint), public.wish_invite(text, uuid), public.my_invites()
+  from public, anon;
+grant execute on function public.pool_open(text, text, text, text, text, int, int), public.pledge_set(bigint, int),
+  public.pool_update(bigint, int, boolean), public.pool_close(bigint), public.wish_invite(text, uuid), public.my_invites()
+  to authenticated;
+
 -- ---------- уведомления ----------
 -- Что нового у зрителя: решения по его заявкам, ответы на его
 -- комментарии, новые подписчики и те, кто захотел заказать то же, что
@@ -857,6 +1078,21 @@ language sql stable security definer set search_path = '' as $$
                              or (m.yt_id is not null and o.yt_id = m.yt_id))
     join public.profiles p on p.id = o.user_id and p.wishes_public, me
    where m.user_id = me.id and o.created_at > now() - interval '30 days'
+  union all
+  -- Позвали скинуться на песню из моего списка (заказочная).
+  select 'invite', i.created_at, i.song_key, i.title, p.name, p.login, null, null, null,
+         i.created_at > me.seen, null
+    from public.wish_invites i
+    join public.profiles p on p.id = i.from_id, me
+   where i.to_id = me.id and i.created_at > now() - interval '30 days'
+  union all
+  -- Кто-то вложился в мой сбор; сколько — в answer.
+  select 'pledge', pl.updated_at, po.song_key, po.artist || ' — ' || po.title, p.name, p.login, null, null,
+         pl.amount::text, pl.updated_at > me.seen, null
+    from public.pledges pl
+    join public.pools po on po.id = pl.pool_id
+    join public.profiles p on p.id = pl.user_id, me
+   where po.owner = me.id and pl.user_id <> me.id and pl.updated_at > now() - interval '30 days'
   order by 2 desc
   limit 50
 $$;
