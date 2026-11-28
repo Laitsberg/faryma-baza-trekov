@@ -2851,6 +2851,212 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
   .tab-heading{flex-wrap:wrap}
   .appearance-box{padding:16px}
 }
+
+/* ---------- заказочная (#zakaz) ----------
+   Макет заказчика faryma-zakazochnaya-v2, перенесённый с его
+   размерами. Классы с префиксом zk-: у макета .track, .cover, .name,
+   .panel, .modal, .empty, .tab, .btn — у нас всё это уже занято. */
+#zpage{max-width:1244px;padding-top:0}
+/* Окно лежит вне #zpage — цвета нужны и ему. */
+#zpage,#mZakaz{--zk-panel:#242426;--zk-card:#29292c;--zk-line:#37373c;--zk-muted:#94949e;--zk-green:#58d48a}
+#zpage .tp-top{margin:23px 0 14px}
+#zpage .crumbs{font-size:11px}
+.zk-hero{display:flex;align-items:center;justify-content:space-between;gap:30px;margin-bottom:30px}
+.zk-hero h1{font:800 52px/1.03 var(--d);letter-spacing:-3px;margin:0 0 13px;color:var(--brand)}
+.zk-hero p{color:#b0afb7;max-width:620px;margin:0;line-height:1.65;font-size:13px}
+.zk-hero strong{color:#e9e8ec;font-weight:600}
+.zk-stats{display:flex;align-items:center;gap:24px;padding:9px 0 9px 24px;border-left:1px solid var(--zk-line);flex-shrink:0}
+.zk-stat b{font-size:29px;font-weight:800;line-height:1;letter-spacing:-1px;display:block}
+.zk-stat small{font-size:11px;color:var(--zk-muted);white-space:nowrap}
+.zk-stat:first-child b{color:var(--brand)}
+.zk-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.zk-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;gap:12px}
+.zk-toolbar h2,.zk-side h2{font:800 22px/1.3 var(--d);letter-spacing:-.7px;margin:0}
+.zk-toolbar h2{color:var(--brand)}
+.zk-sub{font-size:11px;color:var(--zk-muted);margin-top:2px}
+.zk-btn{border:1px solid transparent;border-radius:6px;background:#333337;color:#eeeef1;display:inline-flex;align-items:center;
+  justify-content:center;gap:7px;padding:10px 13px;font-size:12px;font-weight:700;white-space:nowrap;transition:background .15s,border .15s}
+.zk-btn:hover{background:#414146}
+.zk-btn.primary{background:var(--brand);color:#1b1710}
+.zk-btn.primary:hover{background:#ffab42}
+.zk-btn.outline{background:transparent;border-color:#414146;color:#d4d3db}
+.zk-btn.outline:hover{background:#323236}
+.zk-btn.small{padding:8px 10px;font-size:11px}
+.zk-btn.active{background:#383026;color:#ffac50;border-color:#654322}
+.zk-btn:disabled{opacity:.5;cursor:not-allowed}
+.zk-btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.zk-tabs{display:flex;border-bottom:1px solid var(--zk-line);gap:21px;overflow:auto;white-space:nowrap;touch-action:pan-x pan-y}
+.zk-tab{padding:10px 0 12px;color:#a3a2ad;font-size:12px;font-weight:600;border-bottom:2px solid transparent;display:flex;align-items:center;gap:6px}
+.zk-tab:hover{color:var(--ink)}
+.zk-tab[aria-selected="true"]{color:var(--brand);border-color:var(--brand)}
+.zk-count{background:#353539;color:#b9b8bf;font-size:10px;padding:0 6px;border-radius:4px;font-weight:700}
+.zk-tab[aria-selected="true"] .zk-count{color:var(--brand);background:#3b2c20}
+.zk-filters{display:flex;align-items:center;gap:10px;margin:15px 0 13px}
+.zk-search{display:flex;align-items:center;gap:9px;background:var(--zk-card);border:1px solid #3a3a40;border-radius:6px;padding:0 12px;flex:1;min-width:0;height:39px}
+.zk-search svg{width:16px;height:16px;flex:none;fill:none;stroke:var(--brand);stroke-width:1.7;stroke-linecap:round}
+.zk-search input{background:none;border:0;color:var(--ink);outline:0;width:100%;min-width:0;font-size:12px}
+.zk-search:focus-within{border-color:#9b6028}
+.zk-filters .dd{height:39px;max-width:190px;flex:none}
+.zk-filters .dd-b{background:var(--zk-card);color:#dedde3;border:1px solid #3a3a40;border-radius:6px;padding:0 12px;font-size:12px}
+.zk-listhead,.zk-row{grid-template-columns:minmax(205px,1.4fr) minmax(122px,.83fr) minmax(124px,.85fr) 116px;gap:13px}
+.zk-listhead{display:grid;color:#8f8e99;font-size:10px;padding:0 13px 7px;text-transform:uppercase;letter-spacing:.065em;font-weight:600}
+.zk-row{display:grid;align-items:center;background:var(--zk-card);border:1px solid #303034;border-radius:7px;padding:11px 12px;
+  margin-bottom:7px;min-height:92px;transition:border .15s,background .15s}
+.zk-row:hover{border-color:#4a494d;background:#2c2c30}
+.zk-row.mine{border-color:#59412b}
+.zk-row.done{opacity:.72}
+.zk-ti{display:flex;align-items:center;gap:11px;min-width:0}
+.zk-cov{position:relative;width:65px;height:65px;border-radius:5px;background:#404045;flex-shrink:0;overflow:hidden;display:block}
+.zk-cov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.zk-cov .art-fb{position:absolute;inset:0;display:grid;place-items:center;font:800 18px var(--d);color:var(--tc,#fff);background:#38383d}
+.zk-name{font-size:13px;font-weight:700;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+button.zk-name{display:block;max-width:100%;padding:0;text-align:left}
+button.zk-name:hover{color:var(--brand)}
+.zk-artist{color:#b7b6bf;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:3px}
+.zk-meta{font-size:10px;color:#91909b;margin-top:4px;display:flex;gap:5px;align-items:center;white-space:nowrap;min-width:0;flex-wrap:wrap}
+.zk-meta .me{color:#ffab50}
+.zk-meta a{color:var(--zk-green)}
+.zk-meta a:hover{text-decoration:underline}
+.zk-meta .zk-pl{display:inline-flex;color:#b7b6bf}
+.zk-meta .zk-pl:hover{color:var(--ink)}
+.zk-meta .zk-pl svg{width:13px;height:13px}
+.zk-people{display:flex;flex-direction:column;gap:4px;align-items:flex-start;min-width:0;cursor:pointer;text-align:left;color:inherit}
+.zk-avs{display:flex;align-items:center;padding-left:2px}
+.zk-av{width:26px;height:26px;display:grid;place-items:center;border:2px solid var(--zk-card);border-radius:50%;margin-left:-2px;
+  font-size:11px;font-weight:800;color:#1e1e22;flex-shrink:0;overflow:hidden;background:#c2a0dc}
+.zk-av img{width:100%;height:100%;object-fit:cover}
+.zk-avs .zk-av+.zk-av{margin-left:-7px}
+.zk-av.me{box-shadow:0 0 0 2px var(--brand)}
+.zk-av.zk-plus{background:#3d3d43;color:#c7c6ce;font-size:10px}
+.zk-pt{color:#d2d1d8;font-size:11px}
+.zk-pt b{color:#fff;font-weight:700}
+.zk-price b{font-size:16px;font-weight:750;letter-spacing:-.35px}
+.zk-price .desc{color:#9897a1;font-size:10px;margin-top:2px}
+.zk-price .green{color:var(--zk-green);font-weight:700}
+.zk-prog{height:4px;background:#414147;border-radius:6px;overflow:hidden;margin:5px 0 0;max-width:120px}
+.zk-prog span{display:block;height:100%;background:var(--zk-green);border-radius:6px}
+.zk-prog span.over{background:var(--brand)}
+.zk-acts{display:flex;gap:5px;align-items:center;justify-content:flex-end}
+.zk-acts .zk-btn{flex:1}
+.zk-wish{display:grid;place-items:center;width:29px;height:34px;flex-shrink:0;border:1px solid #414147;border-radius:5px;color:#b9b8c1}
+.zk-wish svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round}
+.zk-wish:hover{color:var(--brand);border-color:#a9682c}
+.zk-wish[aria-pressed="true"]{color:var(--brand);background:#3c3026;border-color:#654322}
+.zk-wish[aria-pressed="true"] svg{fill:var(--brand)}
+.zk-side{display:flex;flex-direction:column;gap:13px}
+.zk-panel{border:1px solid #343438;background:var(--zk-panel);border-radius:8px;padding:17px}
+.zk-side h2{font-size:16px;letter-spacing:-.35px}
+.zk-side .zk-sub{line-height:1.5;margin-top:5px}
+.zk-sidehead{display:flex;align-items:center;justify-content:space-between}
+.zk-sidehead span{color:var(--brand);font-weight:700}
+.zk-match{display:flex;align-items:center;gap:9px;padding:12px 0;border-bottom:1px solid #35353a;cursor:pointer;width:100%;text-align:left;color:inherit}
+.zk-match:last-child{border:0}
+.zk-match .zk-cov{width:40px;height:40px}
+.zk-match .zk-cov .art-fb{font-size:13px}
+.zk-match .zk-name{font-size:12px}
+.zk-match .zk-artist{font-size:10px}
+.zk-match .arr{margin-left:auto;color:#9b9aa5;width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.zk-match:hover .zk-name,.zk-match:hover .arr{color:var(--brand)}
+.zk-mc{font-size:10px;color:var(--brand);margin-top:2px}
+.zk-side-link{color:var(--brand);font-size:12px;font-weight:650;padding:11px 0 0;text-align:left}
+.zk-side-link:hover{text-decoration:underline}
+.zk-info{position:relative;overflow:hidden}
+.zk-info::after{content:'▸';font-size:130px;color:#ff921508;position:absolute;right:-7px;top:-35px;pointer-events:none}
+.zk-step{display:flex;gap:9px;align-items:flex-start;margin-top:13px;font-size:12px;color:#b8b7bf;line-height:1.5}
+.zk-step > span{background:#393026;color:var(--brand);width:22px;height:22px;border-radius:4px;display:grid;place-items:center;flex-shrink:0;font-size:11px;font-weight:700}
+.zk-step strong{color:#e8e7ec;font-weight:650}
+.zk-note{font-size:10px;color:#9c9ba5;margin-top:13px;line-height:1.55}
+.zk-notice{display:flex;gap:8px;color:#a7a6b0;font-size:11px;margin-top:13px;line-height:1.5}
+.zk-notice svg{width:16px;height:16px;flex:none;margin-top:1px;fill:none;stroke:#85848e;stroke-width:1.7;stroke-linecap:round}
+.zk-empty{padding:45px 20px;text-align:center;background:var(--zk-panel);border-radius:7px;color:var(--zk-muted)}
+.zk-empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+.zk-empty .tw-in{margin-top:14px}
+/* Окно — общий .modal сайта (Escape и щелчок мимо закрывают его так же),
+   внутри — вид макета. */
+.zk-modal .zk-box{width:min(560px,100%);max-height:90vh;overflow:auto;background:#262629;border:1px solid #48484d;border-radius:10px;
+  box-shadow:0 18px 75px #0007;padding:23px}
+.zk-box h2{font:800 23px/1.15 var(--d);letter-spacing:-.7px;margin:0 24px 7px 0}
+.zk-box h3{font-size:14px;margin:20px 0 10px}
+.zk-box p{font-size:12px;color:#b7b6bf;margin:5px 0 13px}
+.zk-box p.zk-warn{color:var(--brand)}
+.zk-box a{color:inherit;text-decoration:none}
+.zk-box p.zk-warn a{color:var(--zk-green);text-decoration:underline}
+.zk-box .orange{color:var(--brand)}
+.zk-mhero{display:flex;gap:14px;align-items:center;margin:7px 20px 17px 0}
+.zk-mhero .zk-cov{width:80px;height:80px}
+.zk-mhero p{margin:0}
+.zk-mhero .zk-meta{margin-top:6px}
+.zk-money{background:#1f1f21;border:1px solid #3b3b40;border-radius:7px;padding:14px;margin:12px 0}
+.zk-mrow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.zk-mrow b{font-size:23px;letter-spacing:-.6px}
+.zk-mrow small{color:var(--zk-muted);font-size:11px;display:block}
+.zk-money .zk-prog{height:6px;max-width:none;margin:10px 0 7px}
+.zk-money p{margin:5px 0 0;font-size:11px}
+.zk-person{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #38383c}
+.zk-person .zk-av{width:35px;height:35px;font-size:14px;border:0;margin:0}
+.zk-person .pn{font-size:12px;font-weight:700;color:var(--ink)}
+.zk-person a.pn:hover{color:var(--brand)}
+.zk-person .ps{font-size:10px;color:#9c9ba5}
+.zk-person .pl{margin-left:auto;color:var(--zk-green);font-size:12px;font-weight:700;white-space:nowrap}
+.zk-person .pl.zk-nil{color:#898994}
+.zk-person .zk-btn{margin-left:3px}
+.zk-mfoot{display:flex;gap:8px;margin-top:19px;flex-wrap:wrap}
+.zk-mfoot .primary{flex:1}
+.zk-field{display:block;color:#c0bfc7;font-size:12px;font-weight:600;margin:10px 0}
+.zk-field input{display:block;width:100%;color:#e9e8ed;background:#202022;border:1px solid #45454a;padding:10px;border-radius:6px;margin-top:5px;outline:none}
+.zk-field input:focus{border-color:#9b6028}
+.zk-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.zk-found{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid #39393d}
+.zk-found:last-child{border:0}
+.zk-found .zk-cov{width:44px;height:44px}
+.zk-found .zk-btn{margin-left:auto}
+.zk-found .zk-name{white-space:normal}
+.zk-found p{margin:4px 0 0}
+.zk-prev{display:flex;gap:12px;align-items:center;margin:10px 0}
+.zk-prev img{width:96px;aspect-ratio:16/9;object-fit:cover;border-radius:6px;flex:none;background:#333}
+.zk-prev p{margin:0}
+
+@media(max-width:1050px){
+  .zk-layout{grid-template-columns:minmax(0,1fr) 250px;gap:15px}
+  .zk-stats{gap:15px}
+  .zk-listhead,.zk-row{grid-template-columns:minmax(160px,1.3fr) minmax(98px,.75fr) minmax(95px,.7fr) 108px;gap:9px}
+  .zk-cov{width:53px;height:53px}
+  .zk-row{padding:9px}
+  .zk-name{font-size:12px}
+  .zk-side .zk-panel{padding:13px}
+}
+@media(max-width:850px){
+  .zk-layout{grid-template-columns:minmax(0,1fr)}
+  .zk-side{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .zk-hero{align-items:flex-start}
+  .zk-stats{gap:12px;padding-left:15px}
+  .zk-stat b{font-size:22px}
+  .zk-hero h1{font-size:43px}
+  .zk-listhead,.zk-row{grid-template-columns:minmax(170px,1.4fr) minmax(105px,.8fr) minmax(106px,.8fr) 112px}
+}
+@media(max-width:620px){
+  #zpage{padding-left:13px;padding-right:13px}
+  .zk-hero{display:block;margin-bottom:22px}
+  .zk-hero h1{font-size:43px}
+  .zk-stats{margin-top:15px;padding:12px 0 0;border-left:0;border-top:1px solid var(--zk-line);justify-content:space-between}
+  .zk-hero p{font-size:12px}
+  .zk-toolbar h2{font-size:19px}
+  .zk-tabs{gap:15px}
+  .zk-listhead{display:none}
+  .zk-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px;min-height:0;padding:10px}
+  .zk-ti{grid-column:1/-1}
+  .zk-row .zk-cov{width:48px;height:48px}
+  .zk-row .zk-people{grid-column:1;grid-row:2}
+  .zk-row .zk-price{grid-column:2;grid-row:2;justify-self:end;text-align:right}
+  .zk-row .zk-acts{grid-column:1/-1}
+  .zk-price .zk-prog{margin-left:auto}
+  .zk-side{display:flex}
+  .zk-filters .dd{max-width:130px}
+  .zk-tab{font-size:11px}
+  .zk-modal .zk-box{padding:17px}
+  .zk-toolbar .zk-btn{font-size:11px;padding:8px}
+  .zk-two{grid-template-columns:1fr}
+}
 </style>
 <meta name="theme-color" content="#1B1B1D">
 </head>
@@ -2883,6 +3089,7 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
    <a href="https://farymastats.info/" target="_blank" rel="noopener noreferrer">стрим</a>
    <a href="#base" id="navBase">база треков</a>
    <a href="#fun" id="navFun">прикольчики</a>
+   <a href="#zakaz" id="navZakaz">заказочная</a>
    <a href="#">FAQ</a>
   </nav>
 
@@ -3050,6 +3257,53 @@ button.small-tag:hover{background:#3e3e45;color:#fff}
   <a class="fun-card" href="https://farymastats.info/" target="_blank" rel="noopener noreferrer">
    <b>Рекорды и статистика</b><span>Строже ли он стал, менял ли мнение, кого приносят чаще всего.</span><small>сайт статистики ↗</small></a>
  </div>
+</div>
+
+<!-- Заказочная (#zakaz) — по макету заказчика faryma-zakazochnaya-v2:
+     общий список «хочу заказать» всех зрителей, сложенный по песне, и
+     сборы — договорённости заказать трек вместе. Те же таблицы, что у
+     «хочу заказать» в кабинете (wishes), плюс pools и pledges. Шапку
+     макета не брали — она декорация. Рисует JS (zakazDraw). -->
+<div class="tpage zk" id="zpage" hidden>
+ <div class="tp-top">
+  <nav class="crumbs" aria-label="Где я"><a href="#">главная</a><span class="sep">›</span><b>заказочная</b></nav>
+ </div>
+ <section class="zk-hero">
+  <div><h1>заказочная</h1><p>Хочешь услышать разнос любимого трека на стриме? <strong>Найди тех, кто хочет того же.</strong> Объединяйтесь, договаривайтесь о долях и заказывайте музыку вместе.</p></div>
+  <div class="zk-stats"><div class="zk-stat"><b id="zkStTracks">—</b><small>треков ждут</small></div><div class="zk-stat"><b id="zkStUsers">—</b><small>участников</small></div><div class="zk-stat"><b id="zkStPools">—</b><small>активных сборов</small></div></div>
+ </section>
+ <div class="zk-layout">
+  <section>
+   <div class="zk-toolbar"><div><h2>что хотят заказать</h2><div class="zk-sub" id="zkResult">общий список желаний</div></div>
+    <button type="button" class="zk-btn primary" id="zkAdd">＋ предложить трек</button></div>
+   <div class="zk-tabs" id="zkTabs" role="tablist" aria-label="Какие треки показать"></div>
+   <div class="zk-filters">
+    <label class="zk-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="zkQ" type="search" placeholder="найти трек, исполнителя или пользователя" autocomplete="off" aria-label="Найти в заказочной"></label>
+    <select id="zkSort" aria-label="Сортировка" data-dd-right><option value="popular">по популярности</option><option value="recent">недавно добавлены</option><option value="close">ближе к сбору</option><option value="cheap">по доле на человека</option></select>
+   </div>
+   <div class="zk-listhead" aria-hidden="true"><div>трек</div><div>кто хочет</div><div>совместный заказ</div><div></div></div>
+   <div id="zkList" aria-live="polite"></div>
+   <div class="zk-notice"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7h.01"/></svg><span>Сумма на человека ориентировочная: она рассчитана при условии, что все желающие участвуют поровну. Добавление трека в список не обязывает платить.</span></div>
+  </section>
+  <aside class="zk-side">
+   <div class="zk-panel"><div class="zk-sidehead"><h2>твои совпадения</h2><span id="zkMatchN"></span></div>
+    <div class="zk-sub">Другие пользователи тоже хотят заказать треки из твоего списка.</div>
+    <div id="zkMatches"></div><button type="button" class="zk-side-link" data-zk-tab="match">все мои совпадения →</button></div>
+   <div class="zk-panel"><div class="zk-sidehead"><h2>мои сборы</h2><span id="zkMineN"></span></div>
+    <div class="zk-sub" id="zkMineSub">Ты пока ни в одном сборе не участвуешь.</div>
+    <div id="zkMine"></div><button type="button" class="zk-side-link" data-zk-tab="mine">мой список «хочу заказать» →</button></div>
+   <div class="zk-panel zk-info" id="zkHow"><h2>как это работает?</h2>
+    <div class="zk-step"><span>1</span><div><strong>Добавь трек</strong><br>Здесь, в «хочу заказать» личного кабинета или из своего плейлиста.</div></div>
+    <div class="zk-step"><span>2</span><div><strong>Найди единомышленников</strong><br>Посмотри, кто тоже ждёт разнос. Позови их в сбор.</div></div>
+    <div class="zk-step"><span>3</span><div><strong>Договоритесь о заказе</strong><br>Создайте сбор, укажите доли и выберите, кто оформит заказ на стриме.</div></div>
+    <div class="zk-note">Сбор — договорённость, а не оплата. Сам заказ оформляется отдельно.</div></div>
+  </aside>
+ </div>
+</div>
+
+<!-- Окно заказочной: трек и его сбор, своя доля, «предложить трек». -->
+<div class="modal zk-modal" id="mZakaz" hidden>
+ <div class="mbox zk-box" role="dialog" aria-modal="true" aria-label="Заказ трека"></div>
 </div>
 
 <!-- Личный кабинет (#me): своя статистика по своим оценкам. Всё
@@ -14174,6 +14428,7 @@ function controls() {
 
   coverInit();
   factInit();
+  заказПодключить();
 
   const ft = $('fToggle');
   ft.addEventListener('click', () => {
@@ -14254,6 +14509,13 @@ function route() {
   уходИзОценки();
   if (location.hash === '#covers') return showAdmin();
   if (location.hash === '#fun') return showFun();
+  // Окно заказочной живёт только на ней: ушли по ссылке на профиль — закрываем.
+  if (!/^#zakaz(\/|$)/.test(location.hash)) $('mZakaz').hidden = true;
+  if (/^#zakaz(\/|$)/.test(location.hash)) {
+    let к = location.hash.slice(7);
+    try { к = decodeURIComponent(к); } catch {}
+    return showZakaz(к);
+  }
   if (/^#me(\/|$)/.test(location.hash)) return showMe();
   if (location.hash.startsWith('#u=')) {
     let login = location.hash.slice(3);
@@ -14286,9 +14548,9 @@ function route() {
 function навигация() {
   // Студия открывается из кабинета («управление») — подсвечен кабинет.
   const h = location.hash;
-  const где = h === '#fun' ? 'navFun' : h === '#studio' || /^#me(\/|$)/.test(h) ? '' : h.startsWith('#u=') ? '-' :
+  const где = h === '#fun' ? 'navFun' : /^#zakaz(\/|$)/.test(h) ? 'navZakaz' : h === '#studio' || /^#me(\/|$)/.test(h) ? '' : h.startsWith('#u=') ? '-' :
               h === '' || h === '#' || h === '#rate' ? 'navHome' : 'navBase';
-  ['navHome', 'navBase', 'navFun'].forEach(id => {
+  ['navHome', 'navBase', 'navFun', 'navZakaz'].forEach(id => {
     if (id === где) $(id).setAttribute('aria-current', 'page');
     else $(id).removeAttribute('aria-current');
   });
@@ -14314,6 +14576,7 @@ function showTrack(r) {
   $('mpage').hidden = true;
   $('upage').hidden = true;
   $('rpage').hidden = true;
+  $('zpage').hidden = true;
   $('tpage').hidden = false;
   document.title = (r.title || '—') + ' — база треков';
   // Вернулись к тому же треку — лента комментариев осталась от прошлого
@@ -14348,6 +14611,7 @@ function showCatalog() {
   $('mpage').hidden = true;
   $('upage').hidden = true;
   $('rpage').hidden = true;
+  $('zpage').hidden = true;
   плашкаЭфира();
   $('page').hidden = false;
   document.title = 'База треков';
@@ -16983,6 +17247,7 @@ function showAdmin() {
   $('mpage').hidden = true;
   $('upage').hidden = true;
   $('rpage').hidden = true;
+  $('zpage').hidden = true;
   $('apage').hidden = false;
   плашкаЭфира();
   document.title = 'Заявки на обложки — база треков';
@@ -17297,6 +17562,7 @@ function showFun() {
   $('mpage').hidden = true;
   $('upage').hidden = true;
   $('rpage').hidden = true;
+  $('zpage').hidden = true;
   $('fpage').hidden = false;
   document.title = 'Прикольчики — база треков';
   $('fBack').onclick = e => { e.preventDefault(); toCatalog(); };
@@ -18190,6 +18456,7 @@ function showMe() {
   $('fpage').hidden = true;
   $('upage').hidden = true;
   $('rpage').hidden = true;
+  $('zpage').hidden = true;
   $('mpage').hidden = false;
   плашкаЭфира();
   document.title = 'Личный кабинет — база треков';
@@ -19225,7 +19492,8 @@ async function плейлистНарисовать(box, шапка, д) {
 /* ---------- вкладка «хочу заказать» ---------- */
 async function meWishes(box) {
   const шапка = '<div class="tab-heading"><div><h2>хочу заказать</h2><p>Треки, которые ты хочешь принести на разнос. Хочет кто-то ещё — договоритесь и закажите вместе.</p></div>' +
-    '<a class="soft-btn" href="#me/music/playlist">' + ЗНАЧОК_SP.replace('class="sp"', 'class="sp" style="width:15px;height:15px"') + ' мой плейлист</a></div>';
+    '<div class="sp-row"><a class="soft-btn" href="#zakaz">заказочная →</a>' +
+    '<a class="soft-btn" href="#me/music/playlist">' + ЗНАЧОК_SP.replace('class="sp"', 'class="sp" style="width:15px;height:15px"') + ' мой плейлист</a></div></div>';
   if (!вошёл()) {
     box.innerHTML = шапка + '<div class="c-empty">Список «хочу заказать» живёт в аккаунте — после входа через Twitch.' +
       (ОБЛ && ОБЛ.sb ? '<br><button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '') + '</div>';
@@ -19356,6 +19624,635 @@ function формаЖеланияПодключить(box) {
   });
 }
 
+/* ============================================================
+   ЗАКАЗОЧНАЯ (#zakaz)
+   ------------------------------------------------------------
+   Макет заказчика faryma-zakazochnaya-v2. Не отдельная игрушка, а
+   общий вид того же «хочу заказать»: желания всех зрителей, кто их не
+   скрыл (wish_board), сложенные по песне, и сборы на них — pools и
+   pledges. Добавить и убрать трек — тот же хочу(), что в кабинете и в
+   плейлисте; ссылка разбирается тем же чтоПоСсылке(), разнесённое
+   узнаётся той же сверкой razneset.
+   Деньги здесь не ходят: доля — обещание. Цель сбора (сколько стоит
+   разнос) ставит организатор — длинный трек дороже, а цену знает он.
+   «~N ₽ с человека» у песен без сбора — только если композитор или
+   админ поставил цену по умолчанию (site_settings): не поставлена —
+   денег у таких песен нет, выдумывать цену незачем.
+   «Написать» из макета — уведомление «зовёт скинуться» (wish_invite):
+   личных сообщений на сайте нет, а звать можно только того, у кого
+   эта песня в открытом списке.
+   ============================================================ */
+const ЗАК = { ряды: null, цена: null, безСборов: false, ошибка: '', грузим: null, звал: new Set(),
+              вкладка: 'all', q: '', сорт: 'popular', показано: 60, разнесли: new Map(), открыт: '', вид: '' };
+const ЗАК_ВКЛАДКИ = [['all', 'все треки'], ['match', 'мои совпадения'], ['pools', 'идут сборы'], ['mine', 'хочу заказать']];
+const ЗАК_ЦВЕТА = ['#c2a0dc', '#78b9a2', '#e3b976', '#9ba9db', '#d88c92', '#95bfcf', '#b7c28b', '#cc9e87'];
+const ЗИКО = {
+  heart: '<path d="M20.8 8.5c0 4-8.8 9.3-8.8 9.3S3.2 12.5 3.2 8.5a4.5 4.5 0 0 1 8.8-1.2 4.5 4.5 0 0 1 8.8 1.2Z"/>',
+  chat: '<path d="M4 5h16v12H9l-5 4z"/>',
+  arrow: '<path d="m9 6 6 6-6 6"/>'
+};
+const зико = (n, cls = '') => '<svg' + (cls ? ' class="' + cls + '"' : '') + ' viewBox="0 0 24 24" aria-hidden="true">' + ЗИКО[n] + '</svg>';
+const рубли = n => число(Math.round(n)) + ' ₽';
+const людей = n => plural(n, 'человек', 'человека', 'человек');
+const яId = () => вошёл() ? ОБЛ.user.id : '';
+
+/* ---------- данные ---------- */
+function заказЗагрузить() {
+  if (ЗАК.грузим) return ЗАК.грузим;
+  const ход = (async () => {
+    if (!ОБЛ.sb) return null;
+    const я = вошёл();
+    ЗАК.для = яId();
+    const [a, b, c, d] = await Promise.all([
+      ОБЛ.sb.rpc('wish_board'),
+      ОБЛ.sb.rpc('pool_board'),
+      ОБЛ.sb.from('site_settings').select('key,value'),
+      я ? ОБЛ.sb.rpc('my_invites') : Promise.resolve({ data: [] }),
+      я && !ОБЛ.желания ? желанияЗагрузить() : null
+    ]);
+    if (a.error) {
+      ЗАК.ряды = null;
+      ЗАК.ошибка = /wish_board|function|schema cache/i.test(a.error.message || '')
+        ? 'Заказочная на сервере ещё не включена — схему базы надо перезапустить.' : 'Не удалось загрузить: ' + a.error.message;
+      return null;
+    }
+    ЗАК.ошибка = '';
+    ЗАК.безСборов = !!b.error;
+    const цена = !c.error && (c.data || []).find(x => x.key === 'order_price');
+    ЗАК.цена = цена && Number(цена.value) > 0 ? Number(цена.value) : null;
+    ЗАК.звал = new Set((d.data || []).map(x => x.to_id + '|' + x.song_key));
+    ЗАК.ряды = заказСложить(a.data || [], b.error ? [] : b.data || []);
+    заказСверить();
+    return ЗАК.ряды;
+  })();
+  ЗАК.грузим = ход;
+  ход.finally(() => { if (ЗАК.грузим === ход) ЗАК.грузим = null; });
+  return ход;
+}
+
+/* Песни из wish_board → ряды. Одна песня может прийти под двумя
+   ключами (записали по-разному), а ролик или трек Spotify у них общий —
+   тогда это один ряд, как и в wish_mates. Сбор цепляется по любому из
+   ключей ряда; сбор на песню, которую уже никто не хочет, — свой ряд. */
+function заказСложить(песни, сборы) {
+  const ряды = [], поId = new Map(), поКлючу = new Map();
+  const я = яId();
+  песни.forEach(п => {
+    const люди = Array.isArray(п.people) ? п.people : [];
+    let r = (п.yt_ids || []).map(x => поId.get('yt:' + x)).find(Boolean) ||
+            (п.sp_ids || []).map(x => поId.get('sp:' + x)).find(Boolean);
+    if (!r) {
+      r = { key: п.song_key, ключи: [], чьи: new Map(), title: п.title, artist: п.artist, yt: [], sp: [], люди: [], моиКлючи: [],
+            first: Date.parse(п.first_at) || 0, last: Date.parse(п.last_at) || 0, сбор: null };
+      ряды.push(r);
+    }
+    r.ключи.push(п.song_key);
+    r.чьи.set(п.song_key, new Set(люди.map(ч => ч.id)));
+    поКлючу.set(п.song_key, r);
+    (п.yt_ids || []).forEach(x => { if (!r.yt.includes(x)) r.yt.push(x); поId.set('yt:' + x, r); });
+    (п.sp_ids || []).forEach(x => { if (!r.sp.includes(x)) r.sp.push(x); поId.set('sp:' + x, r); });
+    люди.forEach(ч => { if (!r.люди.some(x => x.id === ч.id)) r.люди.push(ч); if (ч.id === я) r.моиКлючи.push(п.song_key); });
+    r.first = Math.min(r.first, Date.parse(п.first_at) || r.first);
+    r.last = Math.max(r.last, Date.parse(п.last_at) || 0);
+  });
+  сборы.forEach(с => {
+    let r = поКлючу.get(с.song_key) || (с.yt_id && поId.get('yt:' + с.yt_id)) || (с.sp_id && поId.get('sp:' + с.sp_id));
+    if (!r) {
+      r = { key: с.song_key, ключи: [с.song_key], чьи: new Map(), title: с.title, artist: с.artist, yt: с.yt_id ? [с.yt_id] : [], sp: с.sp_id ? [с.sp_id] : [],
+            люди: [], моиКлючи: [], first: Date.parse(с.created_at) || 0, last: Date.parse(с.created_at) || 0, сбор: null };
+      ряды.push(r);
+      поКлючу.set(с.song_key, r);
+    }
+    r.сбор = { id: с.id, key: с.song_key, target: с.target, ordered: !!с.ordered, owner: с.owner || {},
+               доли: Array.isArray(с.pledges) ? с.pledges : [], at: Date.parse(с.created_at) || 0 };
+    r.last = Math.max(r.last, r.сбор.at, ...r.сбор.доли.map(x => Date.parse(x.at) || 0));
+  });
+  ряды.forEach(r => { r.мой = r.моиКлючи.length > 0; });
+  return ряды;
+}
+
+/* Все, кто при деле: хотят песню или вложились в её сбор. Скрывший свой
+   список, но вложившийся — виден: доля — дело открытое, это сказано в окне доли. */
+function заказЛюди(r) {
+  const все = r.люди.slice();
+  if (r.сбор) {
+    [r.сбор.owner, ...r.сбор.доли].forEach(ч => { if (ч && ч.id && !все.some(x => x.id === ч.id)) все.push(ч); });
+  }
+  return все;
+}
+const заказСколько = r => заказЛюди(r).length;
+const заказСумма = r => r.сбор ? r.сбор.доли.reduce((s, x) => s + (Number(x.amount) || 0), 0) : 0;
+const заказМояДоля = r => r.сбор ? ((r.сбор.доли.find(x => x.id === яId()) || {}).amount || 0) : 0;
+const заказВСборе = r => !!(r.сбор && вошёл() && (r.сбор.owner.id === яId() || заказМояДоля(r)));
+const заказЦена = r => r.сбор ? r.сбор.target : ЗАК.цена;
+const заказДругие = r => заказЛюди(r).filter(x => x.id !== яId()).length;
+const заказСовпало = r => r.мой && заказДругие(r) > 0;
+
+/* Уже разнесли? Сначала по самому ролику или треку Spotify — без
+   догадок; потом той же сверкой razneset, что у «хочу заказать». */
+function заказСверить() {
+  const ряды = ЗАК.ряды || [];
+  ряды.forEach(r => {
+    if (ЗАК.разнесли.has(r.key)) return;
+    const точно = r.yt.map(y => вАрхивеПоСсылке(y, '')).find(Boolean) || r.sp.map(s => вАрхивеПоСсылке('', s)).find(Boolean);
+    if (точно) ЗАК.разнесли.set(r.key, { r: точно, l: точно.rate ? точно.rate.label : '', s: точно.streamNum });
+  });
+  разнесётКод().then(код => {
+    let нашлось = false;
+    ряды.forEach(r => {
+      if (ЗАК.разнесли.has(r.key)) return;
+      const т = { id: r.sp[0] || '', title: r.title, artists: String(r.artist).split(', ').map(name => ({ id: '', name })) };
+      const ключи = т.artists.map(a => код.p.resolveArtist(код.ix, a)).filter(Boolean);
+      const м = код.p.findRated(код.ix, т, ключи)[0];
+      if (!м) { ЗАК.разнесли.set(r.key, null); return; }
+      ЗАК.разнесли.set(r.key, { r: строкаКаталога(код, м), l: м.l || '', s: м.s });
+      нашлось = true;
+    });
+    if (нашлось && !$('zpage').hidden) заказНарисовать();
+  }).catch(() => {});
+}
+const заказРазнесли = r => ЗАК.разнесли.get(r.key) || null;
+
+/* ---------- страница ---------- */
+function showZakaz(ключ) {
+  уходИзИгры();
+  уходИзСтудии();
+  фон('');
+  if (T.r) уходСТрека();
+  T.r = null;
+  ['page', 'tpage', 'apage', 'fpage', 'mpage', 'upage', 'rpage'].forEach(id => { $(id).hidden = true; });
+  $('zpage').hidden = false;
+  плашкаЭфира();
+  document.title = 'Заказочная — база треков';
+  window.scrollTo(0, 0);
+  if (ключ) ЗАК.открыт = ключ;
+  заказНарисовать();
+  заказПоказать();
+}
+/* Свежие данные с сервера и перерисовка. По ссылке #zakaz/<ключ> (из
+   уведомления) — сразу окно этой песни, а адрес возвращается к #zakaz,
+   чтобы «назад» не открывало окно снова. */
+async function заказПоказать() {
+  if (!ОБЛ.sb) { заказНарисовать(); return; }
+  await заказЗагрузить();
+  if ($('zpage').hidden) return;
+  заказНарисовать();
+  if (ЗАК.открыт && ЗАК.ряды) {
+    const r = заказНайти(ЗАК.открыт);
+    ЗАК.открыт = '';
+    if (location.hash !== '#zakaz') history.replaceState(null, '', location.pathname + location.search + '#zakaz');
+    if (r) заказОкно(r.key); else toast('Этого трека в заказочной уже нет');
+  }
+}
+/* Под каким ключом песня лежит в списке у этого зрителя — его и зовём. */
+const заказКлючЧей = (r, id) => r.ключи.find(к => (r.чьи.get(к) || new Set()).has(id)) || r.key;
+const заказНайти = ключ => (ЗАК.ряды || []).find(r => r.key === ключ || r.ключи.includes(ключ)) || null;
+
+function заказНарисовать() {
+  const список = $('zkList');
+  if (!ЗАК.ряды) {
+    ['zkStTracks', 'zkStUsers', 'zkStPools'].forEach(id => { $(id).textContent = '—'; });
+    $('zkTabs').innerHTML = ''; $('zkResult').textContent = 'общий список желаний';
+    $('zkMatches').innerHTML = ''; $('zkMine').innerHTML = ''; $('zkMatchN').textContent = ''; $('zkMineN').textContent = '';
+    список.innerHTML = '<div class="zk-empty">' + (ЗАК.ошибка ? '<b>заказочная недоступна</b>' + esc(ЗАК.ошибка)
+      : ОБЛ.состояние === 'нет' ? '<b>сервер сайта не ответил</b>Заказочная живёт на сервере — открой страницу чуть позже.'
+      : '<b>загружаю…</b>Собираю, кто что хочет заказать.') + '</div>';
+    return;
+  }
+  const все = ЗАК.ряды;
+  const ждут = все.filter(r => !заказРазнесли(r));
+  const люди = new Set(все.flatMap(r => заказЛюди(r).map(x => x.id)));
+  $('zkStTracks').textContent = число(ждут.length);
+  $('zkStUsers').textContent = число(люди.size);
+  $('zkStPools').textContent = число(все.filter(r => r.сбор && !r.сбор.ordered).length);
+  const подходит = { all: () => true, match: заказСовпало, pools: r => !!r.сбор, mine: r => r.мой };
+  $('zkTabs').innerHTML = ЗАК_ВКЛАДКИ.map(([к, имя]) =>
+    '<button type="button" class="zk-tab" role="tab" data-zk-tab="' + к + '" aria-selected="' + (ЗАК.вкладка === к) + '">' + имя +
+    '<span class="zk-count">' + число(все.filter(подходит[к]).length) + '</span></button>').join('');
+  const q = заказСлова(ЗАК.q);
+  const ряды = все.filter(r => подходит[ЗАК.вкладка](r) && (!q.length || заказИщется(r, q)));
+  const п = r => заказЦена(r) ? заказЦена(r) / Math.max(1, заказСколько(r)) : Infinity;
+  const сбор = r => r.сбор && !r.сбор.ordered ? заказСумма(r) / r.сбор.target : -1;
+  const по = { popular: (a, b) => заказСколько(b) - заказСколько(a) || b.last - a.last,
+               recent: (a, b) => b.last - a.last,
+               close: (a, b) => сбор(b) - сбор(a) || заказСколько(b) - заказСколько(a),
+               cheap: (a, b) => п(a) - п(b) || заказСколько(b) - заказСколько(a) }[ЗАК.сорт];
+  // Разнесённые — в конце при любой сортировке: их уже не ждут.
+  ряды.sort((a, b) => (!!заказРазнесли(a) - !!заказРазнесли(b)) || по(a, b));
+  $('zkResult').textContent = число(ряды.length) + ' из ' + число(все.length) + ' ' + plural(все.length, 'трека', 'треков', 'треков') + ' · ' +
+    (ЗАК.вкладка === 'match' ? 'пересечения с твоим списком' : ЗАК.вкладка === 'mine' ? 'твой список' : 'общий список желаний');
+  список.innerHTML = ряды.length
+    ? ряды.slice(0, ЗАК.показано).map(заказРяд).join('') +
+      (ряды.length > ЗАК.показано ? '<button type="button" class="zk-btn outline" data-zk-more style="width:100%;margin-top:6px">показать ещё ' +
+        число(Math.min(60, ряды.length - ЗАК.показано)) + ' из ' + число(ряды.length - ЗАК.показано) + '</button>' : '')
+    : '<div class="zk-empty">' + заказПусто(q.length) + '</div>';
+  заказКартинки(список);
+  заказБок();
+}
+function заказПусто(сПоиском) {
+  if (сПоиском) return '<b>ничего не нашлось</b>Попробуй изменить запрос или предложить трек.';
+  if ((ЗАК.вкладка === 'mine' || ЗАК.вкладка === 'match') && !вошёл())
+    return '<b>после входа</b>Свой список «хочу заказать» живёт в аккаунте.' +
+      (ОБЛ.sb ? '<br><button type="button" class="tw-in" data-login>' + ЗНАЧОК_TW + 'Войти через Twitch</button>' : '');
+  return { all: '<b>пока пусто</b>Никто ещё ничего не хочет заказать — предложи трек первым.',
+           match: '<b>совпадений пока нет</b>Никто, кроме тебя, не хочет треки из твоего списка. Добавь ещё или загляни позже.',
+           pools: '<b>сборов пока нет</b>Открой трек и создай сбор — остальные смогут вложиться.',
+           mine: '<b>твой список пуст</b>Отмечай сердечком треки здесь или добавь свой — «предложить трек».' }[ЗАК.вкладка];
+}
+
+/* Поиск по началу слова, как в каталоге: «ado» не находит «shadow». */
+const заказСлова = s => String(s || '').normalize('NFKC').toLowerCase().replace(/ё/g, 'е').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+function заказИщется(r, q) {
+  if (!r._слова) r._слова = заказСлова([r.title, r.artist, ...заказЛюди(r).flatMap(x => [x.name, x.login])].join(' '));
+  return q.every(w => r._слова.some(h => h.startsWith(w)));
+}
+
+function заказАва(ч, i = 0) {
+  const цвет = ч.color || ЗАК_ЦВЕТА[Math.abs([...String(ч.id || ч.login || i)].reduce((h, c) => h * 31 + c.charCodeAt(0) | 0, 7)) % ЗАК_ЦВЕТА.length];
+  return '<span class="zk-av' + (ч.id && ч.id === яId() ? ' me' : '') + '" style="background:' + esc(цвет) + '">' +
+    (ч.avatar_url ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(ч.avatar_url) + '">' : esc([...(буквы(ч.name || ч.login) || '?')][0])) + '</span>';
+}
+/* Обложка: трек Spotify — квадратная, у oEmbed; иначе превью ролика;
+   нет ни того, ни другого — буквы, как у карточки без обложки. */
+function заказОбложка(r) {
+  const fb = '<span class="art-fb">' + esc(initials({ artist: r.artist, title: r.title })) + '</span>';
+  return '<span class="zk-cov">' + fb + (r.sp[0] ? '<img alt="" loading="lazy" data-sp="' + esc(r.sp[0]) + '">'
+    : r.yt[0] ? '<img alt="" loading="lazy" src="' + esc(ytCover(r.yt[0])) + '">' : '') + '</span>';
+}
+function заказКартинки(box) {
+  box.querySelectorAll('.zk-cov img').forEach(img => {
+    if (img._шит) return;
+    img._шит = true;
+    img.addEventListener('error', () => img.remove());
+    if (img.dataset.sp) { if (SPC[img.dataset.sp]) img.src = SPC[img.dataset.sp]; else seen.observe(img); }
+  });
+}
+function заказПлощадки(r) {
+  return (r.yt[0] ? '<a class="zk-pl" href="https://youtu.be/' + esc(r.yt[0]) + '" target="_blank" rel="noopener noreferrer" aria-label="Открыть на YouTube" data-tip="Открыть на YouTube">' + ПЛ_ЗНАЧОК.yt + '</a>' : '') +
+    (r.sp[0] ? '<a class="zk-pl" href="https://open.spotify.com/track/' + esc(r.sp[0]) + '" target="_blank" rel="noopener noreferrer" aria-label="Открыть в Spotify" data-tip="Открыть в Spotify">' + ПЛ_ЗНАЧОК.sp + '</a>' : '');
+}
+function заказРазнеслиHtml(r) {
+  const в = заказРазнесли(r);
+  if (!в) return '';
+  return '<span>уже разнесли: ' + (в.r ? '<a href="' + trackHref(в.r) + '">' : '<b>') + esc(в.l || 'без оценки') + (в.r ? '</a>' : '</b>') +
+    (в.s != null ? ' · эфир №' + esc(в.s) : '') + '</span>';
+}
+function заказДеньги(r) {
+  const с = r.сбор, n = заказСколько(r);
+  if (с) {
+    const сумма = заказСумма(r), пол = сумма >= с.target;
+    return '<b class="green">' + рубли(сумма) + '</b><div class="desc">из ' + рубли(с.target) + ' · ' +
+      (с.ordered ? 'заказан' : пол ? 'договорились' : 'идёт сбор') + ' · <span' + (сумма > с.target ? ' class="orange"' : '') + '>' +
+      Math.round(сумма / с.target * 100) + '%</span></div>' +
+      '<div class="zk-prog"><span class="' + (сумма > с.target ? 'over' : '') + '" style="width:' + Math.min(100, сумма / с.target * 100) + '%"></span></div>';
+  }
+  if (ЗАК.цена) return '<b>~' + рубли(Math.ceil(ЗАК.цена / Math.max(1, n))) + '</b><div class="desc">с человека · ' + рубли(ЗАК.цена) + ' всего</div>';
+  return '<b>—</b><div class="desc">сбора пока нет</div>';
+}
+function заказРяд(r) {
+  const n = заказСколько(r), люди = заказЛюди(r), с = r.сбор, полный = с && (с.ordered || заказСумма(r) >= с.target);
+  const ушёл = заказРазнесли(r);
+  return '<article class="zk-row' + (r.мой ? ' mine' : '') + (ушёл ? ' done' : '') + '" data-k="' + esc(r.key) + '">' +
+    '<div class="zk-ti">' + заказОбложка(r) + '<div style="min-width:0">' +
+      '<button type="button" class="zk-name" data-zk-open data-tip="' + esc(r.artist + ' — ' + r.title) + '">' + esc(r.title) + '</button>' +
+      '<div class="zk-artist">' + esc(r.artist) + '</div>' +
+      '<div class="zk-meta">' + заказПлощадки(r) + (ушёл ? заказРазнеслиHtml(r) : r.мой ? '<span class="me">в твоём списке</span>' : '') + '</div></div></div>' +
+    '<button type="button" class="zk-people" data-zk-open aria-label="Кто хочет заказать">' +
+      '<span class="zk-avs">' + люди.slice(0, 5).map(заказАва).join('') + (n > 5 ? '<span class="zk-av zk-plus">+' + (n - 5) + '</span>' : '') + '</span>' +
+      '<span class="zk-pt"><b>' + n + '</b> ' + людей(n) + ' ' + (n === 1 ? 'хочет' : 'хотят') + '</span></button>' +
+    '<div class="zk-price">' + заказДеньги(r) + '</div>' +
+    '<div class="zk-acts"><button type="button" class="zk-btn small' + (с && !полный ? ' primary' : '') + '" data-zk-open>' +
+      (с ? (полный ? 'детали' : 'в сбор') : 'подробнее') + '</button>' +
+      '<button type="button" class="zk-wish" data-zk-wish aria-pressed="' + r.мой + '" aria-label="' + (r.мой ? 'Убрать из «хочу заказать»' : 'Хочу заказать') +
+        '" data-tip="' + (r.мой ? 'убрать из «хочу заказать»' : 'добавить в «хочу заказать»') + '">' + зико('heart') + '</button></div></article>';
+}
+function заказМини(r, подпись) {
+  return '<button type="button" class="zk-match" data-k="' + esc(r.key) + '" data-zk-open>' + заказОбложка(r) +
+    '<span style="min-width:0"><span class="zk-name" style="display:block">' + esc(r.title) + '</span><span class="zk-artist" style="display:block">' + esc(r.artist) + '</span>' +
+    '<span class="zk-mc" style="display:block">' + подпись + '</span></span>' + зико('arrow', 'arr') + '</button>';
+}
+function заказБок() {
+  const все = ЗАК.ряды || [];
+  const совп = все.filter(заказСовпало).sort((a, b) => заказДругие(b) - заказДругие(a));
+  $('zkMatchN').textContent = вошёл() ? совп.length : '';
+  $('zkMatches').innerHTML = !вошёл()
+    ? '<p class="zk-sub">Войди через Twitch — и здесь появятся те, кто хочет того же, что ты.</p>'
+    : совп.length ? совп.slice(0, 3).map(r => заказМини(r, заказДругие(r) + ' ' + людей(заказДругие(r)) + ' тоже ' + (заказДругие(r) === 1 ? 'хочет' : 'хотят'))).join('')
+    : '<p class="zk-sub">Добавь треки в свой список, чтобы найти совпадения.</p>';
+  const мои = все.filter(заказВСборе);
+  $('zkMineN').textContent = вошёл() ? мои.length : '';
+  $('zkMineSub').textContent = мои.length ? 'Твои договорённости о совместных заказах.' : 'Ты пока ни в одном сборе не участвуешь.';
+  $('zkMine').innerHTML = мои.map(r => {
+    const с = заказСумма(r);
+    return заказМини(r, рубли(с) + ' из ' + рубли(r.сбор.target) + ' · ' + (r.сбор.ordered ? 'заказан' : с >= r.сбор.target ? 'договорились' : 'в сборе') +
+      ' · ' + Math.round(с / r.сбор.target * 100) + '%');
+  }).join('');
+  заказКартинки($('zkMatches')); заказКартинки($('zkMine'));
+}
+
+/* ---------- хочу / не хочу ---------- */
+async function заказХочу(r, вкл) {
+  if (нужноВойти('желание')) return false;
+  let ок = true;
+  if (вкл) ок = await хочу({ id: r.sp[0] || '', title: r.title, artists: [{ name: r.artist }] }, r.key, true, r.yt[0] || null);
+  else for (const к of r.моиКлючи) ок = await хочу({ id: '', title: r.title, artists: [{ name: r.artist }] }, к, false) && ок;
+  await заказЗагрузить();
+  if (!$('zpage').hidden) заказНарисовать();
+  return ок;
+}
+
+/* ---------- окно ---------- */
+function заказОкноОткрыть(html) {
+  const m = $('mZakaz'), box = m.querySelector('.zk-box');
+  box.innerHTML = '<button type="button" class="mx" data-zk-close aria-label="Закрыть">✕</button>' + html;
+  m.hidden = false;
+  box.scrollTop = 0;
+  заказКартинки(box);
+  return box;
+}
+function заказОкно(ключ) {
+  const r = заказНайти(ключ);
+  if (!r) { $('mZakaz').hidden = true; return; }
+  ЗАК.вид = r.key;
+  const с = r.сбор, n = заказСколько(r), сумма = заказСумма(r), я = яId();
+  const ушёл = заказРазнесли(r);
+  const хотят = new Set(r.люди.map(x => x.id));
+  const доля = id => с ? (с.доли.find(x => x.id === id) || {}).amount || 0 : 0;
+  const люди = заказЛюди(r).sort((a, b) => (с && b.id === с.owner.id) - (с && a.id === с.owner.id) || доля(b.id) - доля(a.id));
+  const осталось = с ? Math.max(0, с.target - сумма) : 0;
+  const штат = ['moder', 'admin', 'owner'].includes(мояРоль());
+  const участники = люди.map(ч => {
+    const звал = ЗАК.звал.has(ч.id + '|' + заказКлючЧей(r, ч.id));
+    const звать = ч.id !== я && хотят.has(ч.id) && !ушёл;
+    return '<div class="zk-person">' + заказАва(ч) + '<div style="min-width:0">' +
+      (ч.login ? '<a class="pn" href="#u=' + encodeURIComponent(ч.login) + '">' : '<span class="pn">') + esc(ч.name || ч.login || '—') +
+        (ч.id === я ? ' (ты)' : '') + (ч.login ? '</a>' : '</span>') +
+      '<div class="ps">' + (с && с.owner.id === ч.id ? 'организатор' : хотят.has(ч.id) ? 'хочет заказать' : 'участник сбора') + '</div></div>' +
+      (доля(ч.id) ? '<span class="pl">' + рубли(доля(ч.id)) + '</span>' : '<span class="pl zk-nil">—</span>') +
+      (звать ? '<button type="button" class="zk-btn outline small" data-zk-invite="' + esc(ч.id) + '"' + (звал ? ' disabled' : '') + '>' +
+        зико('chat') + (звал ? 'позван' : 'позвать') + '</button>' : '') + '</div>';
+  }).join('');
+  const деньги = с
+    ? '<div class="zk-mrow"><div><small>обещано участниками</small><b class="orange">' + рубли(сумма) + '</b></div>' +
+        '<div style="text-align:right"><small>стоимость разноса</small><b>' + рубли(с.target) + '</b></div></div>' +
+      '<div class="zk-prog"><span class="' + (сумма > с.target ? 'over' : '') + '" style="width:' + Math.min(100, сумма / с.target * 100) + '%"></span></div>' +
+      '<p>' + (с.ordered ? 'Организатор отметил: заказ оформлен. Доли больше не меняются.'
+        : осталось ? 'осталось договориться о ' + рубли(осталось) : 'вся сумма согласована! Организатор может оформить заказ.') +
+        ' <strong' + (сумма > с.target ? ' class="orange"' : '') + '>' + Math.round(сумма / с.target * 100) + '%</strong></p>' +
+      (сумма > с.target ? '<p class="zk-warn">+' + рубли(сумма - с.target) + ' сверх цели · повышенный приоритет разноса</p>' : '') +
+      (с.ordered ? '' : '<p>Можно собрать больше 100% — такой трек будет разнесён быстрее.</p>')
+    : ЗАК.цена
+      ? '<div class="zk-mrow"><div><small>если все скинутся поровну</small><b>~' + рубли(Math.ceil(ЗАК.цена / Math.max(1, n))) + '</b></div>' +
+          '<div style="text-align:right"><small>стоимость разноса</small><b>' + рубли(ЗАК.цена) + '</b></div></div>' +
+        '<p>Пока никто не организовал сбор. Сумма приблизительная, участие добровольное.</p>'
+      : '<p style="margin:0">Пока никто не организовал сбор. Создай его — укажешь, сколько стоит разнос, и свою долю.</p>';
+  const мояД = доля(я);
+  заказОкноОткрыть(
+    '<div class="zk-mhero">' + заказОбложка(r) + '<div style="min-width:0"><h2>' + esc(r.title) + '</h2><p>' + esc(r.artist) + '</p>' +
+      '<div class="zk-meta">' + заказПлощадки(r) + '<span>' + n + ' ' + людей(n) + ' в списке желаний</span>' +
+        (r.мой ? '<span>·</span><span class="me">твой трек</span>' : '') + '</div></div></div>' +
+    (ушёл ? '<p class="zk-warn">Этот трек уже разнесли: ' + заказРазнеслиHtml(r).replace(/^<span>уже разнесли: /, '').replace(/<\/span>$/, '') +
+      '. Заказать его можно разве что повтором.</p>' : '') +
+    '<div class="zk-money">' + деньги + '</div>' +
+    '<h3>' + (с ? 'участники и желающие' : 'кто хочет заказать') + '</h3>' + (участники || '<p>Пока нет других желающих.</p>') +
+    '<div class="zk-mfoot"><button type="button" class="zk-btn outline' + (r.мой ? ' active' : '') + '" data-zk-wish>' + зико('heart') +
+      (r.мой ? 'в моём списке' : 'хочу заказать') + '</button>' +
+      (!с ? '<button type="button" class="zk-btn primary" data-zk-pool>создать сбор</button>'
+        : !с.ordered ? '<button type="button" class="zk-btn primary" data-zk-pledge>' + (мояД ? 'изменить мою долю' : 'предложить свою долю') + '</button>' : '') +
+      (с && с.owner.id === я ? '<button type="button" class="zk-btn outline" data-zk-ordered>' + (с.ordered ? 'заказ ещё не оформлен' : 'заказ оформлен') + '</button>' : '') +
+      (с && (с.owner.id === я || штат) ? '<button type="button" class="zk-btn outline" data-zk-cancel>отменить сбор</button>' : '') + '</div>' +
+    '<p class="zk-note">Никаких списаний: доля — обещание, а не платёж. Позвать можно тех, у кого этот трек в открытом списке, — им придёт уведомление.</p>');
+}
+
+/* Своя доля или новый сбор. */
+function заказДоля(ключ, новый) {
+  if (нужноВойти('сбор')) return;
+  if (ЗАК.безСборов) return toast('Сборы на сервере ещё не включены');
+  const r = заказНайти(ключ); if (!r) return;
+  const с = r.сбор, была = заказМояДоля(r), база = заказСумма(r) - была;
+  const n = Math.max(1, заказСколько(r) + (r.мой || была ? 0 : 1));
+  const цель0 = с ? с.target : ЗАК.цена || '';
+  const box = заказОкноОткрыть('<h2>' + (новый ? 'создать сбор' : 'моя доля') + '</h2><p>' + esc(r.artist) + ' — ' + esc(r.title) + '</p>' +
+    '<p>' + (новый ? 'Ты станешь организатором: укажи, сколько стоит разнос, и свою долю. Остальные смогут вложиться.' : 'Укажи, сколько ты готов внести в совместный заказ.') +
+      ' Это не платёж. Доля видна всем — с твоим ником.</p>' +
+    '<form id="zkForm">' + (новый ? '<label class="zk-field">стоимость разноса, ₽<input id="zkTarget" type="number" inputmode="numeric" min="100" max="200000" step="1" required value="' + цель0 + '"></label>' : '') +
+      '<label class="zk-field">твоя доля, ₽<input id="zkAmount" type="number" inputmode="numeric" min="' + (новый ? 0 : 1) + '" max="200000" step="1" required value="' +
+        (была || (цель0 ? Math.max(1, Math.ceil(цель0 / n)) : '')) + '"></label>' +
+      (!новый ? '<p>до основной цели: ' + рубли(Math.max(0, с.target - база)) + '</p>' : '') +
+      '<div class="zk-money"><div class="zk-mrow"><div><small>с учётом твоей доли</small><b class="orange" id="zkSum"></b></div>' +
+        '<div style="text-align:right"><small>цель сбора</small><b id="zkGoal"></b></div></div>' +
+        '<div class="zk-prog"><span id="zkBar"></span></div><p id="zkPct"></p><p class="zk-warn" id="zkPrio"></p></div>' +
+      '<div class="zk-mfoot"><button type="button" class="zk-btn outline" data-zk-back>назад</button>' +
+        (была ? '<button type="button" class="zk-btn outline" data-zk-leave>убрать долю</button>' : '') +
+        '<button type="submit" class="zk-btn primary">' + (новый ? 'создать сбор' : 'подтвердить долю') + '</button></div></form>');
+  const цельИз = () => новый ? Number(box.querySelector('#zkTarget').value) : с.target;
+  const пересчёт = () => {
+    const v = Number(box.querySelector('#zkAmount').value), а = Number.isSafeInteger(v) && v >= 0 ? v : 0;
+    const ц = цельИз(), есть = Number.isSafeInteger(ц) && ц >= 100;
+    const сумма = база + а;
+    box.querySelector('#zkSum').textContent = рубли(сумма);
+    box.querySelector('#zkGoal').textContent = есть ? рубли(ц) : '—';
+    const бар = box.querySelector('#zkBar');
+    бар.style.width = есть ? Math.min(100, сумма / ц * 100) + '%' : '0';
+    бар.className = есть && сумма > ц ? 'over' : '';
+    box.querySelector('#zkPct').textContent = есть ? Math.round(сумма / ц * 100) + '% от цели' + (сумма > ц ? ' · ' + рубли(сумма - ц) + ' сверх цели' : '') : 'укажи стоимость разноса';
+    box.querySelector('#zkPrio').textContent = есть && сумма > ц ? 'Повышенный приоритет: трек будет разнесён быстрее.' : 'Можно внести больше 100% — тогда трек будет разнесён быстрее.';
+  };
+  box.querySelectorAll('input').forEach(i => i.addEventListener('input', пересчёт));
+  пересчёт();
+  box.querySelector('#zkForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const сумма = Number(box.querySelector('#zkAmount').value), ц = цельИз();
+    if (!Number.isSafeInteger(сумма) || сумма < (новый ? 0 : 1) || сумма > 200000) return toast('Доля — целое число от ' + (новый ? 0 : 1) + ' до 200 000 ₽');
+    if (новый && (!Number.isSafeInteger(ц) || ц < 100 || ц > 200000)) return toast('Стоимость разноса — от 100 до 200 000 ₽');
+    const кн = box.querySelector('[type=submit]'); кн.disabled = true;
+    const { error } = новый
+      ? await ОБЛ.sb.rpc('pool_open', { p_key: r.key, p_title: r.title.slice(0, 300), p_artist: r.artist.slice(0, 300),
+          p_sp: r.sp[0] || null, p_yt: r.yt[0] || null, p_target: ц, p_amount: сумма })
+      : await ОБЛ.sb.rpc('pledge_set', { p_pool: с.id, p_amount: сумма });
+    if (error) { кн.disabled = false; return заказОшибка(error); }
+    toast(новый ? 'Сбор создан' : 'Доля сохранена');
+    await заказОбновить(r.key);
+  });
+}
+function заказОшибка(error) {
+  const m = (error && error.message) || '';
+  toast(/pool exists/.test(m) ? 'Сбор на этот трек уже открыли — обнови страницу'
+    : /too many pools/.test(m) ? 'У тебя уже 10 открытых сборов — закрой или оформи какой-нибудь'
+    : /pool ordered/.test(m) ? 'Заказ уже оформлен — доли больше не меняются'
+    : /too many invites/.test(m) ? 'Слишком много приглашений за час — подожди немного'
+    : /no such wish/.test(m) ? 'Этот зритель уже убрал трек из списка или скрыл его'
+    : /banned/.test(m) ? 'Твой аккаунт закрыт командой сайта'
+    : /too many wishes/.test(m) ? 'В списке уже 500 треков — убери лишние'
+    : /function|schema cache|pool_|pledge_|wish_invite/.test(m) ? 'Сборы на сервере ещё не включены'
+    : 'Не вышло: ' + m);
+}
+/* После своего действия — свежие данные и то же окно. */
+async function заказОбновить(ключ) {
+  ЗАК.разнесли.delete(ключ);
+  await заказЗагрузить();
+  if (!$('zpage').hidden) заказНарисовать();
+  if (!$('mZakaz').hidden) заказОкно(ключ);
+}
+
+/* «Позвать»: уведомление тому, у кого эта песня в открытом списке. */
+function заказПозвать(ключ, кому) {
+  if (нужноВойти('сбор')) return;
+  const r = заказНайти(ключ); if (!r) return;
+  const ч = r.люди.find(x => x.id === кому); if (!ч) return;
+  const к = заказКлючЧей(r, кому);
+  const box = заказОкноОткрыть('<h2>предложить объединиться</h2><p>Получатель: <strong>' + esc(ч.name || ч.login) + '</strong> · ' + esc(r.title) + '</p>' +
+    '<p>' + esc(ч.name || ч.login) + ' придёт уведомление: <b>' + esc(мойНик()) + '</b> зовёт скинуться на «' + esc(r.artist + ' — ' + r.title) + '». ' +
+      'Личных сообщений на сайте нет — договориться подробнее можно через ' +
+      (ч.login ? '<a class="orange" href="#u=' + encodeURIComponent(ч.login) + '">профиль</a>' : 'профиль') + ' и Twitch.</p>' +
+    '<div class="zk-mfoot"><button type="button" class="zk-btn outline" data-zk-back>назад</button><button type="button" class="zk-btn primary" data-zk-send>позвать</button></div>');
+  box.querySelector('[data-zk-send]').addEventListener('click', async e => {
+    e.target.disabled = true;
+    const { data, error } = await ОБЛ.sb.rpc('wish_invite', { p_key: к, p_to: кому });
+    if (error) { e.target.disabled = false; return заказОшибка(error); }
+    ЗАК.звал.add(кому + '|' + к);
+    toast(data === false ? 'Ты уже звал его в этот сбор' : 'Позвали — ' + (ч.name || ч.login) + ' увидит уведомление');
+    заказОкно(r.key);
+  });
+}
+
+/* «Предложить трек»: ссылкой (YouTube или Spotify — тем же разбором,
+   что в кабинете) или названием с исполнителем. Сначала проверка: уже
+   в заказочной — открываем его; уже разнесли — так и говорим. */
+function заказПредложить() {
+  if (нужноВойти('желание')) return;
+  ЗАК.вид = '';
+  const box = заказОкноОткрыть('<h2>предложить трек</h2><p>Вставь ссылку на трек или укажи его название и исполнителя. Проверим, есть ли он в заказочной или среди уже разнесённых.</p>' +
+    '<form id="zkPropose"><label class="zk-field">ссылка на трек — YouTube или Spotify<input id="zkUrl" type="text" placeholder="https://…" maxlength="2000" autocomplete="off" spellcheck="false"></label>' +
+      '<div id="zkPrev"></div>' +
+      '<div class="zk-two"><label class="zk-field">исполнитель<input id="zkArtist" placeholder="например, Ado" maxlength="300"></label>' +
+      '<label class="zk-field">название трека<input id="zkTitle" placeholder="например, Hungry Nicole" maxlength="300"></label></div>' +
+      '<div id="zkFound" aria-live="polite"></div>' +
+      '<div class="zk-mfoot"><button type="button" class="zk-btn outline" data-zk-close>отмена</button><button class="zk-btn primary" type="submit" id="zkGo">проверить и предложить</button></div></form>' +
+    '<p class="zk-note">У ролика YouTube исполнитель и название берутся из заголовка — проверь, где что. Spotify исполнителя по ссылке не отдаёт — его впиши сам.</p>');
+  const $$ = s => box.querySelector(s);
+  let нашли = null, запрос = 0, т, проверено = '';
+  const сброс = () => { $$('#zkFound').innerHTML = ''; $$('#zkGo').textContent = 'проверить и предложить'; проверено = ''; };
+  $$('#zkUrl').addEventListener('input', () => {
+    clearTimeout(т); сброс();
+    т = setTimeout(async () => {
+      const url = $$('#zkUrl').value.trim(), мой = ++запрос;
+      if (!url) { нашли = null; $$('#zkPrev').innerHTML = ''; return; }
+      const ч = await чтоПоСсылке(url).catch(() => null);
+      if (мой !== запрос) return;
+      нашли = ч;
+      if (!ч) { $$('#zkPrev').innerHTML = '<p class="zk-warn">Это не похоже на ссылку на ролик YouTube или трек Spotify.</p>'; return; }
+      $$('#zkPrev').innerHTML = '<div class="zk-prev">' + (ч.картинка ? '<img alt="" src="' + esc(ч.картинка) + '">' : '') +
+        '<p>' + (ч.yt ? 'Ролик YouTube' : 'Трек Spotify') + (ч.title ? ': «' + esc(ч.title) + '»' : '') + '</p></div>';
+      шить($$('#zkPrev'));
+      if (ч.artist && !$$('#zkArtist').value.trim()) $$('#zkArtist').value = ч.artist;
+      if (ч.title && !$$('#zkTitle').value.trim()) $$('#zkTitle').value = ч.title;
+    }, 350);
+  });
+  ['#zkArtist', '#zkTitle'].forEach(s => $$(s).addEventListener('input', сброс));
+  $$('#zkFound').addEventListener('click', e => {
+    const b = e.target.closest('[data-zk-found]'); if (!b) return;
+    const r = заказНайти(b.dataset.zkFound); if (!r) return;
+    if (r.мой) return заказОкно(r.key);
+    b.disabled = true;
+    заказХочу(r, true).then(() => заказОкно(r.key));
+  });
+  $$('#zkPropose').addEventListener('submit', async e => {
+    e.preventDefault();
+    const url = $$('#zkUrl').value.trim(), artist = $$('#zkArtist').value.trim(), title = $$('#zkTitle').value.trim();
+    if (url && !нашли) return toast('Ссылка — на ролик YouTube или трек Spotify');
+    if (!artist || !title) return toast('Нужны и исполнитель, и название');
+    const кн = $$('#zkGo'); кн.disabled = true;
+    const код = await разнесётКод().catch(() => null);
+    кн.disabled = false;
+    if (!код) return toast('Не загрузился код сверки — попробуй ещё раз');
+    const трек = { id: нашли ? нашли.sp : '', title, artists: [{ name: artist }] };
+    const ключ = ключПесни(код.n, трек), yt = нашли ? нашли.yt : '', sp = нашли ? нашли.sp : '';
+    const подпись = ключ + '|' + yt + '|' + sp;
+    if (проверено !== подпись) {
+      // Уже в заказочной — по ключу песни, ролику или треку Spotify.
+      const есть = (ЗАК.ряды || []).filter(r => r.ключи.includes(ключ) || (yt && r.yt.includes(yt)) || (sp && r.sp.includes(sp)));
+      // Уже разнесли — по ссылке точно, иначе сверкой razneset по имени.
+      const точно = вАрхивеПоСсылке(yt, sp);
+      const м = точно ? null : код.p.findRated(код.ix, трек, трек.artists.map(a => код.p.resolveArtist(код.ix, a)).filter(Boolean))[0];
+      const в = точно ? { r: точно, l: точно.rate ? точно.rate.label : '', s: точно.streamNum } : м ? { r: строкаКаталога(код, м), l: м.l || '', s: м.s } : null;
+      if (есть.length || в) {
+        проверено = подпись;
+        $$('#zkFound').innerHTML = '<div class="zk-money">' +
+          (в ? '<p style="color:var(--zk-green)"><strong>' + esc(title) + ' — ' + esc(artist) + '</strong><br>Этот трек уже разнесли: ' +
+            (в.r ? '<a class="orange" href="' + trackHref(в.r) + '">' : '<b>') + esc(в.l || 'без оценки') + (в.r ? '</a>' : '</b>') +
+            (в.s != null ? ' · эфир №' + esc(в.s) : '') + '. Заказать его можно разве что повтором.</p>' : '') +
+          есть.map(r => '<div class="zk-found">' + заказОбложка(r) + '<div style="min-width:0"><div class="zk-name">' + esc(r.title) + '</div><div class="zk-artist">' + esc(r.artist) + '</div>' +
+            '<p>Уже в заказочной · ' + заказСколько(r) + ' ' + людей(заказСколько(r)) + (r.мой ? ' · в твоём списке' : '') + '</p></div>' +
+            '<button type="button" class="zk-btn small ' + (r.мой ? 'outline' : 'primary') + '" data-zk-found="' + esc(r.key) + '">' + (r.мой ? 'открыть' : 'хочу заказать') + '</button></div>').join('') + '</div>';
+        заказКартинки($$('#zkFound'));
+        кн.textContent = есть.length ? 'всё равно предложить отдельно' : 'всё равно предложить';
+        return;
+      }
+    }
+    кн.disabled = true;
+    if (!await хочу(трек, ключ, true, yt || null)) { кн.disabled = false; return; }
+    ЗАК.вкладка = 'mine'; ЗАК.q = ''; $('zkQ').value = '';
+    await заказЗагрузить();
+    заказНарисовать();
+    const r = заказНайти(ключ);
+    if (r) заказОкно(r.key); else $('mZakaz').hidden = true;
+  });
+}
+
+function заказПодключить() {
+  $('zkAdd').addEventListener('click', заказПредложить);
+  let т;
+  $('zkQ').addEventListener('input', e => { clearTimeout(т); т = setTimeout(() => { ЗАК.q = e.target.value; ЗАК.показано = 60; заказНарисовать(); }, 120); });
+  $('zkSort').addEventListener('change', e => { ЗАК.сорт = e.target.value; заказНарисовать(); });
+  $('zpage').addEventListener('click', async e => {
+    const вк = e.target.closest('[data-zk-tab]');
+    if (вк) { ЗАК.вкладка = вк.dataset.zkTab; ЗАК.показано = 60; заказНарисовать(); return; }
+    if (e.target.closest('[data-zk-more]')) { ЗАК.показано += 60; заказНарисовать(); return; }
+    const ряд = e.target.closest('[data-k]');
+    if (!ряд || e.target.closest('a')) return;
+    const r = заказНайти(ряд.dataset.k); if (!r) return;
+    const w = e.target.closest('[data-zk-wish]');
+    if (w) { w.disabled = true; await заказХочу(r, !r.мой); w.disabled = false; return; }
+    if (e.target.closest('[data-zk-open]')) заказОкно(r.key);
+  });
+  $('mZakaz').addEventListener('click', async e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.matches('[data-zk-close]')) { $('mZakaz').hidden = true; return; }
+    const r = ЗАК.вид && заказНайти(ЗАК.вид);
+    if (!r) return;
+    const с = r.сбор;
+    if (b.matches('[data-zk-back]')) return заказОкно(r.key);
+    if (b.matches('[data-zk-wish]')) { b.disabled = true; await заказХочу(r, !r.мой); if (!$('mZakaz').hidden) заказОкно(r.key); return; }
+    if (b.matches('[data-zk-pool]')) return заказДоля(r.key, true);
+    if (b.matches('[data-zk-pledge]')) return заказДоля(r.key, false);
+    if (b.matches('[data-zk-invite]')) return заказПозвать(r.key, b.dataset.zkInvite);
+    if (b.matches('[data-zk-leave]') && с) {
+      b.disabled = true;
+      const { error } = await ОБЛ.sb.rpc('pledge_set', { p_pool: с.id, p_amount: 0 });
+      if (error) { b.disabled = false; return заказОшибка(error); }
+      toast('Доля убрана');
+      return заказОбновить(r.key);
+    }
+    if (b.matches('[data-zk-ordered]') && с) {
+      b.disabled = true;
+      const { error } = await ОБЛ.sb.rpc('pool_update', { p_pool: с.id, p_target: null, p_ordered: !с.ordered });
+      if (error) { b.disabled = false; return заказОшибка(error); }
+      toast(с.ordered ? 'Сбор снова открыт' : 'Отмечено: заказ оформлен');
+      return заказОбновить(r.key);
+    }
+    if (b.matches('[data-zk-cancel]') && с) {
+      // Подтверждение — второй щелчок по той же кнопке, без системного окна.
+      if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'точно отменить? все доли пропадут'; b.classList.add('active'); return; }
+      b.disabled = true;
+      const { error } = await ОБЛ.sb.rpc('pool_close', { p_pool: с.id });
+      if (error) { b.disabled = false; return заказОшибка(error); }
+      toast('Сбор отменён');
+      return заказОбновить(r.key);
+    }
+  });
+}
+
 /* ---------- управление ----------
    Инструменты команды сайта во вкладке кабинета (раньше студия была
    пунктом шапки, а назначение ролей — в настройках). Модеру —
@@ -19375,11 +20272,36 @@ function meManage(box) {
     '<section class="o-panel" data-reports><div class="section-title"><h2>сообщения о неточностях</h2></div><p class="mutedline">загружаю…</p></section>' +
     (старший ? '<section class="o-panel" data-review aria-label="Заявки на привязку заказов"></section>' : '') +
     '<section class="o-panel" data-banned><div class="section-title"><h2>закрытые комментарии</h2></div><p class="mutedline">загружаю…</p></section>' +
+    (старший ? '<section class="o-panel" data-price><div class="section-title"><h2>заказочная: цена разноса</h2></div>' +
+      '<p class="setting-hint" style="margin:0 0 12px">По ней у треков без сбора считается «~N ₽ с человека». Пусто — денег у таких треков не показываем. ' +
+      'У сбора своя цель: её ставит организатор.</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input class="c-field" id="zkPrice" type="number" inputmode="numeric" min="100" max="200000" step="1" placeholder="например, 1200" aria-label="Цена разноса, ₽" style="width:170px">' +
+      '<button type="button" class="soft-btn" data-price-save>сохранить</button></div></section>' : '') +
     (старший ? '<section class="o-panel"><div class="section-title"><h2>команда сайта</h2></div><div id="meTeam"><p class="me-cnt">загружаю…</p></div></section>' : '');
   командаНарисовать($('meTeam'));
   неточностиНарисовать(box.querySelector('[data-reports]'));
   закрытыеНарисовать(box.querySelector('[data-banned]'));
   if (старший) разборЗаявок(box.querySelector('[data-review]'));
+  if (старший) ценаРазноса(box.querySelector('[data-price]'));
+}
+/* Цена разноса по умолчанию для заказочной (site_settings). */
+async function ценаРазноса(el) {
+  if (!el || !ОБЛ.sb) return;
+  const поле = el.querySelector('#zkPrice');
+  const { data, error } = await ОБЛ.sb.from('site_settings').select('key,value').eq('key', 'order_price');
+  if (error) { el.querySelector('.setting-hint').textContent = 'Заказочная на сервере ещё не включена — схему базы надо перезапустить.'; return; }
+  const ц = (data || [])[0];
+  if (ц && !поле.value) поле.value = Number(ц.value) || '';
+  el.querySelector('[data-price-save]').addEventListener('click', async e => {
+    const v = поле.value.trim() === '' ? null : Number(поле.value);
+    if (v !== null && (!Number.isSafeInteger(v) || v < 100 || v > 200000)) return toast('Цена — от 100 до 200 000 ₽ или пусто');
+    e.target.disabled = true;
+    const { error } = await ОБЛ.sb.rpc('set_order_price', { p_price: v });
+    e.target.disabled = false;
+    if (error) return toast('Не вышло: ' + error.message);
+    ЗАК.цена = v;
+    toast(v ? 'Цена разноса — ' + рубли(v) : 'Цена разноса убрана');
+  });
 }
 async function неточностиНарисовать(el) {
   if (!el) return;
@@ -19666,8 +20588,8 @@ function облакоНет(почему) {
   ОБЛ.состояние = 'нет';
   ОБЛ.ошибка = почему;
   облакоРисовать(true);
-  // Чужой профиль и рецензия ждали сервер со словом «загружаю…» — теперь ждать нечего.
-  if (!$('upage').hidden || !$('rpage').hidden) route();
+  // Чужой профиль, рецензия и заказочная ждали сервер со словом «загружаю…» — теперь ждать нечего.
+  if (!$('upage').hidden || !$('rpage').hidden || !$('zpage').hidden) route();
 }
 
 async function облакоСтарт() {
@@ -19679,6 +20601,7 @@ async function облакоСтарт() {
   if (T.r) { комментарииЗагрузить(T.r.key); голосаЗагрузить(T.r.key); }
   владельцыЗагрузить();
   if (!$('upage').hidden || !$('rpage').hidden) route();
+  if (!$('zpage').hidden) заказПоказать();
   /* Внутри этого обработчика нельзя ждать других вызовов Supabase:
      они встанут в очередь за ним самим. Поэтому дела — следующим тиком. */
   ОБЛ.sb.auth.onAuthStateChange((событие, сессия) => { setTimeout(() => облакоСессия(сессия), 0); });
@@ -19761,7 +20684,8 @@ const ВОЙТИ_ЗАЧЕМ = {
   лайк: ['лайк', 'Лайкать комментарии и рецензии могут те, кто вошёл через Twitch.'],
   подписка: ['подписка', 'Подписываться на зрителей могут те, кто вошёл через Twitch: подписки живут в твоём личном кабинете.'],
   неточность: ['неточность', 'Сообщить о неточности могут те, кто вошёл через Twitch: так команде сайта есть кого переспросить.'],
-  желание: ['хочу заказать', 'Список «хочу заказать» живёт в аккаунте: войди через Twitch, и сайт покажет, кто ещё хочет заказать тот же трек.']
+  желание: ['хочу заказать', 'Список «хочу заказать» живёт в аккаунте: войди через Twitch, и сайт покажет, кто ещё хочет заказать тот же трек.'],
+  сбор: ['сбор', 'Сборы на заказ — для тех, кто вошёл через Twitch: доля идёт под твоим ником, и организатору есть с кем договориться.']
 };
 function нужноВойти(что = 'оценка') {
   if (!ОБЛ || ОБЛ.состояние === 'вошёл' || ОБЛ.состояние === 'нет') return false;
@@ -20040,6 +20964,8 @@ function облакоРисовать(сВкладкой) {
   студияДоступ();
   if (T.r && $('tTalk')._рисовать) $('tTalk')._рисовать();
   if (!$('page').hidden && CAT.length) главная();
+  // Вошёл или вышел — у заказочной другие «мои» треки и сборы.
+  if (!$('zpage').hidden && ЗАК.для !== яId()) заказПоказать();
   if (!$('mpage').hidden && CAT.length) {
     // Роль доехала или ушла — вкладка «админка» появляется или пропадает.
     const вкладкиСтарые = !!document.querySelector('#meTabs a[href="#me/manage"]') !== штатСайта();
@@ -20399,11 +21325,15 @@ function уведомленияСтроки(u, сколько) {
                                  : 'Заявку на <b>' + esc(n.claim) + '</b> отклонили') + (n.answer ? ': «' + esc(n.answer) + '»' : '')
       : n.kind === 'follow' ? 'Новый подписчик — <b>' + esc(n.who || n.who_login) + '</b>'
       : n.kind === 'wish' ? '<b>' + esc(n.who || n.who_login) + '</b> тоже хочет заказать «' + esc(обрезать(n.body, 80)) + '» — договоритесь и закажите вместе'
+      : n.kind === 'invite' ? '<b>' + esc(n.who || n.who_login) + '</b> зовёт скинуться на «' + esc(обрезать(n.body, 80)) + '»'
+      : n.kind === 'pledge' ? '<b>' + esc(n.who || n.who_login) + '</b> вложился в твой сбор на «' + esc(обрезать(n.body, 80)) + '»' +
+          (Number(n.answer) > 0 ? ': ' + рубли(Number(n.answer)) : '')
       : 'Ответ от <b>' + esc(n.who || n.who_login) + '</b>' + (t ? ' к «' + esc(t.title) + '»' : '') + ': «' + esc(обрезать(n.body, 90)) + '»';
     // Ответ — прямо к нему в ленте трека, а не просто на страницу трека.
     const куда = n.kind === 'claim' ? '#me/orders/history'
       : n.kind === 'follow' ? '#u=' + encodeURIComponent(n.who_login || '')
-      : n.kind === 'wish' ? '#me/orders'
+      // Совпадение, приглашение и доля — сразу к этой песне в заказочной.
+      : ['wish', 'invite', 'pledge'].includes(n.kind) ? '#zakaz/' + encodeURIComponent(n.track_key || '')
       : (t ? trackHref(t) + (n.comment_id ? '&c=' + n.comment_id : '') : '#me');
     return '<a class="note-row' + (n.fresh ? ' fresh' : '') + '" href="' + куда + '"><span>' + текст + '</span><time>' +
       когда(Date.parse(n.at)) + '</time></a>';
@@ -20510,7 +21440,7 @@ function showUser(login) {
   фон('');
   if (T.r) уходСТрека();
   T.r = null;
-  ['page', 'tpage', 'apage', 'fpage', 'mpage', 'rpage'].forEach(id => { $(id).hidden = true; });
+  ['page', 'tpage', 'apage', 'fpage', 'mpage', 'rpage', 'zpage'].forEach(id => { $(id).hidden = true; });
   $('upage').hidden = false;
   плашкаЭфира();
   document.title = login + ' — база треков';
@@ -20719,7 +21649,7 @@ function showReview(id) {
   уходИзИгры();
   if (T.r) уходСТрека();
   T.r = null;
-  ['page', 'tpage', 'apage', 'fpage', 'mpage', 'upage'].forEach(x => { $(x).hidden = true; });
+  ['page', 'tpage', 'apage', 'fpage', 'mpage', 'upage', 'zpage'].forEach(x => { $(x).hidden = true; });
   $('rpage').hidden = false;
   плашкаЭфира();
   document.title = 'Рецензия — база треков';
@@ -21920,6 +22850,7 @@ function showStudio() {
   $('mpage').hidden = true;
   $('upage').hidden = true;
   $('rpage').hidden = true;
+  $('zpage').hidden = true;
   $('spage').hidden = false;
   document.body.classList.add('st-on');
   document.title = 'Студия оценок — база треков';
